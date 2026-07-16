@@ -24,6 +24,8 @@ export function HabitHeatmap({
               }}
               whileTap={{ scale: 0.8 }}
               title={cell.date}
+              aria-label={`${cell.date}${cell.completed ? ", completed" : ""}`}
+              aria-pressed={cell.completed}
               className="h-[13px] w-[13px] rounded-[3px] disabled:opacity-30"
               style={{
                 backgroundColor: cell.completed

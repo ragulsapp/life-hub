@@ -4,6 +4,7 @@ import { db, type AlarmMission } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import { requestNotificationPermission } from "../../lib/notify";
+import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { SoundPicker } from "./SoundPicker";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -32,6 +33,9 @@ export function AlarmForm() {
       difficulty,
       soundId,
       enabled: true,
+      // If the time already passed today, arm for the next occurrence
+      // instead of ringing the moment it's created.
+      lastFiredDate: reminderCreationGuard(time),
       createdAt: Date.now(),
     } as never);
     setLabel("");

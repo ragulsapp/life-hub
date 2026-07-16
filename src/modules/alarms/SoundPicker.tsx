@@ -37,15 +37,26 @@ export function SoundPicker({
 
   const preview = async (id: number) => {
     stopRef.current?.();
+    stopRef.current = null;
     if (playing === id) {
       setPlaying(null);
       return;
     }
     const s = await db.sounds.get(id);
     if (!s) return;
-    stopRef.current = previewSound(s.blob);
+    const stop = previewSound(s.blob);
+    stopRef.current = stop;
     setPlaying(id);
-    setTimeout(() => setPlaying((p) => (p === id ? null : p)), 4000);
+    setTimeout(() => {
+      // Actually stop the audio when the preview window ends — previously
+      // only the icon reset while long clips kept playing.
+      setPlaying((p) => {
+        if (p !== id) return p;
+        stop();
+        if (stopRef.current === stop) stopRef.current = null;
+        return null;
+      });
+    }, 4000);
   };
 
   const removeSound = async (id: number) => {
@@ -87,6 +98,7 @@ export function SoundPicker({
           <button
             onClick={() => preview(s.id)}
             title="Preview"
+            aria-label={`${playing === s.id ? "Stop" : "Preview"} "${s.name}"`}
             className="px-1 text-base"
           >
             {playing === s.id ? "⏹" : "▶"}
@@ -94,6 +106,7 @@ export function SoundPicker({
           <button
             onClick={() => removeSound(s.id)}
             title="Delete sound"
+            aria-label={`Delete sound "${s.name}"`}
             className="px-1 text-xs opacity-60 hover:text-red-500 hover:opacity-100"
           >
             ✕

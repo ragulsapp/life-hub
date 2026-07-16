@@ -1,6 +1,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../db/db";
 import { Card } from "../../components/Card";
+import { localTimeStr } from "../../lib/dates";
 
 interface AgendaItem {
   key: string;
@@ -10,12 +11,7 @@ interface AgendaItem {
   kind: string;
 }
 
-const nowHHMM = () => {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, "0")}:${String(
-    d.getMinutes(),
-  ).padStart(2, "0")}`;
-};
+const nowHHMM = () => localTimeStr();
 
 export function TodayAgenda() {
   const alarms = useLiveQuery(() => db.alarms.toArray(), []) ?? [];

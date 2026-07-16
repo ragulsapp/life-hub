@@ -6,6 +6,7 @@ import { Card } from "../../components/Card";
 import { inputClass } from "../../components/inputStyles";
 import { NoteEditor } from "./NoteEditor";
 import { requestNotificationPermission } from "../../lib/notify";
+import { reminderCreationGuard } from "../../lib/reminderLogic";
 
 export function NotesView() {
   const notes = useLiveQuery(() => db.notes.toArray(), []) ?? [];
@@ -41,7 +42,7 @@ export function NotesView() {
     await db.notes.update(id, {
       reminderEnabled: enabled,
       reminderTime: time ?? "09:00",
-      lastReminderDate: undefined,
+      lastReminderDate: reminderCreationGuard(time ?? "09:00"),
     });
   };
 
@@ -87,6 +88,7 @@ export function NotesView() {
                     </button>
                     <button
                       onClick={() => remove(n.id)}
+                      aria-label={`Delete note "${n.title}"`}
                       className="text-slate-400 hover:text-red-500"
                     >
                       ✕

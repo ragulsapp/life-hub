@@ -1,6 +1,7 @@
 import { db } from "../db/db";
+import { localDateStr } from "./dates";
 
-interface BackupPayload {
+export interface BackupPayload {
   version: number;
   exportedAt: number;
   tables: {
@@ -20,9 +21,22 @@ interface BackupPayload {
   };
 }
 
-export async function exportBackup(): Promise<void> {
-  const payload: BackupPayload = {
-    version: 2,
+export const BACKUP_VERSION = 2;
+
+/** Tables every valid backup must contain (present since backup v1). */
+const REQUIRED_TABLES = [
+  "healthMetrics",
+  "habitLogs",
+  "financeCategories",
+  "transactions",
+  "notes",
+  "goals",
+  "appSettings",
+] as const;
+
+export async function buildBackupPayload(): Promise<BackupPayload> {
+  return {
+    version: BACKUP_VERSION,
     exportedAt: Date.now(),
     tables: {
       healthMetrics: await db.healthMetrics.toArray(),
@@ -40,23 +54,42 @@ export async function exportBackup(): Promise<void> {
       appSettings: await db.appSettings.toArray(),
     },
   };
-
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `life-hub-backup-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-
-  await db.appSettings.update(1, { lastBackupAt: Date.now() });
 }
 
-export async function importBackup(file: File): Promise<void> {
-  const text = await file.text();
-  const payload = JSON.parse(text) as BackupPayload;
+/**
+ * Validate an untrusted parsed JSON value before letting it near the
+ * database (M3). Throws a user-readable Error on any structural problem.
+ */
+export function validateBackupPayload(data: unknown): BackupPayload {
+  if (typeof data !== "object" || data === null) {
+    throw new Error("That file isn't a Life Hub backup.");
+  }
+  const p = data as Partial<BackupPayload>;
+  if (typeof p.version !== "number" || !p.tables || typeof p.tables !== "object") {
+    throw new Error("That file isn't a Life Hub backup.");
+  }
+  if (p.version > BACKUP_VERSION) {
+    throw new Error(
+      `This backup is from a newer app version (v${p.version}). Update the app first.`,
+    );
+  }
+  for (const table of REQUIRED_TABLES) {
+    if (!Array.isArray((p.tables as Record<string, unknown>)[table])) {
+      throw new Error(`Backup is missing its "${table}" data — file may be corrupted.`);
+    }
+  }
+  return p as BackupPayload;
+}
+
+export function countRecords(payload: BackupPayload): number {
+  return Object.values(payload.tables).reduce(
+    (sum, rows) => sum + (Array.isArray(rows) ? rows.length : 0),
+    0,
+  );
+}
+
+/** Replace all data atomically — a mid-restore failure rolls back everything. */
+export async function restoreBackupPayload(payload: BackupPayload): Promise<void> {
   const t = payload.tables;
 
   await db.transaction(
@@ -111,4 +144,20 @@ export async function importBackup(file: File): Promise<void> {
       }
     },
   );
+}
+
+export async function exportBackup(): Promise<void> {
+  const payload = await buildBackupPayload();
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `life-hub-backup-${localDateStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  await db.appSettings.update(1, { lastBackupAt: Date.now() });
 }

@@ -1,9 +1,10 @@
+import { localDateStr } from "../../lib/dates";
 import { useState } from "react";
 import { db, WEIGHT_BASELINE_KG } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDateStr();
 
 export function HealthEntryForm() {
   const [weight, setWeight] = useState(String(WEIGHT_BASELINE_KG));

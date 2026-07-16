@@ -1,10 +1,11 @@
+import { localDateStr } from "../../lib/dates";
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, DEFAULT_FAST_HOURS } from "../../db/db";
 import { ProgressRing } from "../../components/ProgressRing";
 import { Button } from "../../components/Button";
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDateStr();
 
 function fmt(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));

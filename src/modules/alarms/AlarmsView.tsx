@@ -5,6 +5,7 @@ import { Card } from "../../components/Card";
 import { AlarmForm } from "./AlarmForm";
 import { TaskList } from "./TaskList";
 import { useScheduler } from "../../lib/scheduler";
+import { reminderCreationGuard } from "../../lib/reminderLogic";
 import {
   notificationPermission,
   requestNotificationPermission,
@@ -34,7 +35,9 @@ export function AlarmsView() {
   const toggle = (a: Alarm) =>
     db.alarms.update(a.id, {
       enabled: !a.enabled,
-      lastFiredDate: undefined,
+      // Re-enabling an alarm whose time passed today arms it for the next
+      // occurrence rather than ringing immediately.
+      lastFiredDate: a.enabled ? a.lastFiredDate : reminderCreationGuard(a.time),
     });
   const remove = (id: number) => db.alarms.delete(id);
 
@@ -106,6 +109,8 @@ export function AlarmsView() {
                     </button>
                     <button
                       onClick={() => toggle(a)}
+                      aria-label={`${a.enabled ? "Disable" : "Enable"} ${a.time} alarm`}
+                      aria-pressed={a.enabled}
                       className={`relative h-6 w-11 rounded-full transition-colors ${
                         a.enabled
                           ? "bg-emerald-500"
@@ -120,6 +125,7 @@ export function AlarmsView() {
                     </button>
                     <button
                       onClick={() => remove(a.id)}
+                      aria-label={`Delete ${a.time} alarm`}
                       className="text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
                     >
                       ✕

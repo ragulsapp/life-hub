@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
+import { localDateStr } from "../lib/dates";
 
 export type HealthMetricType =
   | "15.5h-fast"
@@ -151,6 +152,8 @@ export interface AppSettings {
   darkMode: boolean;
   seeded: boolean;
   lastBackupAt?: number;
+  /** Alarm currently ringing — persisted so a page refresh can't skip the mission. */
+  ringingAlarmId?: number;
 }
 
 export const DEFAULT_FAST_HOURS = 15.5;
@@ -304,7 +307,7 @@ export async function ensureSeeded(): Promise<void> {
       "rw",
       [db.habitLogs, db.habits, db.financeCategories, db.goals, db.appSettings],
       async () => {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = localDateStr();
 
         const habitDefCount = await db.habits.count();
         if (habitDefCount === 0) {

@@ -130,6 +130,7 @@ export function FinanceView() {
                   </span>
                   <button
                     onClick={() => remove(t.id)}
+                    aria-label={`Delete ${t.category} transaction of ₹${t.amount}`}
                     className="text-xs text-slate-400 hover:text-red-500"
                   >
                     ✕

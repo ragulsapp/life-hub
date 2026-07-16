@@ -5,6 +5,7 @@ import { db } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import { requestNotificationPermission } from "../../lib/notify";
+import { reminderCreationGuard } from "../../lib/reminderLogic";
 
 export function TaskList() {
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) ?? [];
@@ -32,7 +33,8 @@ export function TaskList() {
     await db.tasks.update(id, {
       reminderTime: time,
       reminderEnabled: !!time,
-      lastReminderDate: undefined,
+      // A time already past today anchors to tomorrow (no instant fire).
+      lastReminderDate: reminderCreationGuard(time),
     });
     setEditingReminder(null);
   };
@@ -66,6 +68,8 @@ export function TaskList() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => toggle(t.id, t.done)}
+                  aria-label={`Mark "${t.title}" ${t.done ? "not done" : "done"}`}
+                  aria-pressed={t.done}
                   className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 text-xs ${
                     t.done
                       ? "border-emerald-500 bg-emerald-500 text-white"
@@ -87,6 +91,11 @@ export function TaskList() {
                   onClick={() =>
                     setEditingReminder(editingReminder === t.id ? null : t.id)
                   }
+                  aria-label={
+                    t.reminderEnabled
+                      ? `Reminder set for ${t.reminderTime}`
+                      : "Set reminder"
+                  }
                   className={`text-xs ${
                     t.reminderEnabled
                       ? "text-cyan-500"
@@ -97,6 +106,7 @@ export function TaskList() {
                 </button>
                 <button
                   onClick={() => remove(t.id)}
+                  aria-label={`Delete task "${t.title}"`}
                   className="text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
                 >
                   ✕

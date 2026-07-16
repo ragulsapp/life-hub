@@ -1,8 +1,8 @@
 import type { HabitLog, HabitSchedule } from "../../db/db";
+import { localDateStr } from "../../lib/dates";
 
-function toDateStr(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
+// Local calendar date — see lib/dates.ts for why toISOString() must not be used.
+const toDateStr = localDateStr;
 
 /** Whether a habit with this schedule is expected on the given date. */
 export function isDueOn(schedule: HabitSchedule, date: Date): boolean {

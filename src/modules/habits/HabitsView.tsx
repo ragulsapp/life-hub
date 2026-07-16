@@ -1,3 +1,4 @@
+import { localDateStr } from "../../lib/dates";
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
@@ -8,6 +9,7 @@ import { HabitForm } from "./HabitForm";
 import { HabitHistoryRow } from "./HabitHistoryRow";
 import { HabitHeatmap } from "./HabitHeatmap";
 import { requestNotificationPermission } from "../../lib/notify";
+import { reminderCreationGuard } from "../../lib/reminderLogic";
 import {
   calcBestStreak,
   calcCompletionRate,
@@ -19,7 +21,7 @@ import {
   scheduleLabel,
 } from "./habitStreaks";
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDateStr();
 
 function HabitCard({
   habit,
@@ -115,6 +117,8 @@ function HabitCard({
             {dueToday ? (
               <motion.button
                 onClick={toggleToday}
+                aria-label={`Mark "${habit.name}" ${completed ? "not done" : "done"} today`}
+                aria-pressed={completed}
                 whileTap={{ scale: 0.85 }}
                 animate={{ scale: completed ? 1.05 : 1 }}
                 className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm transition-colors"
@@ -135,6 +139,7 @@ function HabitCard({
               onClick={deleteHabit}
               className="text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
               title="Delete habit"
+              aria-label={`Delete habit "${habit.name}"`}
             >
               ✕
             </button>
@@ -188,7 +193,7 @@ function HabitCard({
                   onChange={(e) =>
                     db.habits.update(habit.id, {
                       reminderTime: e.target.value,
-                      lastReminderDate: undefined,
+                      lastReminderDate: reminderCreationGuard(e.target.value),
                     })
                   }
                   className="rounded-md bg-slate-100 px-1 py-0.5 text-[11px] dark:bg-slate-700/50"
@@ -201,7 +206,9 @@ function HabitCard({
                   db.habits.update(habit.id, {
                     reminderEnabled: !habit.reminderEnabled,
                     reminderTime: habit.reminderTime ?? "09:00",
-                    lastReminderDate: undefined,
+                    lastReminderDate: reminderCreationGuard(
+                      habit.reminderTime ?? "09:00",
+                    ),
                   });
                 }}
                 className={`text-[11px] font-medium ${

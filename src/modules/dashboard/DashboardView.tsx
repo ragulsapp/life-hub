@@ -1,3 +1,4 @@
+import { localDateStr } from "../../lib/dates";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,8 +8,9 @@ import { Button } from "../../components/Button";
 import { AnimatedNumber } from "../../components/AnimatedNumber";
 import { calcProfitMargin, currentMonthKey } from "../finance/financeSummary";
 import { TodayAgenda } from "./TodayAgenda";
+import { BackupNudge } from "./BackupNudge";
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDateStr();
 
 function useTodayMetric(metricType: "15.5h-fast" | "titan-powder") {
   const today = todayStr();
@@ -58,6 +60,7 @@ function ToggleTile({
   return (
     <motion.button
       onClick={onToggle}
+      aria-pressed={done}
       whileTap={{ scale: 0.94 }}
       animate={done ? { scale: [1, 1.04, 1] } : { scale: 1 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
@@ -120,6 +123,8 @@ export function DashboardView() {
       >
         Command Center
       </motion.h1>
+
+      <BackupNudge />
 
       <div className="grid grid-cols-2 gap-3">
         <ToggleTile

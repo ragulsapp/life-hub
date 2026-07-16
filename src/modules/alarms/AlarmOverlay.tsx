@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { db } from "../../db/db";
 import { useScheduler } from "../../lib/scheduler";
 import { startAlarmSound, stopAlarmSound, vibrate } from "../../lib/alarmSound";
@@ -21,18 +21,24 @@ function LiveClock() {
 
 export function AlarmOverlay() {
   const { activeAlarm, dismiss } = useScheduler();
+  const [needsTap, setNeedsTap] = useState(false);
+  const blobRef = useRef<Blob | null>(null);
 
   useEffect(() => {
     if (!activeAlarm) return;
 
     let stopped = false;
+    setNeedsTap(false);
     (async () => {
       let blob: Blob | null = null;
       if (activeAlarm.soundId != null) {
         const sound = await db.sounds.get(activeAlarm.soundId);
         blob = sound?.blob ?? null;
       }
-      if (!stopped) startAlarmSound(blob);
+      blobRef.current = blob;
+      if (stopped) return;
+      const audible = await startAlarmSound(blob);
+      if (!stopped) setNeedsTap(!audible);
     })();
     vibrate();
     const vibrateId = setInterval(vibrate, 3000);
@@ -55,13 +61,16 @@ export function AlarmOverlay() {
     };
   }, [activeAlarm]);
 
+  // NOTE: no AnimatePresence exit animation here — the always-running child
+  // animations (clock tick, pulse) prevent exit-complete from firing, which
+  // strands an invisible full-screen layer that blocks all taps. Dismissal
+  // unmounts immediately; only the entrance fades.
   return (
-    <AnimatePresence>
+    <>
       {activeAlarm && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 overflow-y-auto bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 p-6"
         >
           <motion.div
@@ -75,6 +84,21 @@ export function AlarmOverlay() {
           <div className="text-center text-lg font-semibold text-white/80">
             {activeAlarm.label || "Alarm"}
           </div>
+
+          {needsTap && (
+            <motion.button
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ repeat: Infinity, duration: 1 }}
+              onClick={async () => {
+                stopAlarmSound();
+                const audible = await startAlarmSound(blobRef.current);
+                setNeedsTap(!audible);
+              }}
+              className="rounded-2xl bg-amber-400 px-6 py-3 text-base font-bold text-slate-900"
+            >
+              🔊 Tap for sound
+            </motion.button>
+          )}
 
           <div className="w-full max-w-sm rounded-3xl bg-white/5 p-6 backdrop-blur">
             {activeAlarm.mission === "math" ? (
@@ -96,6 +120,6 @@ export function AlarmOverlay() {
           </p>
         </motion.div>
       )}
-    </AnimatePresence>
+    </>
   );
 }

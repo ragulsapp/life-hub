@@ -25,9 +25,9 @@ export function BudgetManager({
     budgets.find((b) => b.category === category);
 
   const saveBudget = async (category: string) => {
-    const amount = parseFloat(draft);
+    const amount = Math.round(parseFloat(draft) * 100) / 100;
     const existing = budgetFor(category);
-    if (!amount || amount <= 0) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       if (existing) await db.budgets.delete(existing.id);
     } else if (existing) {
       await db.budgets.update(existing.id, { amount });

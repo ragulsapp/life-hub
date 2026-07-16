@@ -1,3 +1,4 @@
+import { localDateStr } from "../../lib/dates";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -9,7 +10,7 @@ import {
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDateStr();
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"]; // index 0=Sun
 
 type ScheduleType = "daily" | "weekdays" | "times-per-week";

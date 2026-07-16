@@ -69,6 +69,7 @@ export function GoalsView() {
                     </motion.button>
                     <button
                       onClick={() => remove(g.id)}
+                      aria-label={`Delete goal "${g.title}"`}
                       className="text-xs text-slate-400 hover:text-red-500"
                     >
                       ✕

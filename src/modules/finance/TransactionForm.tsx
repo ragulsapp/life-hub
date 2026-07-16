@@ -1,10 +1,11 @@
+import { localDateStr } from "../../lib/dates";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type FinanceCategoryKind } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDateStr();
 
 export function TransactionForm() {
   const categories = useLiveQuery(() => db.financeCategories.toArray(), []) ?? [];
@@ -18,11 +19,13 @@ export function TransactionForm() {
 
   const submit = async () => {
     const value = parseFloat(amount);
-    if (!value || !activeCategory) return;
+    // Reject NaN, zero, and negatives — sign comes from the type toggle,
+    // and negative amounts would silently corrupt totals and budgets (M1).
+    if (!Number.isFinite(value) || value <= 0 || !activeCategory) return;
     await db.transactions.add({
       date: todayStr(),
       type,
-      amount: value,
+      amount: Math.round(value * 100) / 100,
       category: activeCategory,
       note: note.trim() || undefined,
     } as never);

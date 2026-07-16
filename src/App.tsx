@@ -4,8 +4,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ensureSeeded } from "./db/db";
 import { useDarkMode } from "./lib/theme";
 import { SchedulerProvider } from "./lib/scheduler";
+import { installAudioUnlock } from "./lib/alarmSound";
 import { DarkModeToggle } from "./components/DarkModeToggle";
 import { BackupBar } from "./components/BackupBar";
+import { Toaster } from "./components/Toaster";
 import {
   HomeIcon,
   HabitsIcon,
@@ -63,6 +65,10 @@ function App() {
 
   useEffect(() => {
     ensureSeeded();
+    // Ask the browser never to evict IndexedDB under storage pressure (H2).
+    navigator.storage?.persist?.().catch(() => {});
+    // First user gesture unlocks audio so scheduled alarms can ring (H1).
+    installAudioUnlock();
   }, []);
 
   const ActiveView = VIEWS[tab];
@@ -130,6 +136,7 @@ function App() {
         </nav>
 
         <AlarmOverlay />
+        <Toaster />
       </div>
     </SchedulerProvider>
   );

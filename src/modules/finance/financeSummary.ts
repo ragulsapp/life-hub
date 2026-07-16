@@ -1,7 +1,8 @@
 import type { Transaction } from "../../db/db";
+import { localMonthKey } from "../../lib/dates";
 
 export function currentMonthKey(date = new Date()): string {
-  return date.toISOString().slice(0, 7); // YYYY-MM
+  return localMonthKey(date); // YYYY-MM, local calendar (not UTC)
 }
 
 export function isInMonth(dateStr: string, monthKey: string): boolean {
