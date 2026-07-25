@@ -57,8 +57,8 @@ export function NoteEditor() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden rounded-xl border-2 border-red-400 bg-red-50 p-3 text-sm font-semibold text-red-700 dark:border-red-500/60 dark:bg-red-900/20 dark:text-red-300"
           >
-            ⚠️ PRIVACY LOCK: Strip all client names (e.g., Vinoth) and agency
-            branding before finalizing this script.
+            ⚠️ PRIVACY LOCK: Strip all client names and agency branding
+            before finalizing this script.
           </motion.div>
         )}
       </AnimatePresence>
