@@ -25,8 +25,13 @@ jobs:
           java-version: 17
           cache: gradle
 
+      # `npm ci` requires the lockfile to exactly match package.json for the
+      # CURRENT platform. sharp (pulled in by @capacitor/assets) has
+      # per-OS optional binaries, and a lockfile committed from Windows
+      # doesn't record the Linux-only optional deps npm ci demands here.
+      # `npm install` resolves them correctly instead.
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run tests
         run: npm test
