@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21 # capacitor-android's Gradle modules target Java 21
           cache: gradle
 
       # `npm ci` requires the lockfile to exactly match package.json for the
