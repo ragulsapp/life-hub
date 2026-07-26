@@ -145,7 +145,12 @@ export interface FastingSession {
   startedAt: number; // epoch ms
   endedAt?: number; // epoch ms
   targetHours: number;
+  /** Set once the "time to end your fast" notification has fired, so the
+   *  scheduler doesn't repeat it every tick. */
+  targetNotified?: boolean;
 }
+
+export const FAST_TARGET_PRESETS = [12, 14, 15, 15.5, 16, 18, 20];
 
 export interface AppSettings {
   id: number; // fixed at 1

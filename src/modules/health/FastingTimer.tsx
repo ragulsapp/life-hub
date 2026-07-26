@@ -1,9 +1,13 @@
 import { localDateStr } from "../../lib/dates";
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, DEFAULT_FAST_HOURS } from "../../db/db";
+import { db, DEFAULT_FAST_HOURS, FAST_TARGET_PRESETS } from "../../db/db";
 import { ProgressRing } from "../../components/ProgressRing";
 import { Button } from "../../components/Button";
+import {
+  requestNotificationPermission,
+  showLocalNotification,
+} from "../../lib/notify";
 
 const todayStr = () => localDateStr();
 
@@ -21,6 +25,7 @@ export function FastingTimer() {
     [],
   );
   const [now, setNow] = useState(Date.now());
+  const [target, setTarget] = useState(DEFAULT_FAST_HOURS);
 
   useEffect(() => {
     if (!active) return;
@@ -29,11 +34,16 @@ export function FastingTimer() {
   }, [active]);
 
   const start = async () => {
+    await requestNotificationPermission();
     await db.fastingSessions.add({
       startedAt: Date.now(),
-      targetHours: DEFAULT_FAST_HOURS,
+      targetHours: target,
     } as never);
     setNow(Date.now());
+    await showLocalNotification(
+      "Fast started ⏱️",
+      `Aiming for ${target}h — I'll notify you when it's time to eat.`,
+    );
   };
 
   const end = async () => {
@@ -58,18 +68,40 @@ export function FastingTimer() {
 
   if (!active) {
     return (
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3">
         <div>
-          <div className="font-semibold text-slate-800 dark:text-slate-100">
-            Not fasting
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            Target
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            Target {DEFAULT_FAST_HOURS}h window
+          <div className="flex flex-wrap gap-2">
+            {FAST_TARGET_PRESETS.map((h) => (
+              <button
+                key={h}
+                onClick={() => setTarget(h)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  target === h
+                    ? "bg-cyan-500 text-slate-900"
+                    : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
+                }`}
+              >
+                {h}h
+              </button>
+            ))}
           </div>
         </div>
-        <Button variant="toggle-on" onClick={start}>
-          Start Fast
-        </Button>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="font-semibold text-slate-800 dark:text-slate-100">
+              Not fasting
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Target {target}h window
+            </div>
+          </div>
+          <Button variant="toggle-on" onClick={start}>
+            Start Fast
+          </Button>
+        </div>
       </div>
     );
   }

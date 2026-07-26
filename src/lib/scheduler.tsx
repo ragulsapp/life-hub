@@ -127,6 +127,21 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
           await showLocalNotification("Note reminder", n.title);
         }
       }
+
+      // --- Fasting target reached: notify once, keep the fast running ---
+      const activeFasts = await db.fastingSessions
+        .filter((f) => f.endedAt === undefined && !f.targetNotified)
+        .toArray();
+      for (const f of activeFasts) {
+        const elapsedHours = (now.getTime() - f.startedAt) / 3600000;
+        if (elapsedHours >= f.targetHours) {
+          await db.fastingSessions.update(f.id, { targetNotified: true });
+          await showLocalNotification(
+            "🍽️ Fast target reached",
+            `${f.targetHours}h done — open Life Hub to end your fast.`,
+          );
+        }
+      }
     };
 
     tick().catch(console.error);

@@ -5,6 +5,7 @@ import { Card } from "../../components/Card";
 import { AreaChart } from "../../components/AreaChart";
 import { HealthEntryForm } from "./HealthEntryForm";
 import { FastingTimer } from "./FastingTimer";
+import { FastingHistory } from "./FastingHistory";
 import { MetricGoals } from "./MetricGoals";
 
 export function HealthView() {
@@ -32,6 +33,10 @@ export function HealthView() {
 
       <Card title="Fasting Timer">
         <FastingTimer />
+      </Card>
+
+      <Card title="Fasting History" delay={0.02}>
+        <FastingHistory />
       </Card>
 
       <Card title="Goals" delay={0.03}>
