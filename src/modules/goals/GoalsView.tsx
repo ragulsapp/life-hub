@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { db, type GoalStatus } from "../../db/db";
 import { Card } from "../../components/Card";
 import { GoalForm } from "./GoalForm";
+import { localDateStr } from "../../lib/dates";
 
 const statusOrder: GoalStatus[] = ["active", "completed", "abandoned"];
 const statusColor: Record<GoalStatus, string> = {
@@ -14,6 +15,14 @@ const statusColor: Record<GoalStatus, string> = {
 
 export function GoalsView() {
   const goals = useLiveQuery(() => db.goals.toArray(), []) ?? [];
+  const today = localDateStr();
+  const todayLogs =
+    useLiveQuery(() => db.habitLogs.where("date").equals(today).toArray(), [
+      today,
+    ]) ?? [];
+  const doneToday = new Set(
+    todayLogs.filter((l) => l.completed).map((l) => l.habitName),
+  );
   const sorted = [...goals].sort(
     (a, b) => statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status),
   );
@@ -76,6 +85,31 @@ export function GoalsView() {
                     </button>
                   </div>
                 </div>
+
+                {g.status === "active" && (g.linkedHabits?.length ?? 0) > 0 && (
+                  <div className="mt-3 border-t border-slate-200/70 pt-2 dark:border-slate-600/40">
+                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                      Today's step
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {g.linkedHabits!.map((name) => {
+                        const done = doneToday.has(name);
+                        return (
+                          <span
+                            key={name}
+                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                              done
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                                : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
+                            }`}
+                          >
+                            {done ? "✓" : "○"} {name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </Card>
             </motion.div>
           ))}

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import type { SVGProps } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ensureSeeded } from "./db/db";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db, ensureSeeded } from "./db/db";
+import { OnboardingWizard } from "./modules/onboarding/OnboardingWizard";
 import { useDarkMode } from "./lib/theme";
 import { SchedulerProvider } from "./lib/scheduler";
 import { installAudioUnlock } from "./lib/alarmSound";
@@ -62,6 +64,7 @@ const VIEWS: Record<Tab, () => React.ReactElement> = {
 function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
   useDarkMode(); // applies the .dark class to <html> as a side effect
+  const settings = useLiveQuery(() => db.appSettings.get(1));
 
   useEffect(() => {
     ensureSeeded();
@@ -73,12 +76,17 @@ function App() {
 
   const ActiveView = VIEWS[tab];
 
+  // Wait for settings to load before deciding — otherwise the wizard flashes
+  // on every launch for existing users.
+  if (settings === undefined) return null;
+  if (!settings?.onboardingComplete) return <OnboardingWizard />;
+
   return (
     <SchedulerProvider>
       <div className="mx-auto flex min-h-svh max-w-md flex-col">
         <header className="glass sticky top-0 z-10 flex items-center justify-between border-b border-slate-200/70 bg-white/80 px-4 py-3 dark:border-slate-700/50 dark:bg-slate-900/70">
           <span className="bg-gradient-to-r from-cyan-500 to-violet-500 bg-clip-text font-extrabold tracking-tight text-transparent">
-            Life Hub
+            LifeOS
           </span>
           <div className="flex items-center gap-1">
             <BackupBar />

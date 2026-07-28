@@ -5,6 +5,7 @@ import {
   db,
   HABIT_COLORS,
   HABIT_ICONS,
+  IDENTITIES,
   type HabitSchedule,
 } from "../../db/db";
 import { Button } from "../../components/Button";
@@ -22,6 +23,7 @@ export function HabitForm() {
   const [schedType, setSchedType] = useState<ScheduleType>("daily");
   const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [perWeek, setPerWeek] = useState(3);
+  const [identity, setIdentity] = useState<string>(IDENTITIES[0].name);
   const [expanded, setExpanded] = useState(false);
 
   const toggleDay = (d: number) =>
@@ -36,6 +38,7 @@ export function HabitForm() {
     setSchedType("daily");
     setDays([1, 2, 3, 4, 5]);
     setPerWeek(3);
+    setIdentity(IDENTITIES[0].name);
     setExpanded(false);
   };
 
@@ -59,7 +62,9 @@ export function HabitForm() {
       color,
       icon,
       schedule,
+      category: identity,
       archived: false,
+      pinned: false,
       createdAt: Date.now(),
     } as never);
 
@@ -142,6 +147,27 @@ export function HabitForm() {
                   }`}
                   style={{ backgroundColor: c }}
                 />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              Identity — who this makes you
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {IDENTITIES.map((id) => (
+                <button
+                  key={id.name}
+                  onClick={() => setIdentity(id.name)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    identity === id.name
+                      ? "bg-cyan-500 text-slate-900"
+                      : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
+                  }`}
+                >
+                  {id.icon} {id.name}
+                </button>
               ))}
             </div>
           </div>

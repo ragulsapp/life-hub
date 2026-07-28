@@ -9,19 +9,23 @@ import { BudgetManager } from "./BudgetManager";
 import {
   calcMonthTotals,
   calcMRR,
+  calcSafeToSpendToday,
   currentMonthKey,
   expenseByCategory,
 } from "./financeSummary";
 
 export function FinanceView() {
   const transactions = useLiveQuery(() => db.transactions.toArray(), []) ?? [];
+  const categories = useLiveQuery(() => db.financeCategories.toArray(), []) ?? [];
+  const budgets = useLiveQuery(() => db.budgets.toArray(), []) ?? [];
   const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
   const monthKey = currentMonthKey();
   const { totalIncome, totalExpense, net } = calcMonthTotals(
     transactions,
     monthKey,
   );
-  const mrr = calcMRR(transactions, monthKey);
+  const mrr = calcMRR(transactions, monthKey, categories);
+  const safe = calcSafeToSpendToday(transactions, budgets, monthKey);
 
   const byCategory = expenseByCategory(transactions, monthKey);
   const donutSlices = byCategory.map((c, i) => ({
@@ -39,6 +43,34 @@ export function FinanceView() {
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
         Finance
       </h1>
+
+      {safe && (
+        <Card title="Safe to Spend">
+          <div className="flex items-baseline justify-between">
+            <div>
+              <div
+                className={`text-3xl font-extrabold tracking-tight ${
+                  safe.remaining >= 0 ? "text-emerald-500" : "text-red-500"
+                }`}
+              >
+                ₹{safe.perDay.toLocaleString()}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                per day for the rest of the month
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                ₹{safe.remaining.toLocaleString()}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {safe.remaining >= 0 ? "left" : "over"} of ₹
+                {safe.budgetTotal.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card title="This Month">
         <div className="grid grid-cols-3 gap-2 text-center">

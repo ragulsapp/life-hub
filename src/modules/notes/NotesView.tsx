@@ -95,10 +95,9 @@ export function NotesView() {
                     </button>
                   </div>
                 </div>
-                {n.tags.includes("Content-Scripts") && (
-                  <div className="mt-2 rounded-xl border-2 border-red-400 bg-red-50 p-2 text-xs font-semibold text-red-700 dark:border-red-500/60 dark:bg-red-900/20 dark:text-red-300">
-                    ⚠️ PRIVACY LOCK: Strip all client names and agency
-                    branding before finalizing this script.
+                {n.sensitive && (
+                  <div className="mt-2 rounded-xl border-2 border-amber-400 bg-amber-50 p-2 text-xs font-semibold text-amber-700 dark:border-amber-500/60 dark:bg-amber-900/20 dark:text-amber-300">
+                    ⚠️ Marked sensitive — review before sharing.
                   </div>
                 )}
                 <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">

@@ -1,11 +1,6 @@
 import Dexie, { type EntityTable } from "dexie";
-import { localDateStr } from "../lib/dates";
 
-export type HealthMetricType =
-  | "15.5h-fast"
-  | "titan-powder"
-  | "weight"
-  | "energy-level";
+export type HealthMetricType = "weight" | "energy-level";
 
 export interface HealthMetric {
   id: number;
@@ -34,9 +29,12 @@ export interface Habit {
   color: string; // hex
   icon: string; // emoji
   schedule: HabitSchedule;
+  /** Identity this habit builds (see IDENTITIES) — also drives pillar scoring. */
   category?: string;
   archived: boolean;
   createdAt: number;
+  /** Shown as a one-tap quick-toggle on the Dashboard (max 2, enforced in UI). */
+  pinned?: boolean;
   reminderEnabled?: boolean;
   reminderTime?: string; // HH:MM
   lastReminderDate?: string; // YYYY-MM-DD, prevents same-day double fire
@@ -74,6 +72,8 @@ export interface FinanceCategory {
   id: number;
   name: string;
   kind: FinanceCategoryKind;
+  /** Counts toward recurring monthly income (MRR) rather than one-off. */
+  recurring?: boolean;
 }
 
 export interface Transaction {
@@ -92,23 +92,16 @@ export interface Budget {
   amount: number; // monthly limit
 }
 
-export const NOTE_TAGS = [
-  "Meta-Ads-1-1-2",
-  "Content-Scripts",
-  "Tamil-Poetry",
-  "Academic-Stats",
-  "Meeting-Minutes",
-] as const;
-
-export type NoteTag = (typeof NOTE_TAGS)[number];
-
 export interface Note {
   id: number;
   title: string;
   body: string;
+  /** Free-form, user-created. The `*tags` multi-entry index powers filtering. */
   tags: string[];
   pinned: boolean;
   createdAt: number; // epoch ms
+  /** Shows a "review before sharing" banner — replaces tag-name coupling. */
+  sensitive?: boolean;
   reminderEnabled?: boolean;
   reminderTime?: string; // HH:MM
   lastReminderDate?: string;
@@ -129,6 +122,15 @@ export interface Goal {
   title: string;
   status: GoalStatus;
   targetDate?: string; // YYYY-MM-DD
+  /** Habit names that move this goal forward — surfaced as "today's step". */
+  linkedHabits?: string[];
+}
+
+/** A milestone unlocked exactly once; `key` is a stable id like "streak-365". */
+export interface Achievement {
+  id: number;
+  key: string;
+  unlockedAt: number; // epoch ms
 }
 
 /** Target value for a numeric health metric (e.g. reach 62 kg). */
@@ -159,36 +161,57 @@ export interface AppSettings {
   lastBackupAt?: number;
   /** Alarm currently ringing — persisted so a page refresh can't skip the mission. */
   ringingAlarmId?: number;
+  /** First-run wizard finished (or explicitly skipped). */
+  onboardingComplete?: boolean;
+  /** Cached auth user id — identity only, never used to sync life data. */
+  authUserId?: string;
+  /** Offline-grace snapshot; RevenueCat remains the source of truth. */
+  entitlementCache?: {
+    active: boolean;
+    lastCheckedAt: number;
+    productId?: string;
+  };
 }
 
 export const DEFAULT_FAST_HOURS = 15.5;
 
-interface DefaultHabit {
-  name: string;
-  color: string;
-  icon: string;
-  schedule: HabitSchedule;
-  category: string;
-}
+/**
+ * The four Life Pillars. Every identity maps to exactly one pillar, so
+ * completing a habit strengthens an identity *and* rolls up into a score.
+ */
+export type Pillar = "health" | "wealth" | "knowledge" | "productivity";
 
-export const DEFAULT_HABIT_DEFS: DefaultHabit[] = [
-  {
-    name: "Vault 1 Framework Active",
-    color: "#22d3ee",
-    icon: "🧩",
-    schedule: { type: "daily" },
-    category: "System",
-  },
-  {
-    name: "Deep Work (Agency Scaling)",
-    color: "#a78bfa",
-    icon: "🎯",
-    schedule: { type: "weekdays", days: [1, 2, 3, 4, 5] },
-    category: "Work",
-  },
+export const PILLAR_META: Record<
+  Pillar,
+  { label: string; icon: string; color: string }
+> = {
+  health: { label: "Health", icon: "❤️", color: "#fb7185" },
+  wealth: { label: "Wealth", icon: "💰", color: "#f59e0b" },
+  knowledge: { label: "Knowledge", icon: "🧠", color: "#a78bfa" },
+  productivity: { label: "Productivity", icon: "⚡", color: "#22d3ee" },
+};
+
+/** Identity a habit builds. Users pick one; it determines pillar scoring. */
+export const IDENTITIES: { name: string; icon: string; pillar: Pillar }[] = [
+  { name: "Healthy Person", icon: "🥗", pillar: "health" },
+  { name: "Runner", icon: "🏃", pillar: "health" },
+  { name: "Athlete", icon: "💪", pillar: "health" },
+  { name: "Reader", icon: "📚", pillar: "knowledge" },
+  { name: "Learner", icon: "🧠", pillar: "knowledge" },
+  { name: "Creator", icon: "✍️", pillar: "knowledge" },
+  { name: "Investor", icon: "📈", pillar: "wealth" },
+  { name: "Saver", icon: "🏦", pillar: "wealth" },
+  { name: "Minimalist", icon: "🍃", pillar: "wealth" },
+  { name: "Entrepreneur", icon: "🚀", pillar: "productivity" },
+  { name: "Deep Worker", icon: "🎯", pillar: "productivity" },
+  { name: "Early Riser", icon: "🌅", pillar: "productivity" },
 ];
 
-export const DEFAULT_HABITS = DEFAULT_HABIT_DEFS.map((h) => h.name);
+export function pillarForIdentity(identity?: string): Pillar {
+  return (
+    IDENTITIES.find((i) => i.name === identity)?.pillar ?? "productivity"
+  );
+}
 
 export const HABIT_COLORS = [
   "#22d3ee",
@@ -216,25 +239,43 @@ export const HABIT_ICONS = [
   "🧠",
 ];
 
-export const DEFAULT_INCOME_CATEGORIES = [
-  "Agency Retainers (day1to1day)",
-  "Career Consulting (CCC)",
-  "Digital Course Sales",
-];
+/**
+ * Generic suggestions offered as opt-in checkboxes during onboarding.
+ * Nothing here is written automatically — the user chooses what they want.
+ */
+export const STARTER_TEMPLATES = {
+  habits: [
+    { name: "Drink Water", icon: "💧", color: "#22d3ee", identity: "Healthy Person" },
+    { name: "Exercise", icon: "💪", color: "#fb7185", identity: "Athlete" },
+    { name: "Read", icon: "📚", color: "#a78bfa", identity: "Reader" },
+    { name: "Meditate", icon: "🧘", color: "#34d399", identity: "Healthy Person" },
+    { name: "Walk 10k Steps", icon: "🏃", color: "#4ade80", identity: "Runner" },
+    { name: "Deep Work", icon: "🎯", color: "#60a5fa", identity: "Deep Worker" },
+    { name: "Sleep Early", icon: "🛌", color: "#f472b6", identity: "Healthy Person" },
+    { name: "Journal", icon: "✍️", color: "#f59e0b", identity: "Creator" },
+  ],
+  incomeCategories: ["Salary", "Freelance Income", "Business", "Investments"],
+  expenseCategories: [
+    "Food",
+    "Rent",
+    "Transport",
+    "Groceries",
+    "Subscriptions",
+    "Shopping",
+    "Health",
+  ],
+  /** Categories pre-marked as recurring monthly income when selected. */
+  recurringIncome: ["Salary"],
+  goals: [
+    "Get Fit",
+    "Save ₹100,000",
+    "Read 12 Books",
+    "Learn a New Skill",
+    "Build an Emergency Fund",
+  ],
+} as const;
 
-export const DEFAULT_EXPENSE_CATEGORIES = [
-  "Meta Ad Spend",
-  "Software Subscriptions",
-  "Operations",
-];
-
-export const DEFAULT_GOALS = [
-  "Launch Digital Marketing Course",
-  "Scale Meta Ads 1-1-2 Structure",
-  "Clear Statistics Exam",
-];
-
-export const WEIGHT_BASELINE_KG = 66;
+export const WEIGHT_BASELINE_KG = 70;
 
 class LifeHubDB extends Dexie {
   healthMetrics!: EntityTable<HealthMetric, "id">;
@@ -250,6 +291,7 @@ class LifeHubDB extends Dexie {
   tasks!: EntityTable<Task, "id">;
   alarms!: EntityTable<Alarm, "id">;
   sounds!: EntityTable<Sound, "id">;
+  achievements!: EntityTable<Achievement, "id">;
   appSettings!: EntityTable<AppSettings, "id">;
 
   constructor() {
@@ -276,6 +318,49 @@ class LifeHubDB extends Dexie {
     this.version(4).stores({
       sounds: "++id, name",
     });
+    this.version(5)
+      .stores({
+        habits: "++id, &name, category, archived, pinned",
+        notes: "++id, createdAt, pinned, sensitive, *tags",
+        financeCategories: "++id, name, kind, recurring",
+        achievements: "++id, &key, unlockedAt",
+      })
+      .upgrade(async (tx) => {
+        // Carry an existing device forward: the old privacy banner keyed off a
+        // hardcoded tag name, which no longer exists as a concept.
+        await tx
+          .table("notes")
+          .toCollection()
+          .modify((n) => {
+            if (n.sensitive === undefined) {
+              n.sensitive = Array.isArray(n.tags)
+                ? n.tags.includes("Content-Scripts")
+                : false;
+            }
+          });
+        await tx
+          .table("habits")
+          .toCollection()
+          .modify((h) => {
+            if (h.pinned === undefined) h.pinned = false;
+          });
+        await tx
+          .table("financeCategories")
+          .toCollection()
+          .modify((c) => {
+            if (c.recurring === undefined) c.recurring = false;
+          });
+        await tx
+          .table("appSettings")
+          .toCollection()
+          .modify((s) => {
+            // Anyone who already went through the old auto-seed shouldn't be
+            // dropped into the new first-run wizard.
+            if (s.seeded && s.onboardingComplete === undefined) {
+              s.onboardingComplete = true;
+            }
+          });
+      });
   }
 }
 
@@ -290,90 +375,102 @@ export async function backfillHabits(): Promise<void> {
 
   let colorIdx = existing.size;
   for (const name of missing) {
-    const def = DEFAULT_HABIT_DEFS.find((d) => d.name === name);
     await db.habits.add({
       name,
-      color: def?.color ?? HABIT_COLORS[colorIdx % HABIT_COLORS.length],
-      icon: def?.icon ?? "🎯",
-      schedule: def?.schedule ?? { type: "daily" },
-      category: def?.category,
+      color: HABIT_COLORS[colorIdx % HABIT_COLORS.length],
+      icon: "🎯",
+      schedule: { type: "daily" },
       archived: false,
+      pinned: false,
       createdAt: Date.now(),
     } as never);
     colorIdx += 1;
   }
 }
 
+/**
+ * Guarantee the single settings row exists. No content is seeded any more —
+ * a new user picks their own habits/categories/goals in the onboarding
+ * wizard, so nobody inherits someone else's setup.
+ */
 export async function ensureSeeded(): Promise<void> {
   const existing = await db.appSettings.get(1);
 
-  if (!existing?.seeded) {
-    await db.transaction(
-      "rw",
-      [db.habitLogs, db.habits, db.financeCategories, db.goals, db.appSettings],
-      async () => {
-        const today = localDateStr();
-
-        const habitDefCount = await db.habits.count();
-        if (habitDefCount === 0) {
-          await db.habits.bulkAdd(
-            DEFAULT_HABIT_DEFS.map((h) => ({
-              ...h,
-              archived: false,
-              createdAt: Date.now(),
-            })) as Habit[],
-          );
-        }
-
-        const habitCount = await db.habitLogs
-          .where("date")
-          .equals(today)
-          .count();
-        if (habitCount === 0) {
-          await db.habitLogs.bulkAdd(
-            DEFAULT_HABITS.map((habitName) => ({
-              date: today,
-              habitName,
-              completed: false,
-            })) as HabitLog[],
-          );
-        }
-
-        const categoryCount = await db.financeCategories.count();
-        if (categoryCount === 0) {
-          await db.financeCategories.bulkAdd([
-            ...DEFAULT_INCOME_CATEGORIES.map((name) => ({
-              name,
-              kind: "income" as const,
-            })),
-            ...DEFAULT_EXPENSE_CATEGORIES.map((name) => ({
-              name,
-              kind: "expense" as const,
-            })),
-          ] as FinanceCategory[]);
-        }
-
-        const goalCount = await db.goals.count();
-        if (goalCount === 0) {
-          await db.goals.bulkAdd(
-            DEFAULT_GOALS.map((title) => ({
-              title,
-              status: "active" as const,
-            })) as Goal[],
-          );
-        }
-
-        await db.appSettings.put({
-          id: 1,
-          darkMode: existing?.darkMode ?? true,
-          seeded: true,
-          lastBackupAt: existing?.lastBackupAt,
-        });
-      },
-    );
+  if (!existing) {
+    await db.appSettings.put({
+      id: 1,
+      darkMode: true,
+      seeded: true,
+      onboardingComplete: false,
+    });
   }
 
-  // Always reconcile habit definitions with any names present in logs
-  // (covers data created before the habits table existed).
+  // Reconcile habit definitions with any names present in logs (covers data
+  // created before the habits table existed).
   await backfillHabits();
+}
+
+/** Applies the user's onboarding choices, then marks onboarding done. */
+export async function applyOnboardingSelections(selection: {
+  habits: string[];
+  incomeCategories: string[];
+  expenseCategories: string[];
+  goals: string[];
+}): Promise<void> {
+  await db.transaction(
+    "rw",
+    [db.habits, db.financeCategories, db.goals, db.appSettings],
+    async () => {
+      for (const [i, name] of selection.habits.entries()) {
+        const tpl = STARTER_TEMPLATES.habits.find((h) => h.name === name);
+        const exists = await db.habits.where("name").equals(name).first();
+        if (exists) continue;
+        await db.habits.add({
+          name,
+          color: tpl?.color ?? HABIT_COLORS[i % HABIT_COLORS.length],
+          icon: tpl?.icon ?? "🎯",
+          schedule: { type: "daily" },
+          category: tpl?.identity,
+          archived: false,
+          // Pin the first two picks so the Dashboard isn't empty on day one.
+          pinned: i < 2,
+          createdAt: Date.now(),
+        } as never);
+      }
+
+      for (const name of selection.incomeCategories) {
+        const exists = await db.financeCategories
+          .where("name")
+          .equals(name)
+          .first();
+        if (exists) continue;
+        await db.financeCategories.add({
+          name,
+          kind: "income",
+          recurring: (
+            STARTER_TEMPLATES.recurringIncome as readonly string[]
+          ).includes(name),
+        } as never);
+      }
+
+      for (const name of selection.expenseCategories) {
+        const exists = await db.financeCategories
+          .where("name")
+          .equals(name)
+          .first();
+        if (exists) continue;
+        await db.financeCategories.add({
+          name,
+          kind: "expense",
+          recurring: false,
+        } as never);
+      }
+
+      for (const title of selection.goals) {
+        await db.goals.add({ title, status: "active" } as never);
+      }
+
+      await db.appSettings.update(1, { onboardingComplete: true });
+    },
+  );
 }

@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest";
-import type { Transaction } from "../src/db/db";
+import type { Budget, FinanceCategory, Transaction } from "../src/db/db";
 import {
   calcMRR,
   calcMonthTotals,
-  calcProfitMargin,
+  calcSafeToSpendToday,
+  categoryDeltas,
   currentMonthKey,
   expenseByCategory,
   isInMonth,
+  previousMonthKey,
   sumByCategory,
 } from "../src/modules/finance/financeSummary";
 
@@ -17,14 +19,20 @@ const tx = (
   category: string,
 ): Transaction => ({ id: 0, date, type, amount, category }) as Transaction;
 
+const cat = (
+  name: string,
+  kind: "income" | "expense",
+  recurring = false,
+): FinanceCategory => ({ id: 0, name, kind, recurring }) as FinanceCategory;
+
 const M = "2026-07";
 const SAMPLE: Transaction[] = [
-  tx("2026-07-01", "income", 50000, "Agency Retainers (day1to1day)"),
-  tx("2026-07-05", "income", 10000, "Career Consulting (CCC)"),
-  tx("2026-07-06", "income", 5000, "Digital Course Sales"),
-  tx("2026-07-10", "expense", 12000, "Meta Ad Spend"),
-  tx("2026-07-11", "expense", 3000, "Operations"),
-  tx("2026-06-30", "income", 99999, "Agency Retainers (day1to1day)"), // last month
+  tx("2026-07-01", "income", 50000, "Salary"),
+  tx("2026-07-05", "income", 10000, "Freelance Income"),
+  tx("2026-07-06", "income", 5000, "Business"),
+  tx("2026-07-10", "expense", 12000, "Rent"),
+  tx("2026-07-11", "expense", 3000, "Food"),
+  tx("2026-06-30", "income", 99999, "Salary"), // last month
 ];
 
 describe("currentMonthKey", () => {
@@ -41,7 +49,12 @@ describe("month filtering and sums", () => {
   });
 
   it("sumByCategory only counts the month", () => {
-    expect(sumByCategory(SAMPLE, "Agency Retainers (day1to1day)", M)).toBe(50000);
+    expect(sumByCategory(SAMPLE, "Salary", M)).toBe(50000);
+  });
+
+  it("previousMonthKey rolls back across a year boundary", () => {
+    expect(previousMonthKey("2026-07")).toBe("2026-06");
+    expect(previousMonthKey("2026-01")).toBe("2025-12");
   });
 
   it("calcMonthTotals nets income vs expense", () => {
@@ -53,22 +66,87 @@ describe("month filtering and sums", () => {
 });
 
 describe("business metrics", () => {
-  it("profit margin = retainers minus Meta Ad Spend", () => {
-    const { income, expense, profit } = calcProfitMargin(SAMPLE, M);
-    expect(income).toBe(50000);
-    expect(expense).toBe(12000);
-    expect(profit).toBe(38000);
+  it("MRR uses the user's recurring flag, not hardcoded names", () => {
+    const categories = [
+      cat("Salary", "income", true),
+      cat("Freelance Income", "income", true),
+      cat("Business", "income", false), // one-off, excluded
+    ];
+    expect(calcMRR(SAMPLE, M, categories)).toBe(60000);
   });
 
-  it("MRR counts only recurring income categories", () => {
-    expect(calcMRR(SAMPLE, M)).toBe(60000); // retainers + consulting, not course sales
+  it("MRR is zero when nothing is marked recurring", () => {
+    expect(calcMRR(SAMPLE, M, [cat("Salary", "income", false)])).toBe(0);
+    expect(calcMRR(SAMPLE, M, [])).toBe(0);
   });
 
   it("expenseByCategory sorts high to low", () => {
     const rows = expenseByCategory(SAMPLE, M);
     expect(rows).toEqual([
-      { category: "Meta Ad Spend", total: 12000 },
-      { category: "Operations", total: 3000 },
+      { category: "Rent", total: 12000 },
+      { category: "Food", total: 3000 },
     ]);
+  });
+});
+
+describe("calcSafeToSpendToday", () => {
+  const budgets: Budget[] = [
+    { id: 1, category: "Food", amount: 3000 } as Budget,
+    { id: 2, category: "Rent", amount: 12000 } as Budget,
+  ];
+
+  it("is null without budgets — nothing meaningful to say yet", () => {
+    expect(calcSafeToSpendToday(SAMPLE, [], M)).toBeNull();
+  });
+
+  it("paces the remaining budget across the days left", () => {
+    // July 15th → 17 days remaining (inclusive of today).
+    const now = new Date(2026, 6, 15, 12);
+    const out = calcSafeToSpendToday(SAMPLE, budgets, M, now)!;
+    expect(out.budgetTotal).toBe(15000);
+    expect(out.remaining).toBe(0); // 15000 budget − 15000 spent
+    expect(out.perDay).toBe(0);
+  });
+
+  it("reports a negative remaining when over budget", () => {
+    const over = [...SAMPLE, tx("2026-07-12", "expense", 5000, "Food")];
+    const out = calcSafeToSpendToday(over, budgets, M, new Date(2026, 6, 15))!;
+    expect(out.remaining).toBe(-5000);
+    expect(out.perDay).toBe(0); // never suggests a negative daily allowance
+  });
+
+  it("ignores spending in categories with no budget", () => {
+    const withUnbudgeted = [
+      ...SAMPLE,
+      tx("2026-07-12", "expense", 9999, "Shopping"),
+    ];
+    const out = calcSafeToSpendToday(
+      withUnbudgeted,
+      budgets,
+      M,
+      new Date(2026, 6, 15),
+    )!;
+    expect(out.remaining).toBe(0); // unchanged by the unbudgeted category
+  });
+});
+
+describe("categoryDeltas", () => {
+  it("reports month-over-month percentage change", () => {
+    const txns = [
+      tx("2026-06-05", "expense", 100, "Food"),
+      tx("2026-07-05", "expense", 130, "Food"),
+    ];
+    const rows = categoryDeltas(txns, M);
+    expect(rows[0]).toEqual({
+      category: "Food",
+      current: 130,
+      previous: 100,
+      pctChange: 30,
+    });
+  });
+
+  it("skips categories with no prior-month baseline", () => {
+    const txns = [tx("2026-07-05", "expense", 500, "New Thing")];
+    expect(categoryDeltas(txns, M)).toEqual([]);
   });
 });

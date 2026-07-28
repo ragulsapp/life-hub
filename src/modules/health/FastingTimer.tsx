@@ -1,4 +1,3 @@
-import { localDateStr } from "../../lib/dates";
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, DEFAULT_FAST_HOURS, FAST_TARGET_PRESETS } from "../../db/db";
@@ -8,8 +7,6 @@ import {
   requestNotificationPermission,
   showLocalNotification,
 } from "../../lib/notify";
-
-const todayStr = () => localDateStr();
 
 function fmt(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -48,22 +45,9 @@ export function FastingTimer() {
 
   const end = async () => {
     if (!active) return;
-    const elapsedHours = (Date.now() - active.startedAt) / 3600000;
+    // fastingSessions is the single source of truth for fasting history —
+    // no duplicate healthMetrics row needed.
     await db.fastingSessions.update(active.id, { endedAt: Date.now() });
-    // If the fast reached its target, mark today's 15.5h-fast metric done.
-    if (elapsedHours >= active.targetHours) {
-      const today = todayStr();
-      const existing = await db.healthMetrics
-        .where({ date: today, metricType: "15.5h-fast" })
-        .first();
-      if (existing) await db.healthMetrics.update(existing.id, { value: 1 });
-      else
-        await db.healthMetrics.add({
-          date: today,
-          metricType: "15.5h-fast",
-          value: 1,
-        } as never);
-    }
   };
 
   if (!active) {

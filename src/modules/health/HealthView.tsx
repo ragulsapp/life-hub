@@ -18,12 +18,12 @@ export function HealthView() {
     .filter((m) => m.metricType === "energy-level")
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const fastCount = metrics.filter(
-    (m) => m.metricType === "15.5h-fast" && m.value,
+  const fasts = useLiveQuery(() => db.fastingSessions.toArray(), []) ?? [];
+  const completedFasts = fasts.filter((f) => f.endedAt !== undefined);
+  const fastsHitTarget = completedFasts.filter(
+    (f) => (f.endedAt! - f.startedAt) / 3600000 >= f.targetHours,
   ).length;
-  const titanCount = metrics.filter(
-    (m) => m.metricType === "titan-powder" && m.value,
-  ).length;
+  const loggedDays = new Set(metrics.map((m) => m.date)).size;
 
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
@@ -78,18 +78,18 @@ export function HealthView() {
         <div className="flex justify-around text-center">
           <motion.div whileTap={{ scale: 0.95 }}>
             <div className="bg-gradient-to-br from-emerald-400 to-teal-500 bg-clip-text text-3xl font-extrabold text-transparent">
-              {fastCount}
+              {fastsHitTarget}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              15.5h Fast days
+              Fasts on target
             </div>
           </motion.div>
           <motion.div whileTap={{ scale: 0.95 }}>
             <div className="bg-gradient-to-br from-amber-400 to-orange-500 bg-clip-text text-3xl font-extrabold text-transparent">
-              {titanCount}
+              {loggedDays}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              Titan Powder days
+              Days logged
             </div>
           </motion.div>
         </div>

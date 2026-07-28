@@ -10,6 +10,7 @@ import { HabitHistoryRow } from "./HabitHistoryRow";
 import { HabitHeatmap } from "./HabitHeatmap";
 import { requestNotificationPermission } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
+import { deleteHabit, setHabitDone, togglePinned } from "./habitActions";
 import {
   calcBestStreak,
   calcCompletionRate,
@@ -51,27 +52,14 @@ function HabitCard({
     habit.schedule.type === "times-per-week" ? habit.schedule.target : 0;
   const weekDone = weeklyTarget ? calcWeekCompletions(allLogs, habit.name) : 0;
 
-  const setDate = async (date: string, isDone: boolean) => {
-    const existing = await db.habitLogs
-      .where({ date, habitName: habit.name })
-      .first();
-    if (existing) {
-      await db.habitLogs.update(existing.id, { completed: !isDone });
-    } else {
-      await db.habitLogs.add({
-        date,
-        habitName: habit.name,
-        completed: true,
-      } as never);
-    }
-  };
+  const setDate = (date: string, isDone: boolean) =>
+    setHabitDone(habit.name, date, !isDone);
 
   const toggleToday = () => setDate(today, completed);
 
-  const deleteHabit = async () => {
+  const removeHabit = async () => {
     if (!confirm(`Delete "${habit.name}" and all its history?`)) return;
-    await db.habitLogs.where("habitName").equals(habit.name).delete();
-    await db.habits.where("name").equals(habit.name).delete();
+    await deleteHabit(habit.name);
   };
 
   return (
@@ -136,7 +124,24 @@ function HabitCard({
               </span>
             )}
             <button
-              onClick={deleteHabit}
+              onClick={() => togglePinned(habit)}
+              className={`text-xs ${
+                habit.pinned
+                  ? "text-cyan-500"
+                  : "text-slate-300 hover:text-cyan-500 dark:text-slate-600"
+              }`}
+              title={
+                habit.pinned ? "Unpin from Dashboard" : "Pin to Dashboard"
+              }
+              aria-label={`${habit.pinned ? "Unpin" : "Pin"} "${habit.name}" ${
+                habit.pinned ? "from" : "to"
+              } Dashboard`}
+              aria-pressed={!!habit.pinned}
+            >
+              {habit.pinned ? "📌" : "📍"}
+            </button>
+            <button
+              onClick={removeHabit}
               className="text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
               title="Delete habit"
               aria-label={`Delete habit "${habit.name}"`}
