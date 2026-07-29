@@ -8,7 +8,12 @@ import { ProgressRing } from "../../components/ProgressRing";
 import { HabitForm } from "./HabitForm";
 import { HabitHistoryRow } from "./HabitHistoryRow";
 import { HabitHeatmap } from "./HabitHeatmap";
-import { requestNotificationPermission } from "../../lib/notify";
+import {
+  cancelReminder,
+  habitNotifId,
+  requestNotificationPermission,
+  scheduleDailyReminder,
+} from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { deleteHabit, setHabitDone, togglePinned } from "./habitActions";
 import {
@@ -195,25 +200,39 @@ function HabitCard({
                 <input
                   type="time"
                   value={habit.reminderTime ?? "09:00"}
-                  onChange={(e) =>
+                  onChange={async (e) => {
+                    await scheduleDailyReminder(
+                      habitNotifId(habit.id),
+                      "Habit reminder",
+                      `Time for: ${habit.name}`,
+                      e.target.value,
+                    );
                     db.habits.update(habit.id, {
                       reminderTime: e.target.value,
                       lastReminderDate: reminderCreationGuard(e.target.value),
-                    })
-                  }
+                    });
+                  }}
                   className="rounded-md bg-slate-100 px-1 py-0.5 text-[11px] dark:bg-slate-700/50"
                 />
               )}
               <button
                 onClick={async () => {
-                  if (!habit.reminderEnabled)
+                  const time = habit.reminderTime ?? "09:00";
+                  if (!habit.reminderEnabled) {
                     await requestNotificationPermission();
+                    await scheduleDailyReminder(
+                      habitNotifId(habit.id),
+                      "Habit reminder",
+                      `Time for: ${habit.name}`,
+                      time,
+                    );
+                  } else {
+                    await cancelReminder(habitNotifId(habit.id));
+                  }
                   db.habits.update(habit.id, {
                     reminderEnabled: !habit.reminderEnabled,
-                    reminderTime: habit.reminderTime ?? "09:00",
-                    lastReminderDate: reminderCreationGuard(
-                      habit.reminderTime ?? "09:00",
-                    ),
+                    reminderTime: time,
+                    lastReminderDate: reminderCreationGuard(time),
                   });
                 }}
                 className={`text-[11px] font-medium ${

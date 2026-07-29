@@ -7,7 +7,14 @@ import {
   type ReactNode,
 } from "react";
 import { db, type Alarm } from "../db/db";
-import { showLocalNotification } from "./notify";
+import {
+  habitNotifId,
+  isNative,
+  noteNotifId,
+  scheduleDailyReminder,
+  showLocalNotification,
+  taskNotifId,
+} from "./notify";
 import { localDateStr } from "./dates";
 import { alarmDueState, reminderDue } from "./reminderLogic";
 
@@ -52,6 +59,50 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
     })().catch(console.error);
   }, []);
 
+  // Re-register every enabled reminder's native OS schedule on launch —
+  // covers reminders created before this device had the plugin, restored
+  // from a backup import, or cleared by an OS/app data reset.
+  useEffect(() => {
+    if (!isNative) return;
+    (async () => {
+      const [habits, tasks, notes] = await Promise.all([
+        db.habits.toArray(),
+        db.tasks.toArray(),
+        db.notes.toArray(),
+      ]);
+      for (const h of habits) {
+        if (h.reminderEnabled && h.reminderTime && !h.archived) {
+          await scheduleDailyReminder(
+            habitNotifId(h.id),
+            "Habit reminder",
+            `Time for: ${h.name}`,
+            h.reminderTime,
+          );
+        }
+      }
+      for (const t of tasks) {
+        if (t.reminderEnabled && t.reminderTime && !t.done) {
+          await scheduleDailyReminder(
+            taskNotifId(t.id),
+            "Task reminder",
+            t.title,
+            t.reminderTime,
+          );
+        }
+      }
+      for (const n of notes) {
+        if (n.reminderEnabled && n.reminderTime) {
+          await scheduleDailyReminder(
+            noteNotifId(n.id),
+            "Note reminder",
+            n.title,
+            n.reminderTime,
+          );
+        }
+      }
+    })().catch(console.error);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -81,50 +132,56 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // --- Habit reminders (fire late rather than never) ---
-      const habits = await db.habits.toArray();
-      for (const h of habits) {
-        if (
-          !h.reminderEnabled ||
-          !h.reminderTime ||
-          h.archived ||
-          h.lastReminderDate === today
-        )
-          continue;
-        if (reminderDue(h.reminderTime, now)) {
-          await db.habits.update(h.id, { lastReminderDate: today });
-          await showLocalNotification("Habit reminder", `Time for: ${h.name}`);
+      // --- Habit/task/note reminders: native builds get these from the OS
+      // schedule (see the resync effect above) — polling here too would
+      // double-fire them. This poll path stays as the delivery mechanism
+      // for browser/PWA testing only. ---
+      if (!isNative) {
+        const habits = await db.habits.toArray();
+        for (const h of habits) {
+          if (
+            !h.reminderEnabled ||
+            !h.reminderTime ||
+            h.archived ||
+            h.lastReminderDate === today
+          )
+            continue;
+          if (reminderDue(h.reminderTime, now)) {
+            await db.habits.update(h.id, { lastReminderDate: today });
+            await showLocalNotification(
+              "Habit reminder",
+              `Time for: ${h.name}`,
+            );
+          }
         }
-      }
 
-      // --- Task reminders ---
-      const tasks = await db.tasks.toArray();
-      for (const t of tasks) {
-        if (
-          !t.reminderEnabled ||
-          !t.reminderTime ||
-          t.done ||
-          t.lastReminderDate === today
-        )
-          continue;
-        if (reminderDue(t.reminderTime, now)) {
-          await db.tasks.update(t.id, { lastReminderDate: today });
-          await showLocalNotification("Task reminder", t.title);
+        const tasks = await db.tasks.toArray();
+        for (const t of tasks) {
+          if (
+            !t.reminderEnabled ||
+            !t.reminderTime ||
+            t.done ||
+            t.lastReminderDate === today
+          )
+            continue;
+          if (reminderDue(t.reminderTime, now)) {
+            await db.tasks.update(t.id, { lastReminderDate: today });
+            await showLocalNotification("Task reminder", t.title);
+          }
         }
-      }
 
-      // --- Note reminders ---
-      const notes = await db.notes.toArray();
-      for (const n of notes) {
-        if (
-          !n.reminderEnabled ||
-          !n.reminderTime ||
-          n.lastReminderDate === today
-        )
-          continue;
-        if (reminderDue(n.reminderTime, now)) {
-          await db.notes.update(n.id, { lastReminderDate: today });
-          await showLocalNotification("Note reminder", n.title);
+        const notes = await db.notes.toArray();
+        for (const n of notes) {
+          if (
+            !n.reminderEnabled ||
+            !n.reminderTime ||
+            n.lastReminderDate === today
+          )
+            continue;
+          if (reminderDue(n.reminderTime, now)) {
+            await db.notes.update(n.id, { lastReminderDate: today });
+            await showLocalNotification("Note reminder", n.title);
+          }
         }
       }
 

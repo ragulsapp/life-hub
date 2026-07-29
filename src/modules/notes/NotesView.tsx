@@ -5,7 +5,12 @@ import { db } from "../../db/db";
 import { Card } from "../../components/Card";
 import { inputClass } from "../../components/inputStyles";
 import { NoteEditor } from "./NoteEditor";
-import { requestNotificationPermission } from "../../lib/notify";
+import {
+  cancelReminder,
+  noteNotifId,
+  requestNotificationPermission,
+  scheduleDailyReminder,
+} from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 
 export function NotesView() {
@@ -30,19 +35,27 @@ export function NotesView() {
   };
 
   const remove = async (id: number) => {
+    await cancelReminder(noteNotifId(id));
     await db.notes.delete(id);
   };
 
   const toggleReminder = async (
     id: number,
+    title: string,
     enabled: boolean,
     time?: string,
   ) => {
-    if (!enabled) await requestNotificationPermission();
+    const t = time ?? "09:00";
+    if (enabled) {
+      await requestNotificationPermission();
+      await scheduleDailyReminder(noteNotifId(id), "Note reminder", title, t);
+    } else {
+      await cancelReminder(noteNotifId(id));
+    }
     await db.notes.update(id, {
       reminderEnabled: enabled,
-      reminderTime: time ?? "09:00",
-      lastReminderDate: reminderCreationGuard(time ?? "09:00"),
+      reminderTime: t,
+      lastReminderDate: reminderCreationGuard(t),
     });
   };
 
@@ -119,14 +132,19 @@ export function NotesView() {
                       type="time"
                       value={n.reminderTime ?? "09:00"}
                       onChange={(e) =>
-                        toggleReminder(n.id, true, e.target.value)
+                        toggleReminder(n.id, n.title, true, e.target.value)
                       }
                       className="rounded-md bg-slate-100 px-1 py-0.5 text-[11px] dark:bg-slate-700/50"
                     />
                   )}
                   <button
                     onClick={() =>
-                      toggleReminder(n.id, !n.reminderEnabled, n.reminderTime)
+                      toggleReminder(
+                        n.id,
+                        n.title,
+                        !n.reminderEnabled,
+                        n.reminderTime,
+                      )
                     }
                     className={`text-[11px] font-medium ${
                       n.reminderEnabled

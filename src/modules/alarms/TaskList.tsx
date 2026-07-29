@@ -4,7 +4,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { db } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
-import { requestNotificationPermission } from "../../lib/notify";
+import {
+  cancelReminder,
+  requestNotificationPermission,
+  scheduleDailyReminder,
+  taskNotifId,
+} from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 
 export function TaskList() {
@@ -26,10 +31,14 @@ export function TaskList() {
 
   const toggle = (id: number, done: boolean) =>
     db.tasks.update(id, { done: !done });
-  const remove = (id: number) => db.tasks.delete(id);
+  const remove = (id: number) => {
+    cancelReminder(taskNotifId(id));
+    db.tasks.delete(id);
+  };
 
-  const setReminder = async (id: number, time: string) => {
+  const setReminder = async (id: number, title: string, time: string) => {
     await requestNotificationPermission();
+    await scheduleDailyReminder(taskNotifId(id), "Task reminder", title, time);
     await db.tasks.update(id, {
       reminderTime: time,
       reminderEnabled: !!time,
@@ -37,6 +46,11 @@ export function TaskList() {
       lastReminderDate: reminderCreationGuard(time),
     });
     setEditingReminder(null);
+  };
+
+  const clearReminder = (id: number) => {
+    cancelReminder(taskNotifId(id));
+    db.tasks.update(id, { reminderEnabled: false });
   };
 
   return (
@@ -118,14 +132,12 @@ export function TaskList() {
                   <input
                     type="time"
                     defaultValue={t.reminderTime ?? "09:00"}
-                    onChange={(e) => setReminder(t.id, e.target.value)}
+                    onChange={(e) => setReminder(t.id, t.title, e.target.value)}
                     className={`!p-1.5 text-sm ${inputClass}`}
                   />
                   {t.reminderEnabled && (
                     <button
-                      onClick={() =>
-                        db.tasks.update(t.id, { reminderEnabled: false })
-                      }
+                      onClick={() => clearReminder(t.id)}
                       className="text-xs text-red-500"
                     >
                       Clear

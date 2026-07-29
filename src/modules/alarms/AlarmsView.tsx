@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db, type Alarm } from "../../db/db";
@@ -30,7 +31,15 @@ export function AlarmsView() {
   const { ringNow } = useScheduler();
   const sorted = [...alarms].sort((a, b) => a.time.localeCompare(b.time));
 
-  const perm = notificationPermission();
+  const [perm, setPerm] = useState<"granted" | "denied" | "default">(
+    "default",
+  );
+  useEffect(() => {
+    notificationPermission().then(setPerm);
+  }, []);
+  const enableNotifications = async () => {
+    setPerm(await requestNotificationPermission());
+  };
 
   const toggle = (a: Alarm) =>
     db.alarms.update(a.id, {
@@ -48,12 +57,13 @@ export function AlarmsView() {
       </h1>
 
       <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-        Alarms &amp; reminders fire while the app is open (or just backgrounded).
-        A web app can't wake a locked phone like a native alarm — keep Life Hub
-        open overnight for the wake-up mission to ring.
+        Habit, task, and note reminders now fire from the system even with
+        the app fully closed. The wake-up <em>mission</em> itself still needs
+        Life Hub open (or freshly backgrounded) — solving a puzzle to
+        dismiss it means the app has to actually be running.
         {perm !== "granted" && (
           <button
-            onClick={requestNotificationPermission}
+            onClick={enableNotifications}
             className="ml-1 font-semibold underline"
           >
             Enable notifications
