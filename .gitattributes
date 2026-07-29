@@ -1,0 +1,11 @@
+# Keystores are binary. Without this, Git's autocrlf on Windows can rewrite
+# bytes inside them on checkout, producing a corrupt keystore and a confusing
+# "failed to read key from store" Gradle error in CI.
+*.keystore binary
+*.jks binary
+
+# Other binary assets, guarded for the same reason.
+*.png binary
+*.apk binary
+*.wav binary
+*.mp3 binary
