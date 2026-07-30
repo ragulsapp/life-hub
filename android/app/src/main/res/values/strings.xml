@@ -1,7 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Life Hub</string>
-    <string name="title_activity_main">Life Hub</string>
+    <string name="app_name">Life Mentor</string>
+    <string name="title_activity_main">Life Mentor</string>
+    <!-- package_name and custom_url_scheme are the app's IDENTITY, not its
+         display name. Changing either makes Android treat this as a different
+         app: the installed copy could not be updated and all local data would
+         be lost. Display name only above. -->
     <string name="package_name">com.ragulkumar.lifehub</string>
     <string name="custom_url_scheme">com.ragulkumar.lifehub</string>
 </resources>

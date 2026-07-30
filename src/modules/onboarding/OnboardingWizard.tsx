@@ -115,7 +115,7 @@ export function OnboardingWizard() {
 
   const steps = [
     {
-      title: "Welcome to LifeOS",
+      title: "Welcome to Life Mentor",
       subtitle:
         "One place that tells you what to do next — habits, money, goals, all in one view.",
       body: (

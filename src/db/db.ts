@@ -446,6 +446,9 @@ class LifeHubDB extends Dexie {
   appSettings!: EntityTable<AppSettings, "id">;
 
   constructor() {
+    // NEVER rename this. It is the IndexedDB database name, not a label —
+    // changing it opens a fresh empty database and orphans every existing
+    // user's data. The app's display name is "Life Mentor"; this is not.
     super("life-hub");
     this.version(1).stores({
       healthMetrics: "++id, date, metricType, [date+metricType]",

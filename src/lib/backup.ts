@@ -69,11 +69,11 @@ export async function buildBackupPayload(): Promise<BackupPayload> {
  */
 export function validateBackupPayload(data: unknown): BackupPayload {
   if (typeof data !== "object" || data === null) {
-    throw new Error("That file isn't a Life Hub backup.");
+    throw new Error("That file isn't a Life Mentor backup.");
   }
   const p = data as Partial<BackupPayload>;
   if (typeof p.version !== "number" || !p.tables || typeof p.tables !== "object") {
-    throw new Error("That file isn't a Life Hub backup.");
+    throw new Error("That file isn't a Life Mentor backup.");
   }
   if (p.version > BACKUP_VERSION) {
     throw new Error(
@@ -179,7 +179,9 @@ export async function exportBackup(): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `life-hub-backup-${localDateStr()}.json`;
+  // Filename only — import validates the payload's shape, never its name, so
+  // backups exported under the old name still restore fine.
+  a.download = `life-mentor-backup-${localDateStr()}.json`;
   a.click();
   URL.revokeObjectURL(url);
 

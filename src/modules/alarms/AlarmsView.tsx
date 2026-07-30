@@ -69,7 +69,7 @@ export function AlarmsView() {
       <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
         Habit, task, and note reminders now fire from the system even with
         the app fully closed. The wake-up <em>mission</em> itself still needs
-        Life Hub open (or freshly backgrounded) — solving a puzzle to
+        Life Mentor open (or freshly backgrounded) — solving a puzzle to
         dismiss it means the app has to actually be running.
         {perm !== "granted" && (
           <button

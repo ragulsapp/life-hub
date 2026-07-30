@@ -6,7 +6,30 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0f172a" />
-    <title>Life Hub</title>
+    <title>Life Mentor</title>
+    <!--
+      Applies the theme BEFORE first paint.
+
+      Dark mode lives in IndexedDB, which is async, so the .dark class used to
+      land only after Dexie resolved — every cold start flashed light first.
+      localStorage is synchronous and readable here; it is a MIRROR, written
+      from the Dexie-derived value in useDarkMode, never a second source of
+      truth. If it is ever stale, Dexie corrects it within one frame.
+    -->
+    <script>
+      (function () {
+        var on = true; // matches the app's default
+        try {
+          var v = localStorage.getItem("lm-dark");
+          if (v !== null) on = v === "1";
+        } catch (e) {}
+        var root = document.documentElement;
+        root.classList.toggle("dark", on);
+        root.style.colorScheme = on ? "dark" : "light";
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", on ? "#0b1120" : "#f1f5f9");
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

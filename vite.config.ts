@@ -12,10 +12,10 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icons/icon.svg", "icons/icon-192.png"],
       manifest: {
-        name: "Life Hub",
-        short_name: "Life Hub",
+        name: "Life Mentor",
+        short_name: "Life Mentor",
         description:
-          "Offline personal command center — habits, health, finance, notes, goals.",
+          "Your offline life coach — habits, health, money, notes and goals, all on your device.",
         theme_color: "#0f172a",
         background_color: "#0f172a",
         display: "standalone",
