@@ -84,7 +84,13 @@ function App() {
   return (
     <SchedulerProvider>
       <div className="mx-auto flex min-h-svh max-w-md flex-col">
-        <header className="glass sticky top-0 z-10 flex items-center justify-between border-b border-slate-200/70 bg-white/80 px-4 py-3 dark:border-slate-700/50 dark:bg-slate-900/70">
+        {/* Keeps `top-0`: offsetting by the inset would break the sticky
+            scrollport and stop the glass blur bleeding under the status bar,
+            which is the effect we want. The inset is padding, not offset. */}
+        <header
+          className="glass sticky top-0 z-10 flex items-center justify-between border-b border-slate-200/70 bg-white/80 px-4 pb-3 dark:border-slate-700/50 dark:bg-slate-900/70"
+          style={{ paddingTop: "calc(var(--sat) + 0.75rem)" }}
+        >
           <span className="bg-gradient-to-r from-cyan-500 to-violet-500 bg-clip-text font-extrabold tracking-tight text-transparent">
             LifeOS
           </span>
@@ -94,7 +100,10 @@ function App() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{ paddingBottom: "calc(var(--sab) + 4.5rem)" }}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}
@@ -108,7 +117,12 @@ function App() {
           </AnimatePresence>
         </main>
 
-        <nav className="glass fixed bottom-0 left-1/2 flex w-full max-w-md -translate-x-1/2 justify-around border-t border-slate-200/70 bg-white/80 py-2 dark:border-slate-700/50 dark:bg-slate-900/80">
+        {/* z-20: this had no z-index at all while the header had z-10 — a
+            latent paint-order bug. Bottom padding clears the gesture bar. */}
+        <nav
+          className="glass fixed bottom-0 left-1/2 z-20 flex w-full max-w-md -translate-x-1/2 justify-around border-t border-slate-200/70 bg-white/80 pt-2 dark:border-slate-700/50 dark:bg-slate-900/80"
+          style={{ paddingBottom: "calc(var(--sab) + 0.5rem)" }}
+        >
           {TABS.map((t) => (
             <button
               key={t.id}

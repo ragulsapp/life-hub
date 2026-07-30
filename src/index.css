@@ -2,6 +2,28 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/**
+ * Safe-area insets.
+ *
+ * index.html sets `viewport-fit=cover`, which deliberately extends the web
+ * view UNDER the system bars — and at targetSdk 36 Android enforces
+ * edge-to-edge with no opt-out. Without compensation the header sits beneath
+ * the status bar and its buttons are physically untappable.
+ *
+ * Capacitor 8's core SystemBars plugin (auto-registered in Bridge.java)
+ * injects --safe-area-inset-* onto documentElement. It is correct in both of
+ * its branches: on WebView >= 140 it passes the real insets through, and on
+ * older WebView it pads the web view's parent itself and then reports 0px.
+ * So: injected value wins, native env() is the pre-injection fallback, 0px
+ * is the floor for the browser/PWA where there are no system bars.
+ */
+:root {
+  --sat: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --sab: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --sal: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --sar: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+}
+
 html,
 body,
 #root {
