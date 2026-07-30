@@ -103,12 +103,23 @@ export function AreaChart({
           />
         ))}
       </svg>
+      {/* A date range under the line, so a trend says WHEN as well as what.
+          Previously `labels` was accepted but only its last entry rendered,
+          and no caller passed it at all. */}
+      {labels && labels.length > 0 && (
+        <div className="mt-1 flex justify-between text-[11px] text-slate-400 dark:text-slate-500">
+          <span>{labels[0]}</span>
+          {labels.length > 2 && (
+            <span>{labels[Math.floor((labels.length - 1) / 2)]}</span>
+          )}
+          <span>{labels[labels.length - 1]}</span>
+        </div>
+      )}
       <div className="mt-1 flex justify-between text-xs text-slate-400 dark:text-slate-500">
         <span>
           min {min.toLocaleString()}
           {unit}
         </span>
-        {labels && <span>{labels[labels.length - 1]}</span>}
         <span>
           max {max.toLocaleString()}
           {unit}

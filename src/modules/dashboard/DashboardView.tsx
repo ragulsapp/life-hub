@@ -87,7 +87,8 @@ export function DashboardView() {
       label: t.title,
       icon: "☑️",
       done: false,
-      toggle: () => db.tasks.update(t.id, { done: true }),
+      toggle: () =>
+        db.tasks.update(t.id, { done: true, completedAt: Date.now() }),
     }));
   const mission = [...missionHabits, ...missionTasks];
   const missionDone = mission.filter((m) => m.done).length;

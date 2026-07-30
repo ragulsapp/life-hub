@@ -22,6 +22,15 @@ import { FastingHistory } from "./FastingHistory";
 import { MetricGoals } from "./MetricGoals";
 import { setFastingEnabled } from "./healthActions";
 
+/** "2026-07-31" -> "31 Jul", for the trend chart axes. */
+const shortDate = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+  });
+};
+
 /**
  * Ordered around the four questions people actually open a health screen with:
  * "Am I okay?" → "What should I do today?" → "Am I improving?" → "What else
@@ -129,6 +138,7 @@ export function HealthView() {
       <Card title="Weight Trend" delay={0.07}>
         <AreaChart
           values={weightSeries.map((d) => d.value)}
+          labels={weightSeries.map((d) => shortDate(d.date))}
           color="#38bdf8"
           unit="kg"
         />
@@ -144,6 +154,7 @@ export function HealthView() {
         <Card title="Water Trend" delay={0.08}>
           <AreaChart
             values={waterSeries.map((d) => Math.round(d.value))}
+            labels={waterSeries.map((d) => shortDate(d.date))}
             color="#22d3ee"
             unit="ml"
           />
@@ -154,6 +165,7 @@ export function HealthView() {
         <Card title="Sleep Trend" delay={0.09}>
           <AreaChart
             values={sleepSeries.map((d) => d.value)}
+            labels={sleepSeries.map((d) => shortDate(d.date))}
             color="#f472b6"
             unit="h"
           />
@@ -161,7 +173,11 @@ export function HealthView() {
       )}
 
       <Card title="Energy Trend" delay={0.1}>
-        <AreaChart values={energySeries.map((d) => d.value)} color="#a78bfa" />
+        <AreaChart
+          values={energySeries.map((d) => d.value)}
+          labels={energySeries.map((d) => shortDate(d.date))}
+          color="#a78bfa"
+        />
         <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           Latest:{" "}
           <span className="font-semibold text-slate-800 dark:text-slate-200">

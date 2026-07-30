@@ -137,6 +137,12 @@ export interface Task {
   title: string;
   done: boolean;
   createdAt: number;
+  /**
+   * When it was actually finished. `done` alone is a boolean with no time, so
+   * "how much did I get through this week" was previously underivable.
+   * Cleared when a task is un-ticked. Not backfilled — see Goal.createdAt.
+   */
+  completedAt?: number;
   dueDate?: string; // YYYY-MM-DD
   reminderEnabled?: boolean;
   reminderTime?: string; // HH:MM
@@ -219,6 +225,16 @@ export interface Goal {
   targetDate?: string; // YYYY-MM-DD
   /** Habit names that move this goal forward — surfaced as "today's step". */
   linkedHabits?: string[];
+  /**
+   * Timestamps for history. Both are optional and DELIBERATELY NOT backfilled
+   * on goals that predate them: there is no honest value to invent. Guessing
+   * "now" would claim every old goal was created today; guessing anything else
+   * is equally made up. Undefined renders as "—" and history starts now.
+   *
+   * Non-indexed, so no Dexie version bump is needed.
+   */
+  createdAt?: number;
+  completedAt?: number;
 }
 
 /** A milestone unlocked exactly once; `key` is a stable id like "streak-365". */

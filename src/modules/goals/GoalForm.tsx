@@ -24,6 +24,7 @@ export function GoalForm() {
       status: "active",
       targetDate: targetDate || undefined,
       linkedHabits: linked.length ? linked : undefined,
+      createdAt: Date.now(),
     } as never);
     setTitle("");
     setTargetDate("");

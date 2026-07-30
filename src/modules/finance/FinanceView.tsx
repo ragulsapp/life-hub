@@ -6,6 +6,7 @@ import { AnimatedNumber } from "../../components/AnimatedNumber";
 import { DonutChart, DONUT_PALETTE } from "../../components/DonutChart";
 import { TransactionForm } from "./TransactionForm";
 import { BudgetManager } from "./BudgetManager";
+import { SpendingHistory } from "./SpendingHistory";
 import {
   calcMonthTotals,
   calcMRR,
@@ -119,6 +120,10 @@ export function FinanceView() {
           centerValue={`₹${totalExpense.toLocaleString()}`}
           centerLabel="spent"
         />
+      </Card>
+
+      <Card title="Spending History" delay={0.06}>
+        <SpendingHistory transactions={transactions} monthKey={monthKey} />
       </Card>
 
       <Card title="Budgets" delay={0.08}>

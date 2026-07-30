@@ -43,7 +43,26 @@ export function AchievementsCard() {
 
   if (unlockedRows === undefined) return null;
 
-  const earned = all.filter((a) => isUnlocked(a));
+  // unlockedAt has been written since this feature shipped but was never
+  // shown — so a badge could say what you achieved, not when.
+  const unlockedAt = new Map(
+    (unlockedRows ?? []).map((a) => [a.key, a.unlockedAt]),
+  );
+  const earnedOn = (key: string) => {
+    const at = unlockedAt.get(key);
+    return at
+      ? new Date(at).toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : null;
+  };
+
+  const earned = all
+    .filter((a) => isUnlocked(a))
+    // Most recently earned first — the timeline reads newest-at-the-top.
+    .sort((a, b) => (unlockedAt.get(b.key) ?? 0) - (unlockedAt.get(a.key) ?? 0));
   // Show the closest few still in progress — motivating, not overwhelming.
   const next = all
     .filter((a) => !isUnlocked(a))
@@ -59,17 +78,26 @@ export function AchievementsCard() {
       ) : (
         <div className="flex flex-col gap-3">
           {earned.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {earned.map((a) => (
-                <motion.span
+            <div className="flex flex-col gap-1.5">
+              {earned.map((a, i) => (
+                <motion.div
                   key={a.key}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
                   title={a.requirement}
-                  className="rounded-full bg-gradient-to-r from-amber-300 to-orange-400 px-3 py-1 text-xs font-bold text-slate-900"
+                  className="flex items-center gap-2.5"
                 >
-                  {a.icon} {a.title}
-                </motion.span>
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-400/15 text-sm">
+                    {a.icon}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {a.title}
+                  </span>
+                  <span className="flex-shrink-0 text-[11px] tabular-nums text-slate-400">
+                    {earnedOn(a.key) ?? "—"}
+                  </span>
+                </motion.div>
               ))}
             </div>
           )}

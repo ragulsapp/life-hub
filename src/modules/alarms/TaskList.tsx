@@ -30,7 +30,11 @@ export function TaskList() {
   };
 
   const toggle = (id: number, done: boolean) =>
-    db.tasks.update(id, { done: !done });
+    // Clearing completedAt on un-tick keeps "finished this week" honest.
+    db.tasks.update(id, {
+      done: !done,
+      completedAt: !done ? Date.now() : undefined,
+    });
   const remove = (id: number) => {
     cancelReminder(taskNotifId(id));
     db.tasks.delete(id);

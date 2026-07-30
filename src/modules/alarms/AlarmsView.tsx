@@ -5,6 +5,7 @@ import { db, type Alarm } from "../../db/db";
 import { Card } from "../../components/Card";
 import { AlarmForm } from "./AlarmForm";
 import { TaskList } from "./TaskList";
+import { WakeHistory } from "./WakeHistory";
 import { useScheduler } from "../../lib/scheduler";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import {
@@ -103,6 +104,9 @@ export function AlarmsView() {
                 {punctual !== null && <span>⏱️ {punctual}% on time</span>}
               </div>
             </div>
+          </div>
+          <div className="mt-4 border-t border-slate-200/70 pt-4 dark:border-slate-600/40">
+            <WakeHistory logs={wakeLogs} />
           </div>
         </Card>
       )}

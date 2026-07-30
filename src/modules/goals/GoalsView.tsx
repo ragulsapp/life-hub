@@ -27,9 +27,19 @@ export function GoalsView() {
     (a, b) => statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status),
   );
 
+  /** Completed goals, most recently finished first. */
+  const finished = goals
+    .filter((g) => g.status === "completed")
+    .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
+
   const cycleStatus = async (id: number, status: GoalStatus) => {
     const next = statusOrder[(statusOrder.indexOf(status) + 1) % statusOrder.length];
-    await db.goals.update(id, { status: next });
+    // Stamp on completion, clear when it moves back out — so "completed this
+    // month" can never count a goal that was later reopened.
+    await db.goals.update(id, {
+      status: next,
+      completedAt: next === "completed" ? Date.now() : undefined,
+    });
   };
 
   const remove = async (id: number) => {
@@ -45,6 +55,41 @@ export function GoalsView() {
       <Card title="Add Goal">
         <GoalForm />
       </Card>
+
+      {finished.length > 0 && (
+        <Card title="Completed" delay={0.03}>
+          <div className="flex flex-col gap-2">
+            {finished.map((g) => {
+              const took =
+                g.completedAt && g.createdAt
+                  ? Math.max(
+                      1,
+                      Math.round((g.completedAt - g.createdAt) / 86400000),
+                    )
+                  : null;
+              return (
+                <div key={g.id} className="flex items-center gap-2 text-sm">
+                  <span className="text-emerald-500">✓</span>
+                  <span className="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">
+                    {g.title}
+                  </span>
+                  <span className="flex-shrink-0 text-[11px] tabular-nums text-slate-400">
+                    {/* Goals from before timestamps existed show "—" rather
+                        than an invented date. */}
+                    {g.completedAt
+                      ? new Date(g.completedAt).toLocaleDateString(undefined, {
+                          day: "numeric",
+                          month: "short",
+                        })
+                      : "—"}
+                    {took !== null && ` · ${took}d`}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <div className="flex flex-col gap-2">
         <AnimatePresence initial={false}>

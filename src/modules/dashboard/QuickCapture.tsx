@@ -79,7 +79,11 @@ export function QuickCapture() {
         } as never);
         toast("Note saved.");
       } else if (kind === "goal") {
-        await db.goals.add({ title: text, status: "active" } as never);
+        await db.goals.add({
+          title: text,
+          status: "active",
+          createdAt: Date.now(),
+        } as never);
         toast("Goal added.");
       } else if (kind === "weight") {
         const w = parseFloat(text);
