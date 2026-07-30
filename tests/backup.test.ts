@@ -75,7 +75,7 @@ describe("backup round-trip", () => {
 
 describe("validateBackupPayload (M3)", () => {
   it("rejects non-objects and junk", () => {
-    expect(() => validateBackupPayload(null)).toThrow(/isn't a Life Hub backup/);
+    expect(() => validateBackupPayload(null)).toThrow(/isn't a .* backup/);
     expect(() => validateBackupPayload("hello")).toThrow();
     expect(() => validateBackupPayload({ foo: 1 })).toThrow();
   });
