@@ -18,6 +18,7 @@ import { BackupNudge } from "./BackupNudge";
 import { PillarBar } from "./PillarBar";
 import { QuickCapture } from "./QuickCapture";
 import { AchievementsCard } from "../achievements/AchievementsCard";
+import { WeeklyReviewCard } from "./WeeklyReviewCard";
 
 export function DashboardView() {
   const [brainDump, setBrainDump] = useState("");
@@ -276,6 +277,15 @@ export function DashboardView() {
       </Card>
 
       <TodayAgenda />
+      <WeeklyReviewCard
+        habits={habits}
+        logs={logs}
+        transactions={transactions}
+        tasks={tasks}
+        goals={goals}
+        healthMetrics={healthMetrics}
+        profile={settings?.bodyProfile}
+      />
       <AchievementsCard />
       <QuickCapture />
     </div>
