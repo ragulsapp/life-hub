@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { db, type Alarm } from "../../db/db";
 import { Card } from "../../components/Card";
 import { AlarmForm } from "./AlarmForm";
-import { ReminderSoundPicker } from "./ReminderSoundPicker";
 import { TaskList } from "./TaskList";
 import { useScheduler } from "../../lib/scheduler";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
@@ -107,10 +106,6 @@ export function AlarmsView() {
           </div>
         </Card>
       )}
-
-      <Card title="Reminder Sound" delay={0.01}>
-        <ReminderSoundPicker />
-      </Card>
 
       <Card title="New Alarm">
         <AlarmForm />

@@ -7,9 +7,9 @@ import { OnboardingWizard } from "./modules/onboarding/OnboardingWizard";
 import { useDarkMode } from "./lib/theme";
 import { SchedulerProvider } from "./lib/scheduler";
 import { installAudioUnlock } from "./lib/alarmSound";
-import { DarkModeToggle } from "./components/DarkModeToggle";
-import { BackupBar } from "./components/BackupBar";
 import { Toaster } from "./components/Toaster";
+import { SettingsPanel } from "./modules/settings/SettingsPanel";
+import { SettingsUiContext } from "./lib/settingsUi";
 import {
   HomeIcon,
   HabitsIcon,
@@ -63,6 +63,7 @@ const VIEWS: Record<Tab, () => React.ReactElement> = {
 
 function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [settingsOpen, setSettingsOpen] = useState(false);
   useDarkMode(); // applies the .dark class to <html> as a side effect
   const settings = useLiveQuery(() => db.appSettings.get(1));
 
@@ -83,6 +84,9 @@ function App() {
 
   return (
     <SchedulerProvider>
+      <SettingsUiContext.Provider
+        value={{ open: () => setSettingsOpen(true) }}
+      >
       <div className="mx-auto flex min-h-svh max-w-md flex-col">
         {/* Keeps `top-0`: offsetting by the inset would break the sticky
             scrollport and stop the glass blur bleeding under the status bar,
@@ -91,13 +95,14 @@ function App() {
           className="glass sticky top-0 z-10 flex items-center justify-between border-b border-slate-200/70 bg-white/80 px-4 pb-3 dark:border-slate-700/50 dark:bg-slate-900/70"
           style={{ paddingTop: "calc(var(--sat) + 0.75rem)" }}
         >
+          {/* Deliberately a pure wordmark. The controls that used to live
+              here were 24-32px tall — under Android's 48dp minimum — and sat
+              under the status bar. They now live in Settings, reachable from
+              the Dashboard, which fixes reachability structurally rather than
+              relying on the inset being reported correctly. */}
           <span className="bg-gradient-to-r from-cyan-500 to-violet-500 bg-clip-text font-extrabold tracking-tight text-transparent">
             LifeOS
           </span>
-          <div className="flex items-center gap-1">
-            <BackupBar />
-            <DarkModeToggle />
-          </div>
         </header>
 
         <main
@@ -159,7 +164,11 @@ function App() {
 
         <AlarmOverlay />
         <Toaster />
+        {settingsOpen && (
+          <SettingsPanel onClose={() => setSettingsOpen(false)} />
+        )}
       </div>
+      </SettingsUiContext.Provider>
     </SchedulerProvider>
   );
 }

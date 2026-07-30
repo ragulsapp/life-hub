@@ -38,7 +38,8 @@ function Pills<T extends string>({
           key={o}
           onClick={() => onChange(o)}
           aria-pressed={value === o}
-          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+          // min-h-11 = 44px: these are touch targets, not desktop chips.
+          className={`flex min-h-11 items-center rounded-full px-4 text-xs font-medium transition-colors ${
             value === o
               ? "bg-cyan-500 text-slate-900"
               : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"

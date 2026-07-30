@@ -9,6 +9,7 @@ import { localDateStr } from "../../lib/dates";
 import { calcLifeBalance, calcPillars } from "../../lib/lifePillars";
 import { getRecommendation } from "../../lib/recommendations";
 import { dailyCoachMessage, greeting } from "../../lib/coachMessages";
+import { useSettingsUi } from "../../lib/settingsUi";
 import { currentMonthKey } from "../finance/financeSummary";
 import { isDueOn } from "../habits/habitStreaks";
 import { setHabitDone } from "../habits/habitActions";
@@ -21,6 +22,7 @@ import { AchievementsCard } from "../achievements/AchievementsCard";
 export function DashboardView() {
   const [brainDump, setBrainDump] = useState("");
   const [saved, setSaved] = useState(false);
+  const { open: openSettings } = useSettingsUi();
 
   const habits = useLiveQuery(() => db.habits.toArray(), []) ?? [];
   const logs = useLiveQuery(() => db.habitLogs.toArray(), []) ?? [];
@@ -114,13 +116,26 @@ export function DashboardView() {
       <motion.div
         initial={{ opacity: 0, x: -8 }}
         animate={{ opacity: 1, x: 0 }}
+        className="flex items-start justify-between gap-3"
       >
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          {greeting(now)}
-        </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {coachLine}
-        </p>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {greeting(now)}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {coachLine}
+          </p>
+        </div>
+        {/* Settings lives on the page body, not the header — the header sits
+            under the status bar and its targets were untappable. 44x44. */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={openSettings}
+          aria-label="Settings"
+          className="-mr-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-lg text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
+        >
+          ⚙️
+        </motion.button>
       </motion.div>
 
       <BackupNudge />
