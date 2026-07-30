@@ -5,8 +5,9 @@
  * time to reach, so hitting one actually means something. Pure functions over
  * local data, evaluated on render.
  */
-import type { Goal, HabitLog, Transaction } from "../../db/db";
+import type { Goal, HabitLog, Transaction, WakeLog } from "../../db/db";
 import { calcBestStreak } from "../habits/habitStreaks";
+import { calcBestWakeStreak } from "../../lib/wakeStreak";
 
 export interface AchievementDef {
   key: string;
@@ -22,11 +23,14 @@ const STREAK_TIERS = [7, 30, 100, 365];
 const COMPLETION_TIERS = [10, 50, 100, 500];
 const SAVINGS_TIERS = [10_000, 100_000, 500_000];
 const GOAL_TIERS = [1, 5, 25];
+const WAKE_TIERS = [7, 30, 100, 365];
 
 export function evaluateAchievements(
   logs: HabitLog[],
   goals: Goal[],
   transactions: Transaction[],
+  /** Optional so existing call sites keep working unchanged. */
+  wakeLogs: WakeLog[] = [],
 ): AchievementDef[] {
   const out: AchievementDef[] = [];
 
@@ -75,6 +79,20 @@ export function evaluateAchievements(
       icon: "💰",
       requirement: `Net savings reach ₹${tier.toLocaleString()}`,
       progress: Math.min(saved, tier),
+      target: tier,
+    });
+  }
+
+  // Mornings you beat the mission — the alarm can't be silenced any other way,
+  // so each one is a day you genuinely got out of bed.
+  const bestWake = calcBestWakeStreak(wakeLogs);
+  for (const tier of WAKE_TIERS) {
+    out.push({
+      key: `wake-${tier}`,
+      title: `${tier}-Morning Streak`,
+      icon: "🌅",
+      requirement: `Beat the wake-up mission ${tier} days straight`,
+      progress: Math.min(bestWake, tier),
       target: tier,
     });
   }

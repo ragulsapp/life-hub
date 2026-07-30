@@ -3,8 +3,11 @@ import { motion } from "framer-motion";
 import { db } from "../../db/db";
 import { useScheduler } from "../../lib/scheduler";
 import { startAlarmSound, stopAlarmSound, vibrate } from "../../lib/alarmSound";
+import { minutesAfterScheduled } from "../../lib/wakeStreak";
 import { MathMission } from "./missions/MathMission";
 import { MemoryMission } from "./missions/MemoryMission";
+import { MorningBriefing } from "./MorningBriefing";
+import { recordWakeUp } from "./wakeActions";
 
 function LiveClock() {
   const [now, setNow] = useState(new Date());
@@ -22,13 +25,44 @@ function LiveClock() {
 export function AlarmOverlay() {
   const { activeAlarm, dismiss } = useScheduler();
   const [needsTap, setNeedsTap] = useState(false);
+  const [solved, setSolved] = useState(false);
+  const [minutesLate, setMinutesLate] = useState(0);
   const blobRef = useRef<Blob | null>(null);
+  const vibrateRef = useRef<number | null>(null);
+
+  const stopRinging = () => {
+    stopAlarmSound();
+    if (vibrateRef.current !== null) {
+      clearInterval(vibrateRef.current);
+      vibrateRef.current = null;
+    }
+  };
+
+  /**
+   * Mission beaten. The overlay stays mounted to show the briefing, so the
+   * alarm has to be silenced explicitly here — the effect's cleanup won't run
+   * until the user taps through to the app.
+   */
+  const handleSolved = async () => {
+    if (!activeAlarm) return;
+    stopRinging();
+    const at = Date.now();
+    setMinutesLate(minutesAfterScheduled(activeAlarm.time, at));
+    try {
+      await recordWakeUp(activeAlarm, at);
+    } catch (err) {
+      // A failed write must never trap the user behind the overlay.
+      console.error(err);
+    }
+    setSolved(true);
+  };
 
   useEffect(() => {
     if (!activeAlarm) return;
 
     let stopped = false;
     setNeedsTap(false);
+    setSolved(false);
     (async () => {
       let blob: Blob | null = null;
       if (activeAlarm.soundId != null) {
@@ -41,7 +75,7 @@ export function AlarmOverlay() {
       if (!stopped) setNeedsTap(!audible);
     })();
     vibrate();
-    const vibrateId = setInterval(vibrate, 3000);
+    vibrateRef.current = window.setInterval(vibrate, 3000);
 
     // Keep the screen awake while ringing (best-effort).
     let wakeLock: { release: () => Promise<void> } | null = null;
@@ -55,8 +89,7 @@ export function AlarmOverlay() {
 
     return () => {
       stopped = true;
-      stopAlarmSound();
-      clearInterval(vibrateId);
+      stopRinging();
       wakeLock?.release().catch(() => {});
     };
   }, [activeAlarm]);
@@ -73,6 +106,10 @@ export function AlarmOverlay() {
           animate={{ opacity: 1 }}
           className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 overflow-y-auto bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 p-6"
         >
+          {solved ? (
+            <MorningBriefing minutesLate={minutesLate} onDone={dismiss} />
+          ) : (
+            <>
           <motion.div
             animate={{ scale: [1, 1.06, 1] }}
             transition={{ repeat: Infinity, duration: 1.4 }}
@@ -105,12 +142,12 @@ export function AlarmOverlay() {
               <MathMission
                 difficulty={activeAlarm.difficulty}
                 steps={activeAlarm.difficulty + 1}
-                onSolved={dismiss}
+                onSolved={handleSolved}
               />
             ) : (
               <MemoryMission
                 difficulty={activeAlarm.difficulty}
-                onSolved={dismiss}
+                onSolved={handleSolved}
               />
             )}
           </div>
@@ -118,6 +155,8 @@ export function AlarmOverlay() {
           <p className="max-w-xs text-center text-xs text-white/40">
             The alarm stops only when you finish the mission. Stay awake!
           </p>
+            </>
+          )}
         </motion.div>
       )}
     </>

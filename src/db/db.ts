@@ -225,6 +225,24 @@ export interface Achievement {
   unlockedAt: number; // epoch ms
 }
 
+/**
+ * One row per day the wake-up mission was actually solved. Solving it is the
+ * only way to silence the alarm, so a row here means the user genuinely got
+ * up with the app — which is what makes a wake-up streak mean something.
+ */
+export interface WakeLog {
+  id: number;
+  date: string; // YYYY-MM-DD (local), unique — one wake per day
+  solvedAt: number; // epoch ms
+  /** The alarm's scheduled HH:MM, for the "up N minutes later" line. */
+  scheduledTime: string;
+  /** Positive = solved after the alarm; can be negative if it was previewed. */
+  minutesLate: number;
+}
+
+/** Solving within this many minutes of the alarm counts as "on time". */
+export const WAKE_ON_TIME_GRACE_MIN = 15;
+
 /** Target value for a numeric health metric (e.g. reach 62 kg). */
 export interface MetricGoal {
   id: number;
@@ -398,6 +416,7 @@ class LifeHubDB extends Dexie {
   alarms!: EntityTable<Alarm, "id">;
   sounds!: EntityTable<Sound, "id">;
   achievements!: EntityTable<Achievement, "id">;
+  wakeLogs!: EntityTable<WakeLog, "id">;
   appSettings!: EntityTable<AppSettings, "id">;
 
   constructor() {
@@ -467,6 +486,10 @@ class LifeHubDB extends Dexie {
             }
           });
       });
+    // Purely a new table — nothing to backfill, so no upgrade callback.
+    this.version(6).stores({
+      wakeLogs: "++id, &date",
+    });
   }
 }
 

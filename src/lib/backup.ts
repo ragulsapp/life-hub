@@ -18,6 +18,7 @@ export interface BackupPayload {
     tasks?: unknown[];
     alarms?: unknown[];
     achievements?: unknown[];
+    wakeLogs?: unknown[];
     appSettings: unknown[];
   };
 }
@@ -53,6 +54,7 @@ export async function buildBackupPayload(): Promise<BackupPayload> {
       tasks: await db.tasks.toArray(),
       alarms: await db.alarms.toArray(),
       achievements: await db.achievements.toArray(),
+      wakeLogs: await db.wakeLogs.toArray(),
       appSettings: await db.appSettings.toArray(),
       // `sounds` is deliberately omitted: it holds Blobs, and JSON.stringify
       // flattens a Blob to {}, so exporting it would write junk rows that
@@ -113,6 +115,7 @@ export async function restoreBackupPayload(payload: BackupPayload): Promise<void
       db.tasks,
       db.alarms,
       db.achievements,
+      db.wakeLogs,
       db.appSettings,
     ],
     async () => {
@@ -130,6 +133,7 @@ export async function restoreBackupPayload(payload: BackupPayload): Promise<void
         db.tasks.clear(),
         db.alarms.clear(),
         db.achievements.clear(),
+        db.wakeLogs.clear(),
       ]);
 
       await db.healthMetrics.bulkAdd(t.healthMetrics as never[]);
@@ -147,6 +151,7 @@ export async function restoreBackupPayload(payload: BackupPayload): Promise<void
       if (t.alarms) await db.alarms.bulkAdd(t.alarms as never[]);
       if (t.achievements)
         await db.achievements.bulkAdd(t.achievements as never[]);
+      if (t.wakeLogs) await db.wakeLogs.bulkAdd(t.wakeLogs as never[]);
 
       if (t.appSettings[0]) {
         // MERGE rather than replace. `put` would swap the whole row, so

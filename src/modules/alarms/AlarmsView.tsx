@@ -11,6 +11,11 @@ import {
   notificationPermission,
   requestNotificationPermission,
 } from "../../lib/notify";
+import {
+  calcBestWakeStreak,
+  calcWakeStreak,
+  onTimeRate,
+} from "../../lib/wakeStreak";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -28,8 +33,13 @@ function repeatLabel(days: number[]): string {
 
 export function AlarmsView() {
   const alarms = useLiveQuery(() => db.alarms.toArray(), []) ?? [];
+  const wakeLogs = useLiveQuery(() => db.wakeLogs.toArray(), []) ?? [];
   const { ringNow } = useScheduler();
   const sorted = [...alarms].sort((a, b) => a.time.localeCompare(b.time));
+
+  const streak = calcWakeStreak(wakeLogs);
+  const best = calcBestWakeStreak(wakeLogs);
+  const punctual = onTimeRate(wakeLogs);
 
   const [perm, setPerm] = useState<"granted" | "denied" | "default">(
     "default",
@@ -70,6 +80,32 @@ export function AlarmsView() {
           </button>
         )}
       </div>
+
+      {wakeLogs.length > 0 && (
+        <Card title="Wake-Up Streak">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400/20 to-orange-500/20">
+              <span className="text-xl font-extrabold text-amber-500">
+                {streak}
+              </span>
+              <span className="text-[9px] font-medium text-amber-600/70 dark:text-amber-400/70">
+                {streak === 1 ? "DAY" : "DAYS"}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1 text-sm">
+              <div className="font-semibold text-slate-900 dark:text-white">
+                {streak > 0
+                  ? "Mornings you beat the mission"
+                  : "Streak broken — the next one starts tomorrow"}
+              </div>
+              <div className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-slate-500 dark:text-slate-400">
+                <span>🏆 Best {best}</span>
+                {punctual !== null && <span>⏱️ {punctual}% on time</span>}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card title="New Alarm">
         <AlarmForm />
