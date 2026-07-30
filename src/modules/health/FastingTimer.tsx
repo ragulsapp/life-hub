@@ -80,7 +80,7 @@ export function FastingTimer() {
                 onClick={() => setTarget(h)}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                   target === h
-                    ? "bg-cyan-500 text-slate-900"
+                    ? "bg-cyan-500 text-white"
                     : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
                 }`}
               >
@@ -126,7 +126,7 @@ export function FastingTimer() {
       </ProgressRing>
       <div className="min-w-0 flex-1">
         {active.label && (
-          <div className="truncate text-xs font-semibold text-cyan-500">
+          <div className="truncate text-xs font-semibold text-cyan-500 dark:text-cyan-300">
             {active.label}
           </div>
         )}

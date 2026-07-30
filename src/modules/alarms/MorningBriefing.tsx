@@ -113,7 +113,7 @@ export function MorningBriefing({
 
       <button
         onClick={onDone}
-        className="w-full rounded-2xl bg-cyan-500 py-3.5 text-base font-bold text-slate-900"
+        className="w-full rounded-2xl bg-cyan-500 py-3.5 text-base font-bold text-white"
       >
         Start my day
       </button>

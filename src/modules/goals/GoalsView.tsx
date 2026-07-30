@@ -7,7 +7,7 @@ import { localDateStr } from "../../lib/dates";
 
 const statusOrder: GoalStatus[] = ["active", "completed", "abandoned"];
 const statusColor: Record<GoalStatus, string> = {
-  active: "bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-900",
+  active: "bg-gradient-to-r from-cyan-400 to-sky-500 text-white",
   completed: "bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-900",
   abandoned:
     "bg-slate-200 text-slate-500 dark:bg-slate-600/60 dark:text-slate-300",

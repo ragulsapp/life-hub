@@ -63,6 +63,40 @@
     0 1px 2px rgb(0 0 0 / 0.24), 0 12px 28px -12px rgb(0 0 0 / 0.55);
   --shadow-e3-dark:
     0 1px 3px rgb(0 0 0 / 0.3), 0 24px 56px -18px rgb(0 0 0 / 0.65);
+
+  /**
+   * Accent: the stock cyan ramp is a bright electric blue that reads
+   * "dashboard demo". Same hue family, pulled toward teal and desaturated.
+   * All ~70 cyan-* usages retune from here.
+   *
+   * The ramp is anchored on MEASURED contrast, not taste, because cyan plays
+   * two roles that pull in opposite directions:
+   *   - 500 is a FILL behind white text  -> 5.0:1 with white (AA)
+   *     and it is also accent text on white -> 5.0:1 (AA)
+   *   - 300 is accent TEXT on dark surfaces -> 9.3:1 on #12161c (AAA)
+   * A single step cannot do both: an earlier draft at #2b8f9c gave white text
+   * only 3.81:1, which FAILS AA and was worse than the dark text it replaced.
+   */
+  --color-cyan-50: #f0f9fa;
+  --color-cyan-100: #d9f0f2;
+  --color-cyan-200: #b3e0e5;
+  --color-cyan-300: #7fc9d1;
+  --color-cyan-400: #4aacb8;
+  --color-cyan-500: #1f7a88;
+  --color-cyan-600: #1a6672;
+  --color-cyan-700: #17555f;
+  --color-cyan-800: #164751;
+  --color-cyan-900: #153e47;
+
+  /**
+   * Neutrals: the 50-500 text ramp is fine and is left alone. Only the dark
+   * SURFACES change — stock slate is navy-tinted, and pulling it toward a
+   * true neutral charcoal is most of what separates "calm" from "blue-black
+   * tech demo".
+   */
+  --color-slate-700: #2a323d;
+  --color-slate-800: #1b2027;
+  --color-slate-900: #12161c;
 }
 
 /**
@@ -94,11 +128,13 @@ body,
   min-height: 100svh;
 }
 
+/* Hardcoded because a gradient can't read a Tailwind token — these must be
+   updated by hand whenever the accent or surface colours change. */
 body {
   background: radial-gradient(
     ellipse 120% 80% at 50% -10%,
-    #e0f2fe 0%,
-    #f1f5f9 55%
+    #eaf4f5 0%,
+    #f4f5f7 55%
   );
   font-feature-settings: "tnum";
 }
@@ -106,8 +142,8 @@ body {
 .dark body {
   background: radial-gradient(
     ellipse 120% 80% at 50% -10%,
-    #0e2a3d 0%,
-    #0b1120 55%
+    #16262b 0%,
+    #12161c 55%
   );
 }
 

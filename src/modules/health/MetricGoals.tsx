@@ -97,7 +97,7 @@ export function MetricGoals({ metrics }: { metrics: HealthMetric[] }) {
                   />
                   <button
                     onClick={() => save(m.type, m.defaultDir)}
-                    className="rounded-lg bg-cyan-500 px-2 py-1 text-xs font-semibold text-slate-900"
+                    className="rounded-lg bg-cyan-500 px-2 py-1 text-xs font-semibold text-white"
                   >
                     Save
                   </button>

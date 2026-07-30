@@ -104,7 +104,7 @@ export function FinanceView() {
           </div>
         </div>
         <div className="mt-3 border-t border-slate-200/70 pt-3 text-center dark:border-slate-600/50">
-          <div className="text-lg font-bold text-cyan-500">
+          <div className="text-lg font-bold text-cyan-500 dark:text-cyan-300">
             <AnimatedNumber value={mrr} prefix="₹" />
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">

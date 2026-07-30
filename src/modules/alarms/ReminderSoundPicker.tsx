@@ -57,7 +57,7 @@ export function ReminderSoundPicker() {
             aria-pressed={current === s.id}
             className={`flex min-h-11 items-center rounded-full px-4 text-sm font-medium transition-colors ${
               current === s.id
-                ? "bg-cyan-500 text-slate-900"
+                ? "bg-cyan-500 text-white"
                 : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
             }`}
           >
@@ -68,7 +68,7 @@ export function ReminderSoundPicker() {
       </div>
       <button
         onClick={test}
-        className="flex min-h-11 items-center self-start text-xs font-semibold text-cyan-500 hover:underline"
+        className="flex min-h-11 items-center self-start text-xs font-semibold text-cyan-500 dark:text-cyan-300 hover:underline"
       >
         Send a test reminder now
       </button>

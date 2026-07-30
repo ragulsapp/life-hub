@@ -132,7 +132,7 @@ function HabitCard({
               onClick={() => togglePinned(habit)}
               className={`text-xs ${
                 habit.pinned
-                  ? "text-cyan-500"
+                  ? "text-cyan-500 dark:text-cyan-300"
                   : "text-slate-300 hover:text-cyan-500 dark:text-slate-600"
               }`}
               title={
@@ -237,8 +237,8 @@ function HabitCard({
                 }}
                 className={`text-[11px] font-medium ${
                   habit.reminderEnabled
-                    ? "text-cyan-500"
-                    : "text-slate-400 hover:text-cyan-500"
+                    ? "text-cyan-500 dark:text-cyan-300"
+                    : "text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
                 }`}
               >
                 {habit.reminderEnabled ? "🔔 On" : "🔔 Remind"}

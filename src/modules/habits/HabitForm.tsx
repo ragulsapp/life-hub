@@ -142,7 +142,7 @@ export function HabitForm() {
                   onClick={() => setIdentity(id.name)}
                   className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                     identity === id.name
-                      ? "bg-cyan-500 text-slate-900"
+                      ? "bg-cyan-500 text-white"
                       : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
                   }`}
                 >
@@ -169,7 +169,7 @@ export function HabitForm() {
                   onClick={() => setSchedType(val)}
                   className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition-colors ${
                     schedType === val
-                      ? "bg-cyan-500 text-slate-900"
+                      ? "bg-cyan-500 text-white"
                       : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
                   }`}
                 >
@@ -186,7 +186,7 @@ export function HabitForm() {
                     onClick={() => toggleDay(i)}
                     className={`h-8 w-8 rounded-full text-xs font-bold transition-colors ${
                       days.includes(i)
-                        ? "bg-cyan-500 text-slate-900"
+                        ? "bg-cyan-500 text-white"
                         : "bg-slate-100 text-slate-400 dark:bg-slate-700/50"
                     }`}
                   >

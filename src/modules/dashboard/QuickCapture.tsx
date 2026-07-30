@@ -105,7 +105,7 @@ export function QuickCapture() {
         whileTap={{ scale: 0.9 }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Quick capture"
-        className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 text-2xl text-slate-900 shadow-lg"
+        className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 text-2xl text-white shadow-lg"
       >
         {open ? "✕" : "+"}
       </motion.button>
@@ -135,7 +135,7 @@ export function QuickCapture() {
                     }}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                       kind === k.kind
-                        ? "bg-cyan-500 text-slate-900"
+                        ? "bg-cyan-500 text-white"
                         : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
                     }`}
                   >

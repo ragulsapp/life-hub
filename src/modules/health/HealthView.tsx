@@ -63,7 +63,7 @@ export function HealthView() {
           <BodyBasics profile={profile!} metrics={metrics} />
           <button
             onClick={() => setEditingProfile(true)}
-            className="mt-3 text-xs font-semibold text-cyan-500 hover:underline"
+            className="mt-3 text-xs font-semibold text-cyan-500 dark:text-cyan-300 hover:underline"
           >
             Edit your details
           </button>
@@ -203,7 +203,7 @@ export function HealthView() {
             </p>
             <button
               onClick={() => setFastingEnabled(true)}
-              className="self-start rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-900"
+              className="self-start rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-white"
             >
               Track my fasts
             </button>

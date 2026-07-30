@@ -57,7 +57,7 @@ export function GoalForm() {
                 onClick={() => toggleHabit(h.name)}
                 className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                   linked.includes(h.name)
-                    ? "bg-cyan-500 text-slate-900"
+                    ? "bg-cyan-500 text-white"
                     : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
                 }`}
               >

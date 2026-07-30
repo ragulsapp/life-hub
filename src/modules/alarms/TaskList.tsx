@@ -112,8 +112,8 @@ export function TaskList() {
                   }
                   className={`text-xs ${
                     t.reminderEnabled
-                      ? "text-cyan-500"
-                      : "text-slate-400 hover:text-cyan-500"
+                      ? "text-cyan-500 dark:text-cyan-300"
+                      : "text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
                   }`}
                 >
                   {t.reminderEnabled ? `🔔 ${t.reminderTime}` : "🔔"}

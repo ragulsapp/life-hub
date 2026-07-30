@@ -36,7 +36,7 @@ function Chips({
           aria-pressed={selected.includes(o)}
           className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
             selected.includes(o)
-              ? "bg-cyan-500 text-slate-900"
+              ? "bg-cyan-500 text-white"
               : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
           }`}
         >
@@ -195,7 +195,7 @@ export function OnboardingWizard() {
                   aria-pressed={sex === v}
                   className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
                     sex === v
-                      ? "bg-cyan-500 text-slate-900"
+                      ? "bg-cyan-500 text-white"
                       : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
                   }`}
                 >
@@ -266,7 +266,7 @@ export function OnboardingWizard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.18 }}
         >
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-cyan-500">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-cyan-500 dark:text-cyan-300">
             Step {step + 1} of {steps.length}
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">

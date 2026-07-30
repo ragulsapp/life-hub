@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
         <div className="flex gap-3">
           <button
             onClick={() => exportBackup().catch(console.error)}
-            className="rounded-2xl bg-cyan-500 px-5 py-2.5 font-semibold text-slate-900"
+            className="rounded-2xl bg-cyan-500 px-5 py-2.5 font-semibold text-white"
           >
             Export data
           </button>

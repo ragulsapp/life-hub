@@ -98,7 +98,7 @@ export function NoteEditor() {
               whileTap={{ scale: 0.94 }}
               onClick={() => setTags((p) => p.filter((t) => t !== tag))}
               aria-label={`Remove tag ${tag}`}
-              className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-medium text-slate-900"
+              className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-medium text-white"
             >
               {tag} ✕
             </motion.button>

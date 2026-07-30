@@ -68,7 +68,7 @@ export function BudgetManager({
                   />
                   <button
                     onClick={() => saveBudget(cat.name)}
-                    className="rounded-lg bg-cyan-500 px-2 py-1 text-xs font-semibold text-slate-900"
+                    className="rounded-lg bg-cyan-500 px-2 py-1 text-xs font-semibold text-white"
                   >
                     Save
                   </button>

@@ -78,7 +78,7 @@ export function AlarmForm() {
               onClick={() => toggleDay(i)}
               className={`h-8 w-8 rounded-full text-xs font-bold transition-colors ${
                 days.includes(i)
-                  ? "bg-cyan-500 text-slate-900"
+                  ? "bg-cyan-500 text-white"
                   : "bg-slate-100 text-slate-400 dark:bg-slate-700/50"
               }`}
             >
@@ -104,7 +104,7 @@ export function AlarmForm() {
               onClick={() => setMission(val)}
               className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
                 mission === val
-                  ? "bg-cyan-500 text-slate-900"
+                  ? "bg-cyan-500 text-white"
                   : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
               }`}
             >

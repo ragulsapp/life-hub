@@ -95,7 +95,7 @@ export function NotesView() {
                   <div className="flex gap-2 text-xs">
                     <button
                       onClick={() => togglePin(n.id, n.pinned)}
-                      className="text-slate-400 hover:text-cyan-500"
+                      className="text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
                     >
                       {n.pinned ? "Unpin" : "Pin"}
                     </button>
@@ -148,8 +148,8 @@ export function NotesView() {
                     }
                     className={`text-[11px] font-medium ${
                       n.reminderEnabled
-                        ? "text-cyan-500"
-                        : "text-slate-400 hover:text-cyan-500"
+                        ? "text-cyan-500 dark:text-cyan-300"
+                        : "text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
                     }`}
                   >
                     {n.reminderEnabled
