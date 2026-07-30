@@ -76,29 +76,37 @@ function cleanupAudioEl() {
   }
 }
 
+/** Loop an audio source. Falls back to the siren if playback is refused. */
+async function startFromUrl(url: string, revoke: boolean): Promise<boolean> {
+  audioUrl = revoke ? url : null;
+  audioEl = new Audio(url);
+  audioEl.loop = true;
+  audioEl.volume = 1;
+  try {
+    await audioEl.play();
+    return true;
+  } catch {
+    // Autoplay blocked or unsupported format — fall back to the siren.
+    cleanupAudioEl();
+    return startSiren();
+  }
+}
+
 /**
- * Start ringing. Pass a Blob for custom audio, or omit for the siren.
+ * Start ringing. An uploaded Blob wins; otherwise a bundled tone if one is
+ * chosen; otherwise the generated siren.
+ *
  * Resolves true if sound is audibly playing, false if blocked by autoplay
  * policy (caller should surface a tap-to-unmute affordance).
  */
-export async function startAlarmSound(blob?: Blob | null): Promise<boolean> {
+export async function startAlarmSound(
+  blob?: Blob | null,
+  builtInUrl?: string | null,
+): Promise<boolean> {
   if (osc || audioEl) return true; // already ringing
 
-  if (blob) {
-    audioUrl = URL.createObjectURL(blob);
-    audioEl = new Audio(audioUrl);
-    audioEl.loop = true;
-    audioEl.volume = 1;
-    try {
-      await audioEl.play();
-      return true;
-    } catch {
-      // Autoplay blocked or unsupported format — fall back to the siren.
-      cleanupAudioEl();
-      return startSiren();
-    }
-  }
-
+  if (blob) return startFromUrl(URL.createObjectURL(blob), true);
+  if (builtInUrl) return startFromUrl(builtInUrl, false);
   return startSiren();
 }
 
@@ -129,6 +137,13 @@ export function previewSound(blob: Blob): () => void {
     el.pause();
     URL.revokeObjectURL(url);
   };
+}
+
+/** Play a bundled tone once, so the user can hear what they're picking. */
+export function previewUrl(url: string): () => void {
+  const el = new Audio(url);
+  el.play().catch(() => {});
+  return () => el.pause();
 }
 
 export function vibrate(): void {

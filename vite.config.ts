@@ -43,7 +43,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,ico,png}"],
+        // wav included so the built-in alarm/reminder tones still play offline.
+        globPatterns: ["**/*.{js,css,html,svg,ico,png,wav}"],
       },
     }),
   ],

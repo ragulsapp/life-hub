@@ -153,7 +153,10 @@ export interface Alarm {
   enabled: boolean;
   mission: AlarmMission;
   difficulty: number; // 1..3 (mission steps)
-  soundId?: number; // custom sound; undefined = generated siren
+  /** An uploaded clip from the `sounds` table. Takes precedence if set. */
+  soundId?: number;
+  /** One of the bundled tones. Used when there's no uploaded clip. */
+  builtInSound?: SoundId;
   lastFiredDate?: string; // YYYY-MM-DD
   createdAt: number;
 }
@@ -291,6 +294,8 @@ export interface AppSettings {
    * protocol. The app never assumes it.
    */
   fastingEnabled?: boolean;
+  /** Which built-in tone habit/task/note reminders use. */
+  reminderSound?: SoundId;
 }
 
 export const DEFAULT_FAST_HOURS = 12;
@@ -400,6 +405,27 @@ export const STARTER_TEMPLATES = {
 
 /** One glass of water, in ml — the unit the water tracker taps in. */
 export const GLASS_ML = 250;
+
+/**
+ * Built-in tones, bundled twice from the same source files: in `public/sounds/`
+ * so the WebView can play them for the in-app alarm and previews, and in
+ * `android/app/src/main/res/raw/` so Android notification channels can use them.
+ */
+export const BUILT_IN_SOUNDS = [
+  { id: "chime", label: "Chime", blurb: "Soft two-note bell" },
+  { id: "ping", label: "Ping", blurb: "One bright hit" },
+  { id: "bell", label: "Bell", blurb: "Three quick beeps" },
+] as const;
+
+export type SoundId = (typeof BUILT_IN_SOUNDS)[number]["id"];
+
+export const DEFAULT_REMINDER_SOUND: SoundId = "chime";
+
+/** Web-accessible path for a built-in tone (previews and the in-app alarm). */
+export const soundUrl = (id: SoundId) => `/sounds/${id}.wav`;
+
+/** The Android res/raw filename the notification channel resolves. */
+export const soundResource = (id: SoundId) => `${id}.wav`;
 
 class LifeHubDB extends Dexie {
   healthMetrics!: EntityTable<HealthMetric, "id">;

@@ -6,15 +6,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { db, type Alarm } from "../db/db";
-import {
-  habitNotifId,
-  isNative,
-  noteNotifId,
-  scheduleDailyReminder,
-  showLocalNotification,
-  taskNotifId,
-} from "./notify";
+import { db, DEFAULT_REMINDER_SOUND, type Alarm } from "../db/db";
+import { isNative, showLocalNotification } from "./notify";
+import { resyncNativeReminders } from "./reminderSync";
 import { localDateStr } from "./dates";
 import { alarmDueState, reminderDue } from "./reminderLogic";
 
@@ -59,47 +53,12 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
     })().catch(console.error);
   }, []);
 
-  // Re-register every enabled reminder's native OS schedule on launch —
-  // covers reminders created before this device had the plugin, restored
-  // from a backup import, or cleared by an OS/app data reset.
+  // Re-register every enabled reminder's native OS schedule on launch — see
+  // resyncNativeReminders for why this is needed.
   useEffect(() => {
-    if (!isNative) return;
     (async () => {
-      const [habits, tasks, notes] = await Promise.all([
-        db.habits.toArray(),
-        db.tasks.toArray(),
-        db.notes.toArray(),
-      ]);
-      for (const h of habits) {
-        if (h.reminderEnabled && h.reminderTime && !h.archived) {
-          await scheduleDailyReminder(
-            habitNotifId(h.id),
-            "Habit reminder",
-            `Time for: ${h.name}`,
-            h.reminderTime,
-          );
-        }
-      }
-      for (const t of tasks) {
-        if (t.reminderEnabled && t.reminderTime && !t.done) {
-          await scheduleDailyReminder(
-            taskNotifId(t.id),
-            "Task reminder",
-            t.title,
-            t.reminderTime,
-          );
-        }
-      }
-      for (const n of notes) {
-        if (n.reminderEnabled && n.reminderTime) {
-          await scheduleDailyReminder(
-            noteNotifId(n.id),
-            "Note reminder",
-            n.title,
-            n.reminderTime,
-          );
-        }
-      }
+      const settings = await db.appSettings.get(1);
+      await resyncNativeReminders(settings?.reminderSound ?? DEFAULT_REMINDER_SOUND);
     })().catch(console.error);
   }, []);
 

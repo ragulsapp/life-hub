@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { db, type AlarmMission } from "../../db/db";
+import {
+  db,
+  DEFAULT_REMINDER_SOUND,
+  type AlarmMission,
+} from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import { requestNotificationPermission } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
-import { SoundPicker } from "./SoundPicker";
+import { SoundPicker, type SoundSelection } from "./SoundPicker";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -15,7 +19,9 @@ export function AlarmForm() {
   const [days, setDays] = useState<number[]>([]);
   const [mission, setMission] = useState<AlarmMission>("math");
   const [difficulty, setDifficulty] = useState(2);
-  const [soundId, setSoundId] = useState<number | undefined>(undefined);
+  const [sound, setSound] = useState<SoundSelection>({
+    builtInSound: DEFAULT_REMINDER_SOUND,
+  });
 
   const toggleDay = (d: number) =>
     setDays((prev) =>
@@ -31,7 +37,8 @@ export function AlarmForm() {
       days,
       mission,
       difficulty,
-      soundId,
+      soundId: sound.soundId,
+      builtInSound: sound.builtInSound,
       enabled: true,
       // If the time already passed today, arm for the next occurrence
       // instead of ringing the moment it's created.
@@ -128,7 +135,7 @@ export function AlarmForm() {
         <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
           Alarm sound
         </div>
-        <SoundPicker value={soundId} onChange={setSoundId} />
+        <SoundPicker value={sound} onChange={setSound} />
       </div>
 
       <motion.div whileTap={{ scale: 0.98 }}>

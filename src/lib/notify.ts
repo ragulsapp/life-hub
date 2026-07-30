@@ -1,5 +1,11 @@
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import {
+  BUILT_IN_SOUNDS,
+  DEFAULT_REMINDER_SOUND,
+  soundResource,
+  type SoundId,
+} from "../db/db";
 
 /**
  * Notification delivery. The standard Web Notification API is NOT reliably
@@ -9,6 +15,50 @@ import { LocalNotifications } from "@capacitor/local-notifications";
  * for browser/PWA testing (`npm run dev` / `vite preview`).
  */
 export const isNative = Capacitor.isNativePlatform();
+
+/**
+ * Channel ids are versioned because **an Android notification channel is
+ * immutable once created**. Its importance and sound are fixed at creation and
+ * `createChannel` on an existing id silently does nothing — so a channel that
+ * was created silent can never be repaired, only replaced. Bump the suffix to
+ * force fresh settings onto devices that already have the old one.
+ *
+ * This is exactly why reminders were silent: the plugin's own "default" channel
+ * only gets a sound if one is configured as a bundled resource, which it wasn't,
+ * and nothing could fix that channel after the fact.
+ */
+const CHANNEL_VERSION = "v2";
+const channelId = (sound: SoundId) => `reminders-${sound}-${CHANNEL_VERSION}`;
+
+let channelsReady: Promise<void> | null = null;
+
+/**
+ * Create one channel per built-in tone, at IMPORTANCE_HIGH (5) so reminders
+ * make a sound and show a heads-up banner rather than landing silently in the
+ * shade. Idempotent and safe to call on every launch.
+ */
+export function ensureChannels(): Promise<void> {
+  if (!isNative) return Promise.resolve();
+  if (channelsReady) return channelsReady;
+  channelsReady = (async () => {
+    for (const s of BUILT_IN_SOUNDS) {
+      try {
+        await LocalNotifications.createChannel({
+          id: channelId(s.id),
+          name: `Reminders (${s.label})`,
+          description: "Habit, task and note reminders",
+          importance: 5,
+          sound: soundResource(s.id),
+          vibration: true,
+          visibility: 1,
+        });
+      } catch (err) {
+        console.error("channel create failed", s.id, err);
+      }
+    }
+  })();
+  return channelsReady;
+}
 
 export function notificationsSupported(): boolean {
   return isNative || "Notification" in window;
@@ -40,6 +90,16 @@ export async function requestNotificationPermission(): Promise<
   }
 }
 
+/**
+ * Which tone reminders use. Read once per call rather than cached, so changing
+ * it in settings takes effect on the next notification without a restart.
+ */
+let reminderSound: SoundId = DEFAULT_REMINDER_SOUND;
+
+export function setReminderSound(sound: SoundId): void {
+  reminderSound = sound;
+}
+
 /** Fire a notification right now (used by the in-app 15s reminder/alarm tick). */
 export async function showLocalNotification(
   title: string,
@@ -48,12 +108,14 @@ export async function showLocalNotification(
   if ((await notificationPermission()) !== "granted") return;
   try {
     if (isNative) {
+      await ensureChannels();
       await LocalNotifications.schedule({
         notifications: [
           {
             id: Math.floor(Math.random() * 2_000_000_000),
             title,
             body,
+            channelId: channelId(reminderSound),
           },
         ],
       });
@@ -87,6 +149,7 @@ export async function scheduleDailyReminder(
   time: string, // "HH:MM"
 ): Promise<void> {
   if (!isNative) return;
+  await ensureChannels();
   const [hour, minute] = time.split(":").map(Number);
   await LocalNotifications.cancel({ notifications: [{ id }] });
   await LocalNotifications.schedule({
@@ -95,6 +158,8 @@ export async function scheduleDailyReminder(
         id,
         title,
         body,
+        // Without a channel carrying a sound, this arrives silently.
+        channelId: channelId(reminderSound),
         schedule: { on: { hour, minute }, allowWhileIdle: true },
       },
     ],

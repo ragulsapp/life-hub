@@ -1,19 +1,48 @@
 import { useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../../db/db";
-import { previewSound } from "../../lib/alarmSound";
+import { BUILT_IN_SOUNDS, db, soundUrl, type SoundId } from "../../db/db";
+import { previewSound, previewUrl } from "../../lib/alarmSound";
+
+/** Exactly one of these is set; both unset means the generated siren. */
+export interface SoundSelection {
+  soundId?: number;
+  builtInSound?: SoundId;
+}
 
 export function SoundPicker({
   value,
   onChange,
 }: {
-  value: number | undefined;
-  onChange: (soundId: number | undefined) => void;
+  value: SoundSelection;
+  onChange: (next: SoundSelection) => void;
 }) {
   const sounds = useLiveQuery(() => db.sounds.toArray(), []) ?? [];
   const fileRef = useRef<HTMLInputElement>(null);
   const stopRef = useRef<(() => void) | null>(null);
-  const [playing, setPlaying] = useState<number | null>(null);
+  const [playing, setPlaying] = useState<number | string | null>(null);
+
+  const isSiren = value.soundId == null && value.builtInSound == null;
+
+  /** Shared preview lifecycle: stop any current clip, auto-stop after 4s. */
+  const playPreview = (key: number | string, start: () => () => void) => {
+    stopRef.current?.();
+    stopRef.current = null;
+    if (playing === key) {
+      setPlaying(null);
+      return;
+    }
+    const stop = start();
+    stopRef.current = stop;
+    setPlaying(key);
+    setTimeout(() => {
+      setPlaying((p) => {
+        if (p !== key) return p;
+        stop();
+        if (stopRef.current === stop) stopRef.current = null;
+        return null;
+      });
+    }, 4000);
+  };
 
   const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,68 +61,90 @@ export function SoundPicker({
       blob: file,
       createdAt: Date.now(),
     } as never);
-    onChange(id as number);
+    onChange({ soundId: id as number });
   };
 
   const preview = async (id: number) => {
-    stopRef.current?.();
-    stopRef.current = null;
-    if (playing === id) {
-      setPlaying(null);
-      return;
-    }
     const s = await db.sounds.get(id);
     if (!s) return;
-    const stop = previewSound(s.blob);
-    stopRef.current = stop;
-    setPlaying(id);
-    setTimeout(() => {
-      // Actually stop the audio when the preview window ends — previously
-      // only the icon reset while long clips kept playing.
-      setPlaying((p) => {
-        if (p !== id) return p;
-        stop();
-        if (stopRef.current === stop) stopRef.current = null;
-        return null;
-      });
-    }, 4000);
+    // Auto-stop matters here: without it only the icon reset while a long
+    // uploaded clip kept playing.
+    playPreview(id, () => previewSound(s.blob));
   };
 
   const removeSound = async (id: number) => {
     await db.sounds.delete(id);
-    if (value === id) onChange(undefined);
+    if (value.soundId === id) onChange({});
   };
 
   return (
     <div className="flex flex-col gap-2">
+      {BUILT_IN_SOUNDS.map((s) => {
+        const selected = value.builtInSound === s.id;
+        return (
+          <div
+            key={s.id}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
+              selected
+                ? "bg-cyan-500 text-slate-900"
+                : "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
+            }`}
+          >
+            <button
+              onClick={() => onChange({ builtInSound: s.id })}
+              className="flex min-w-0 flex-1 items-center gap-2 text-left"
+            >
+              <span>🔔</span>
+              <span className="min-w-0 truncate">
+                {s.label}
+                <span
+                  className={`ml-1.5 text-xs ${selected ? "text-slate-900/60" : "opacity-60"}`}
+                >
+                  {s.blurb}
+                </span>
+              </span>
+              {selected && <span className="ml-auto">✓</span>}
+            </button>
+            <button
+              onClick={() => playPreview(s.id, () => previewUrl(soundUrl(s.id)))}
+              title="Preview"
+              aria-label={`${playing === s.id ? "Stop" : "Preview"} ${s.label}`}
+              className="px-1 text-base"
+            >
+              {playing === s.id ? "⏹" : "▶"}
+            </button>
+          </div>
+        );
+      })}
+
       <button
-        onClick={() => onChange(undefined)}
+        onClick={() => onChange({})}
         className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-          value === undefined
+          isSiren
             ? "bg-cyan-500 text-slate-900"
             : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-300"
         }`}
       >
-        <span>🔔 Default siren</span>
-        {value === undefined && <span>✓</span>}
+        <span>📢 Siren (loud, keeps going)</span>
+        {isSiren && <span>✓</span>}
       </button>
 
       {sounds.map((s) => (
         <div
           key={s.id}
           className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-            value === s.id
+            value.soundId === s.id
               ? "bg-cyan-500 text-slate-900"
               : "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
           }`}
         >
           <button
-            onClick={() => onChange(s.id)}
-            className="flex flex-1 items-center gap-2 text-left"
+            onClick={() => onChange({ soundId: s.id })}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
           >
             <span>🎵</span>
             <span className="truncate">{s.name}</span>
-            {value === s.id && <span className="ml-auto">✓</span>}
+            {value.soundId === s.id && <span className="ml-auto">✓</span>}
           </button>
           <button
             onClick={() => preview(s.id)}

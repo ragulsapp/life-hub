@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { db } from "../../db/db";
+import { db, soundUrl } from "../../db/db";
 import { useScheduler } from "../../lib/scheduler";
 import { startAlarmSound, stopAlarmSound, vibrate } from "../../lib/alarmSound";
 import { minutesAfterScheduled } from "../../lib/wakeStreak";
@@ -63,6 +63,9 @@ export function AlarmOverlay() {
     let stopped = false;
     setNeedsTap(false);
     setSolved(false);
+    const builtInUrl = activeAlarm.builtInSound
+      ? soundUrl(activeAlarm.builtInSound)
+      : null;
     (async () => {
       let blob: Blob | null = null;
       if (activeAlarm.soundId != null) {
@@ -71,7 +74,7 @@ export function AlarmOverlay() {
       }
       blobRef.current = blob;
       if (stopped) return;
-      const audible = await startAlarmSound(blob);
+      const audible = await startAlarmSound(blob, builtInUrl);
       if (!stopped) setNeedsTap(!audible);
     })();
     vibrate();
@@ -128,7 +131,12 @@ export function AlarmOverlay() {
               transition={{ repeat: Infinity, duration: 1 }}
               onClick={async () => {
                 stopAlarmSound();
-                const audible = await startAlarmSound(blobRef.current);
+                const audible = await startAlarmSound(
+                  blobRef.current,
+                  activeAlarm.builtInSound
+                    ? soundUrl(activeAlarm.builtInSound)
+                    : null,
+                );
                 setNeedsTap(!audible);
               }}
               className="rounded-2xl bg-amber-400 px-6 py-3 text-base font-bold text-slate-900"

@@ -37,4 +37,15 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+      Without these, Android 12+ refuses exact alarms and the notification
+      plugin silently downgrades every reminder to an inexact one — which Doze
+      can defer by a long way, so a 9:00 reminder might land mid-afternoon.
+      USE_EXACT_ALARM is the alarm-clock grant (auto-granted, no prompt);
+      SCHEDULE_EXACT_ALARM covers API 31-32 where USE_EXACT_ALARM doesn't exist.
+    -->
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 </manifest>
