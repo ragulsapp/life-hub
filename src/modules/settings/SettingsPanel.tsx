@@ -88,7 +88,7 @@ function Section({
       <div className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
         {title}
       </div>
-      <div className="glass rounded-3xl border border-white/60 bg-white/80 p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-8px_rgba(15,23,42,0.12)] dark:border-white/5 dark:bg-slate-800/60 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2),0_12px_28px_-10px_rgba(0,0,0,0.5)]">
+      <div className="glass rounded-3xl border border-white/60 bg-white/80 p-1.5 shadow-e2 dark:border-white/5 dark:bg-slate-800/60 dark:shadow-e2-dark">
         {children}
       </div>
     </div>

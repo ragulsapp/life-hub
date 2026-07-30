@@ -3,6 +3,69 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /**
+ * Inter, self-hosted. This is an offline app — nothing may load from a CDN.
+ * One variable latin woff2 (~48 KB) covering weights 400-700; the static
+ * four-file alternative is ~72 KB and worse.
+ *
+ * font-display: block, NOT swap. The file sits on local disk inside the APK
+ * so it resolves in milliseconds; `swap` would show a visible Roboto->Inter
+ * jump on every cold start. `block` trades an imperceptible pause for zero
+ * layout shift.
+ *
+ * unicode-range includes U+20B9 (₹) — without it the rupee in amounts like
+ * "₹100,000" falls back to another face mid-string.
+ *
+ * SIL Open Font License 1.1 — see Inter-LICENSE.txt alongside the file.
+ */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: block;
+  src: url("./assets/fonts/inter-latin-var.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+    U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20B9, U+2074,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/**
+ * Design tokens.
+ *
+ * In Tailwind v4 the theme namespace IS the class generator, so redefining a
+ * token here retunes every existing utility that uses it — no find-and-replace
+ * across ~500 call sites, and revertible in one commit.
+ *
+ * Colour is deliberately NOT touched here; it lands separately so a visual
+ * regression can be reverted without losing the typography and shape work.
+ */
+@theme {
+  /* Setting --font-sans alone re-fonts the app: Preflight applies it to html. */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+
+  /* Softer, more consistent corners. Retunes existing rounded-* utilities. */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 1.75rem;
+
+  /* Elevation: layered and low-alpha. No coloured glow — that reads as
+     "gamey" rather than calm. Replaces one-off shadow-[...] strings. */
+  --shadow-e1: 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-e2:
+    0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px -10px rgb(15 23 42 / 0.1);
+  --shadow-e3:
+    0 1px 3px rgb(15 23 42 / 0.06), 0 20px 48px -16px rgb(15 23 42 / 0.18);
+  --shadow-e1-dark: 0 1px 2px rgb(0 0 0 / 0.24);
+  --shadow-e2-dark:
+    0 1px 2px rgb(0 0 0 / 0.24), 0 12px 28px -12px rgb(0 0 0 / 0.55);
+  --shadow-e3-dark:
+    0 1px 3px rgb(0 0 0 / 0.3), 0 24px 56px -18px rgb(0 0 0 / 0.65);
+}
+
+/**
  * Safe-area insets.
  *
  * index.html sets `viewport-fit=cover`, which deliberately extends the web

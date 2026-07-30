@@ -43,8 +43,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // wav included so the built-in alarm/reminder tones still play offline.
-        globPatterns: ["**/*.{js,css,html,svg,ico,png,wav}"],
+        // wav so the built-in tones still play offline; woff2 so the app
+        // doesn't fall back to a system face when opened without a network.
+        globPatterns: ["**/*.{js,css,html,svg,ico,png,wav,woff2}"],
       },
     }),
   ],
