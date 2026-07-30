@@ -5,6 +5,7 @@ import { localDateStr } from "../../lib/dates";
 import { toast } from "../../lib/toast";
 import { inputClass } from "../../components/inputStyles";
 import { Button } from "../../components/Button";
+import { logMetric } from "../health/healthActions";
 
 type CaptureKind = "expense" | "note" | "goal" | "weight" | "task";
 
@@ -86,11 +87,9 @@ export function QuickCapture() {
           toast("Enter a valid weight.", "error");
           return;
         }
-        await db.healthMetrics.add({
-          date: localDateStr(),
-          metricType: "weight",
-          value: w,
-        } as never);
+        // Via logMetric so a second weigh-in corrects today rather than
+        // adding a duplicate row (which used to plot as an extra chart point).
+        await logMetric("weight", w);
         toast("Weight logged.");
       }
       close();

@@ -17,6 +17,7 @@ export interface BackupPayload {
     fastingSessions?: unknown[];
     tasks?: unknown[];
     alarms?: unknown[];
+    achievements?: unknown[];
     appSettings: unknown[];
   };
 }
@@ -51,7 +52,11 @@ export async function buildBackupPayload(): Promise<BackupPayload> {
       fastingSessions: await db.fastingSessions.toArray(),
       tasks: await db.tasks.toArray(),
       alarms: await db.alarms.toArray(),
+      achievements: await db.achievements.toArray(),
       appSettings: await db.appSettings.toArray(),
+      // `sounds` is deliberately omitted: it holds Blobs, and JSON.stringify
+      // flattens a Blob to {}, so exporting it would write junk rows that
+      // restore as unplayable sounds. Custom audio must be re-uploaded.
     },
   };
 }
@@ -107,6 +112,7 @@ export async function restoreBackupPayload(payload: BackupPayload): Promise<void
       db.fastingSessions,
       db.tasks,
       db.alarms,
+      db.achievements,
       db.appSettings,
     ],
     async () => {
@@ -123,6 +129,7 @@ export async function restoreBackupPayload(payload: BackupPayload): Promise<void
         db.fastingSessions.clear(),
         db.tasks.clear(),
         db.alarms.clear(),
+        db.achievements.clear(),
       ]);
 
       await db.healthMetrics.bulkAdd(t.healthMetrics as never[]);
@@ -138,9 +145,21 @@ export async function restoreBackupPayload(payload: BackupPayload): Promise<void
         await db.fastingSessions.bulkAdd(t.fastingSessions as never[]);
       if (t.tasks) await db.tasks.bulkAdd(t.tasks as never[]);
       if (t.alarms) await db.alarms.bulkAdd(t.alarms as never[]);
+      if (t.achievements)
+        await db.achievements.bulkAdd(t.achievements as never[]);
 
       if (t.appSettings[0]) {
-        await db.appSettings.put(t.appSettings[0] as never);
+        // MERGE rather than replace. `put` would swap the whole row, so
+        // restoring a backup taken before a settings field existed would
+        // silently wipe it — the body profile being the painful case, since
+        // every Body Basics card would just go blank with no explanation.
+        const incoming = t.appSettings[0] as Record<string, unknown>;
+        const current = await db.appSettings.get(1);
+        await db.appSettings.put({
+          ...current,
+          ...incoming,
+          id: 1,
+        } as never);
       }
     },
   );

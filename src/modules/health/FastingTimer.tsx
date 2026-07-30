@@ -3,11 +3,17 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, DEFAULT_FAST_HOURS, FAST_TARGET_PRESETS } from "../../db/db";
 import { ProgressRing } from "../../components/ProgressRing";
 import { Button } from "../../components/Button";
+import { inputClass } from "../../components/inputStyles";
 import {
   requestNotificationPermission,
   showLocalNotification,
 } from "../../lib/notify";
 
+/**
+ * A fast the user chose to keep. Framed as an observance being kept and
+ * completed — not a metabolic protocol with a goal to hit, and never with
+ * "time to eat!" celebration copy, which is wrong for a religious fast.
+ */
 function fmt(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(totalSec / 3600);
@@ -23,6 +29,7 @@ export function FastingTimer() {
   );
   const [now, setNow] = useState(Date.now());
   const [target, setTarget] = useState(DEFAULT_FAST_HOURS);
+  const [label, setLabel] = useState("");
 
   useEffect(() => {
     if (!active) return;
@@ -32,14 +39,17 @@ export function FastingTimer() {
 
   const start = async () => {
     await requestNotificationPermission();
+    const name = label.trim();
     await db.fastingSessions.add({
       startedAt: Date.now(),
       targetHours: target,
+      label: name || undefined,
     } as never);
     setNow(Date.now());
+    setLabel("");
     await showLocalNotification(
-      "Fast started ⏱️",
-      `Aiming for ${target}h — I'll notify you when it's time to eat.`,
+      name ? `${name} started` : "Fast started",
+      `Tracking ${target}h. I'll let you know when you reach it.`,
     );
   };
 
@@ -53,9 +63,15 @@ export function FastingTimer() {
   if (!active) {
     return (
       <div className="flex flex-col gap-3">
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="What are you keeping? (optional)"
+          className={`!p-2 text-sm ${inputClass}`}
+        />
         <div>
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-            Target
+            How long
           </div>
           <div className="flex flex-wrap gap-2">
             {FAST_TARGET_PRESETS.map((h) => (
@@ -73,17 +89,17 @@ export function FastingTimer() {
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
             <div className="font-semibold text-slate-800 dark:text-slate-100">
-              Not fasting
+              Not currently fasting
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              Target {target}h window
+              Tracking {target}h when you start
             </div>
           </div>
           <Button variant="toggle-on" onClick={start}>
-            Start Fast
+            Start
           </Button>
         </div>
       </div>
@@ -108,13 +124,18 @@ export function FastingTimer() {
           {Math.floor(percent)}%
         </span>
       </ProgressRing>
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
+        {active.label && (
+          <div className="truncate text-xs font-semibold text-cyan-500">
+            {active.label}
+          </div>
+        )}
         <div className="text-lg font-extrabold tabular-nums text-slate-900 dark:text-white">
           {fmt(elapsedMs)}
         </div>
         <div className="text-xs text-slate-500 dark:text-slate-400">
           {reached
-            ? `🎉 Target reached! +${fmt(-remainingMs)} extra`
+            ? `${active.targetHours}h reached · ${fmt(-remainingMs)} beyond`
             : `${fmt(remainingMs)} to ${active.targetHours}h`}
         </div>
         <Button
@@ -122,7 +143,7 @@ export function FastingTimer() {
           onClick={end}
           className="mt-2 !py-1.5 text-sm"
         >
-          End Fast
+          Complete
         </Button>
       </div>
     </div>

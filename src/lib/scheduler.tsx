@@ -185,7 +185,11 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // --- Fasting target reached: notify once, keep the fast running ---
+      // --- Fast reached its length: notify once, keep it running. Neutral
+      // wording on purpose — a fast may be an observance, so "time to eat!"
+      // is not ours to say. Known limitation: this uses the poll path rather
+      // than a native OS schedule, so on native it only fires while the app
+      // is alive. ---
       const activeFasts = await db.fastingSessions
         .filter((f) => f.endedAt === undefined && !f.targetNotified)
         .toArray();
@@ -194,8 +198,8 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
         if (elapsedHours >= f.targetHours) {
           await db.fastingSessions.update(f.id, { targetNotified: true });
           await showLocalNotification(
-            "🍽️ Fast target reached",
-            `${f.targetHours}h done — open Life Hub to end your fast.`,
+            f.label ? `${f.label} — ${f.targetHours}h reached` : "Fast complete",
+            `You've reached ${f.targetHours} hours.`,
           );
         }
       }

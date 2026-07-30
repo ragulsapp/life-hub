@@ -1,8 +1,6 @@
-import { localDateStr } from "../../lib/dates";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  db,
   HABIT_COLORS,
   HABIT_ICONS,
   IDENTITIES,
@@ -10,8 +8,9 @@ import {
 } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
+import { toast } from "../../lib/toast";
+import { createHabitFromTemplate } from "./habitActions";
 
-const todayStr = () => localDateStr();
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"]; // index 0=Sun
 
 type ScheduleType = "daily" | "weekdays" | "times-per-week";
@@ -45,11 +44,6 @@ export function HabitForm() {
   const addHabit = async () => {
     const habitName = name.trim();
     if (!habitName) return;
-    const exists = await db.habits.where("name").equals(habitName).first();
-    if (exists) {
-      alert("A habit with that name already exists.");
-      return;
-    }
 
     let schedule: HabitSchedule;
     if (schedType === "daily") schedule = { type: "daily" };
@@ -57,29 +51,15 @@ export function HabitForm() {
       schedule = { type: "weekdays", days: days.length ? days : [1] };
     else schedule = { type: "times-per-week", target: perWeek };
 
-    await db.habits.add({
-      name: habitName,
-      color,
-      icon,
-      schedule,
-      category: identity,
-      archived: false,
-      pinned: false,
-      createdAt: Date.now(),
-    } as never);
-
-    // Also create today's log row so it appears immediately.
-    const today = todayStr();
-    const existing = await db.habitLogs
-      .where({ date: today, habitName })
-      .first();
-    if (!existing) {
-      await db.habitLogs.add({
-        date: today,
-        habitName,
-        completed: false,
-      } as never);
+    const result = await createHabitFromTemplate(
+      { name: habitName, icon, color, identity },
+      { schedule },
+    );
+    if (result === "exists") {
+      toast("You already have a habit with that name.", "error");
+      return;
     }
+    if (result === "restored") toast(`"${habitName}" is back in your habits.`);
     reset();
   };
 

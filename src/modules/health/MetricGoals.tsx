@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { motion } from "framer-motion";
-import {
-  db,
-  type HealthMetric,
-  type HealthMetricType,
-} from "../../db/db";
+import { db, type HealthMetric, type TrajectoryMetricType } from "../../db/db";
 import { inputClass } from "../../components/inputStyles";
+import { dailyValues, type DailyValue } from "../../lib/healthMetrics";
 
+/**
+ * Trajectory metrics only — a start→target journey you make once.
+ * Water and sleep are recurring daily targets derived from the body profile
+ * (see bodyMetrics.ts) and deliberately don't belong here: two sources of
+ * truth for the same number would drift.
+ */
 const GOAL_METRICS: {
-  type: HealthMetricType;
+  type: TrajectoryMetricType;
   label: string;
   unit: string;
   defaultDir: "decrease" | "increase";
@@ -19,14 +22,13 @@ const GOAL_METRICS: {
 ];
 
 function progressToGoal(
-  series: HealthMetric[],
+  series: DailyValue[],
   target: number,
   direction: "decrease" | "increase",
 ): { current: number | null; start: number | null; pct: number } {
-  const sorted = series.sort((a, b) => a.date.localeCompare(b.date));
-  if (sorted.length === 0) return { current: null, start: null, pct: 0 };
-  const start = sorted[0].value;
-  const current = sorted[sorted.length - 1].value;
+  if (series.length === 0) return { current: null, start: null, pct: 0 };
+  const start = series[0].value;
+  const current = series[series.length - 1].value;
   const totalGap = Math.abs(start - target) || 1;
   const covered =
     direction === "decrease" ? start - current : current - start;
@@ -34,15 +36,18 @@ function progressToGoal(
   return { current, start, pct };
 }
 
-export function MetricGoals() {
-  const metrics = useLiveQuery(() => db.healthMetrics.toArray(), []) ?? [];
+export function MetricGoals({ metrics }: { metrics: HealthMetric[] }) {
   const goals = useLiveQuery(() => db.metricGoals.toArray(), []) ?? [];
-  const [editing, setEditing] = useState<HealthMetricType | null>(null);
+  const [editing, setEditing] = useState<TrajectoryMetricType | null>(null);
   const [draft, setDraft] = useState("");
 
-  const goalFor = (t: HealthMetricType) => goals.find((g) => g.metricType === t);
+  const goalFor = (t: TrajectoryMetricType) =>
+    goals.find((g) => g.metricType === t);
 
-  const save = async (t: HealthMetricType, dir: "decrease" | "increase") => {
+  const save = async (
+    t: TrajectoryMetricType,
+    dir: "decrease" | "increase",
+  ) => {
     const target = parseFloat(draft);
     const existing = goalFor(t);
     if (!target) {
@@ -64,7 +69,7 @@ export function MetricGoals() {
     <div className="flex flex-col gap-3">
       {GOAL_METRICS.map((m) => {
         const goal = goalFor(m.type);
-        const series = metrics.filter((x) => x.metricType === m.type);
+        const series = dailyValues(metrics, m.type);
         const isEditing = editing === m.type;
         const prog = goal
           ? progressToGoal(series, goal.target, goal.direction)

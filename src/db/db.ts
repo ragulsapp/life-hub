@@ -1,6 +1,31 @@
 import Dexie, { type EntityTable } from "dexie";
 
-export type HealthMetricType = "weight" | "energy-level";
+export type HealthMetricType =
+  | "weight"
+  | "energy-level"
+  | "water-ml"
+  | "sleep-hours";
+
+/**
+ * Metrics the user works *toward* over time (start → target, once). Recurring
+ * daily targets (water, sleep) are deliberately excluded: their targets are
+ * derived from the body profile in `bodyMetrics.ts`, and letting them into
+ * `metricGoals` would create a second, silently diverging source of truth.
+ */
+export type TrajectoryMetricType = "weight" | "energy-level";
+
+/**
+ * How multiple same-day rows for a metric collapse into one daily value.
+ * "sum" accumulates through the day (each glass of water is its own row);
+ * "latest" means the most recent reading wins. Consumed exclusively via
+ * `dailyValues()` in `src/lib/healthMetrics.ts` — never re-implement it.
+ */
+export const METRIC_AGGREGATION: Record<HealthMetricType, "sum" | "latest"> = {
+  "water-ml": "sum",
+  weight: "latest",
+  "energy-level": "latest",
+  "sleep-hours": "latest",
+};
 
 export interface HealthMetric {
   id: number;
@@ -9,6 +34,73 @@ export interface HealthMetric {
   value: number; // booleans stored as 1/0
   note?: string;
 }
+
+/**
+ * The user's body basics, so the app can compute personal targets instead of
+ * showing arbitrary ones. Weight deliberately lives in `healthMetrics` (it
+ * changes over time and needs a trend) — not here.
+ */
+export interface BodyProfile {
+  /** Age is DERIVED from this — storing age itself would silently rot yearly. */
+  birthYear?: number;
+  heightCm?: number;
+  /** Optional: only affects the BMR estimate. "unspecified" shows a range. */
+  sex?: "male" | "female" | "unspecified";
+  activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very-active";
+  /**
+   * Which published BMI reference range to interpret weight against.
+   * "asia-pacific" uses the lower WHO/ICMR cutoffs. Presented as the user's
+   * own choice of reference — deliberately NOT inferred from ethnicity.
+   */
+  bmiReference?: "standard" | "asia-pacific";
+  waterTargetMlOverride?: number;
+  sleepTargetHoursOverride?: number;
+}
+
+/** Wellness practices offered as a shelf — the user picks what fits their life. */
+export const PRACTICES: {
+  name: string;
+  icon: string;
+  color: string;
+  identity: string;
+  blurb: string;
+}[] = [
+  {
+    name: "Exercise",
+    icon: "💪",
+    color: "#fb7185",
+    identity: "Athlete",
+    blurb: "Any movement that raises your heart rate",
+  },
+  {
+    name: "Yoga",
+    icon: "🧘",
+    color: "#a78bfa",
+    identity: "Healthy Person",
+    blurb: "Flexibility, balance and breath",
+  },
+  {
+    name: "Meditation",
+    icon: "🕉️",
+    color: "#60a5fa",
+    identity: "Healthy Person",
+    blurb: "A few quiet minutes for your mind",
+  },
+  {
+    name: "Home-cooked Meals",
+    icon: "🥗",
+    color: "#34d399",
+    identity: "Healthy Person",
+    blurb: "Eat what you prepared yourself",
+  },
+  {
+    name: "No Sugar",
+    icon: "🚫",
+    color: "#f59e0b",
+    identity: "Healthy Person",
+    blurb: "Skip added sugar for the day",
+  },
+];
 
 export interface HabitLog {
   id: number;
@@ -136,23 +228,25 @@ export interface Achievement {
 /** Target value for a numeric health metric (e.g. reach 62 kg). */
 export interface MetricGoal {
   id: number;
-  metricType: HealthMetricType;
+  metricType: TrajectoryMetricType;
   target: number;
   direction: "decrease" | "increase";
 }
 
-/** A fasting window, live while endedAt is undefined. */
+/** A fasting observance, live while endedAt is undefined. */
 export interface FastingSession {
   id: number;
   startedAt: number; // epoch ms
   endedAt?: number; // epoch ms
   targetHours: number;
-  /** Set once the "time to end your fast" notification has fired, so the
-   *  scheduler doesn't repeat it every tick. */
+  /** Optional label for the observance (e.g. "Ekadashi", "Roza"). */
+  label?: string;
+  /** Set once the elapsed-time notification has fired, so the scheduler
+   *  doesn't repeat it every tick. */
   targetNotified?: boolean;
 }
 
-export const FAST_TARGET_PRESETS = [12, 14, 15, 15.5, 16, 18, 20];
+export const FAST_TARGET_PRESETS = [8, 10, 12, 14, 16, 18, 24];
 
 export interface AppSettings {
   id: number; // fixed at 1
@@ -171,9 +265,17 @@ export interface AppSettings {
     lastCheckedAt: number;
     productId?: string;
   };
+  /** Body basics, so health targets are personal rather than arbitrary. */
+  bodyProfile?: BodyProfile;
+  /**
+   * Fasting is OFF unless the user opts in — it's a practice some people keep
+   * and others don't, and for many it's an observance rather than a health
+   * protocol. The app never assumes it.
+   */
+  fastingEnabled?: boolean;
 }
 
-export const DEFAULT_FAST_HOURS = 15.5;
+export const DEFAULT_FAST_HOURS = 12;
 
 /**
  * The four Life Pillars. Every identity maps to exactly one pillar, so
@@ -242,16 +344,19 @@ export const HABIT_ICONS = [
 /**
  * Generic suggestions offered as opt-in checkboxes during onboarding.
  * Nothing here is written automatically — the user chooses what they want.
+ *
+ * Deliberately excludes water and sleep: "did you drink water today?" is a
+ * meaningless checkbox because the real question is *how much*. Both are
+ * tracked as daily quantities against a personal target in the Health tab
+ * instead (see METRIC_AGGREGATION / bodyMetrics.ts).
  */
 export const STARTER_TEMPLATES = {
   habits: [
-    { name: "Drink Water", icon: "💧", color: "#22d3ee", identity: "Healthy Person" },
     { name: "Exercise", icon: "💪", color: "#fb7185", identity: "Athlete" },
     { name: "Read", icon: "📚", color: "#a78bfa", identity: "Reader" },
     { name: "Meditate", icon: "🧘", color: "#34d399", identity: "Healthy Person" },
-    { name: "Walk 10k Steps", icon: "🏃", color: "#4ade80", identity: "Runner" },
+    { name: "Walk", icon: "🏃", color: "#4ade80", identity: "Runner" },
     { name: "Deep Work", icon: "🎯", color: "#60a5fa", identity: "Deep Worker" },
-    { name: "Sleep Early", icon: "🛌", color: "#f472b6", identity: "Healthy Person" },
     { name: "Journal", icon: "✍️", color: "#f59e0b", identity: "Creator" },
   ],
   incomeCategories: ["Salary", "Freelance Income", "Business", "Investments"],
@@ -275,7 +380,8 @@ export const STARTER_TEMPLATES = {
   ],
 } as const;
 
-export const WEIGHT_BASELINE_KG = 70;
+/** One glass of water, in ml — the unit the water tracker taps in. */
+export const GLASS_ML = 250;
 
 class LifeHubDB extends Dexie {
   healthMetrics!: EntityTable<HealthMetric, "id">;
@@ -410,34 +516,23 @@ export async function ensureSeeded(): Promise<void> {
   await backfillHabits();
 }
 
-/** Applies the user's onboarding choices, then marks onboarding done. */
+/**
+ * Applies the user's onboarding choices, then marks onboarding done.
+ *
+ * Habits are deliberately NOT handled here — they go through
+ * `createHabitFromTemplate` in `modules/habits/habitActions.ts`, the single
+ * habit-creation path. Calling it from this file would be a circular import,
+ * so the wizard invokes it directly before calling this.
+ */
 export async function applyOnboardingSelections(selection: {
-  habits: string[];
   incomeCategories: string[];
   expenseCategories: string[];
   goals: string[];
 }): Promise<void> {
   await db.transaction(
     "rw",
-    [db.habits, db.financeCategories, db.goals, db.appSettings],
+    [db.financeCategories, db.goals, db.appSettings],
     async () => {
-      for (const [i, name] of selection.habits.entries()) {
-        const tpl = STARTER_TEMPLATES.habits.find((h) => h.name === name);
-        const exists = await db.habits.where("name").equals(name).first();
-        if (exists) continue;
-        await db.habits.add({
-          name,
-          color: tpl?.color ?? HABIT_COLORS[i % HABIT_COLORS.length],
-          icon: tpl?.icon ?? "🎯",
-          schedule: { type: "daily" },
-          category: tpl?.identity,
-          archived: false,
-          // Pin the first two picks so the Dashboard isn't empty on day one.
-          pinned: i < 2,
-          createdAt: Date.now(),
-        } as never);
-      }
-
       for (const name of selection.incomeCategories) {
         const exists = await db.financeCategories
           .where("name")

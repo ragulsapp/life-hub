@@ -7,7 +7,7 @@ interface Row {
   date: string;
   hours: number;
   target: number;
-  hit: boolean;
+  label?: string;
 }
 
 function fmtHours(h: number): string {
@@ -38,7 +38,7 @@ export function FastingHistory() {
         }),
         hours,
         target: s.targetHours,
-        hit: hours >= s.targetHours,
+        label: s.label,
       };
     })
     .sort((a, b) => b.id - a.id);
@@ -52,9 +52,7 @@ export function FastingHistory() {
   }
 
   const avg = rows.reduce((sum, r) => sum + r.hours, 0) / rows.length;
-  const hitRate = Math.round(
-    (rows.filter((r) => r.hit).length / rows.length) * 100,
-  );
+  const longest = Math.max(...rows.map((r) => r.hours));
   const recent = rows.slice(0, 14).slice().reverse(); // oldest-first for the chart
   const maxHours = Math.max(...recent.map((r) => Math.max(r.hours, r.target)), 1);
 
@@ -68,7 +66,7 @@ export function FastingHistory() {
             {rows.length}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            Fasts logged
+            Fasts kept
           </div>
         </div>
         <div>
@@ -76,13 +74,15 @@ export function FastingHistory() {
             {fmtHours(avg)}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            Avg duration
+            Average
           </div>
         </div>
         <div>
-          <div className="text-xl font-bold text-emerald-500">{hitRate}%</div>
+          <div className="text-xl font-bold text-slate-900 dark:text-white">
+            {fmtHours(longest)}
+          </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">
-            Hit target
+            Longest
           </div>
         </div>
       </div>
@@ -94,10 +94,8 @@ export function FastingHistory() {
               initial={{ height: 0 }}
               animate={{ height: `${(r.hours / maxHours) * 100}%` }}
               transition={{ duration: 0.4 }}
-              className={`w-full min-h-[3px] rounded-t-md ${
-                r.hit ? "bg-emerald-400" : "bg-amber-400"
-              }`}
-              title={`${r.date}: ${fmtHours(r.hours)} (target ${r.target}h)`}
+              className="w-full min-h-[3px] rounded-t-md bg-cyan-400"
+              title={`${r.date}: ${fmtHours(r.hours)} of ${r.target}h`}
             />
             <span className="text-[9px] text-slate-400">{r.date}</span>
           </div>
@@ -107,16 +105,17 @@ export function FastingHistory() {
       <div className="flex flex-col gap-2 border-t border-slate-200/70 pt-3 dark:border-slate-600/40">
         {rows.slice(0, 8).map((r) => (
           <div key={r.id} className="flex items-center gap-2 text-sm">
-            <span className={r.hit ? "text-emerald-500" : "text-amber-500"}>
-              {r.hit ? "✓" : "✕"}
-            </span>
             <span className="w-16 flex-shrink-0 text-slate-500 dark:text-slate-400">
               {r.date}
             </span>
-            <span className="flex-1 font-medium text-slate-800 dark:text-slate-100">
+            <span className="min-w-0 flex-1 truncate font-medium text-slate-800 dark:text-slate-100">
               {fmtHours(r.hours)}
+              {r.label && (
+                <span className="ml-1.5 text-xs font-normal text-slate-400">
+                  {r.label}
+                </span>
+              )}
             </span>
-            <span className="text-xs text-slate-400">/ {r.target}h</span>
             <button
               onClick={() => remove(r.id)}
               aria-label={`Delete ${r.date} fast record`}

@@ -1,10 +1,19 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { applyOnboardingSelections, db, STARTER_TEMPLATES } from "../../db/db";
+import {
+  applyOnboardingSelections,
+  db,
+  HABIT_COLORS,
+  STARTER_TEMPLATES,
+  type BodyProfile,
+} from "../../db/db";
 import { Button } from "../../components/Button";
+import { inputClass } from "../../components/inputStyles";
 import { toast } from "../../lib/toast";
+import { createHabitFromTemplate } from "../habits/habitActions";
+import { saveBodyProfile } from "../health/healthActions";
 
-type Step = 0 | 1 | 2 | 3;
+type Step = number;
 
 function Chips({
   options,
@@ -44,7 +53,22 @@ export function OnboardingWizard() {
   const [income, setIncome] = useState<string[]>([]);
   const [expense, setExpense] = useState<string[]>([]);
   const [goals, setGoals] = useState<string[]>([]);
+  const [birthYear, setBirthYear] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [sex, setSex] = useState<BodyProfile["sex"]>("unspecified");
   const [saving, setSaving] = useState(false);
+
+  /** Only saved if the user actually filled something in — it's optional. */
+  const bodyProfile: BodyProfile | null = (() => {
+    const by = parseInt(birthYear, 10);
+    const h = parseFloat(heightCm);
+    const patch: BodyProfile = {};
+    if (Number.isFinite(by) && by > 1900 && by <= new Date().getFullYear())
+      patch.birthYear = by;
+    if (Number.isFinite(h) && h > 50 && h < 260) patch.heightCm = h;
+    if (sex && sex !== "unspecified") patch.sex = sex;
+    return Object.keys(patch).length ? patch : null;
+  })();
 
   const toggle =
     (setter: React.Dispatch<React.SetStateAction<string[]>>) => (v: string) =>
@@ -58,8 +82,22 @@ export function OnboardingWizard() {
       if (skip) {
         await db.appSettings.update(1, { onboardingComplete: true });
       } else {
+        // Habits go through the shared creation path; the first two picks are
+        // pinned so the Dashboard isn't empty on day one.
+        for (const [i, name] of habits.entries()) {
+          const tpl = STARTER_TEMPLATES.habits.find((h) => h.name === name);
+          await createHabitFromTemplate(
+            {
+              name,
+              icon: tpl?.icon ?? "🎯",
+              color: tpl?.color ?? HABIT_COLORS[i % HABIT_COLORS.length],
+              identity: tpl?.identity,
+            },
+            { pinned: i < 2 },
+          );
+        }
+        if (bodyProfile) await saveBodyProfile(bodyProfile);
         await applyOnboardingSelections({
-          habits,
           incomeCategories: income,
           expenseCategories: expense,
           goals,
@@ -106,6 +144,74 @@ export function OnboardingWizard() {
       ),
     },
     {
+      title: "A little about your body",
+      subtitle:
+        "Optional — it lets the Health tab give you personal numbers instead of generic ones.",
+      body: (
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                Birth year
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={birthYear}
+                onChange={(e) => setBirthYear(e.target.value)}
+                placeholder="1998"
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                Height (cm)
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={heightCm}
+                onChange={(e) => setHeightCm(e.target.value)}
+                placeholder="170"
+                className={inputClass}
+              />
+            </label>
+          </div>
+          <div>
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              Sex — only affects one energy estimate
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  ["female", "Female"],
+                  ["male", "Male"],
+                  ["unspecified", "Prefer not to say"],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={v}
+                  onClick={() => setSex(v)}
+                  aria-pressed={sex === v}
+                  className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                    sex === v
+                      ? "bg-cyan-500 text-slate-900"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs text-slate-400">
+            You can skip this entirely and fill it in later — or never. Like
+            everything else, it stays on this device.
+          </p>
+        </div>
+      ),
+    },
+    {
       title: "Money categories",
       subtitle: "So the app can tell you what's safe to spend.",
       body: (
@@ -147,7 +253,7 @@ export function OnboardingWizard() {
   ];
 
   const current = steps[step];
-  const isLast = step === 3;
+  const isLast = step === steps.length - 1;
 
   return (
     <div className="mx-auto flex min-h-svh max-w-md flex-col justify-between p-6">
@@ -175,16 +281,14 @@ export function OnboardingWizard() {
 
       <div className="flex flex-col gap-2 pb-4">
         <Button
-          onClick={() => (isLast ? finish() : setStep((s) => (s + 1) as Step))}
+          onClick={() => (isLast ? finish() : setStep((s) => s + 1))}
           disabled={saving}
           className="w-full"
         >
           {isLast ? (saving ? "Setting up…" : "Finish setup") : "Continue"}
         </Button>
         <button
-          onClick={() =>
-            step === 0 ? finish(true) : setStep((s) => (s - 1) as Step)
-          }
+          onClick={() => (step === 0 ? finish(true) : setStep((s) => s - 1))}
           disabled={saving}
           className="py-2 text-sm font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
         >

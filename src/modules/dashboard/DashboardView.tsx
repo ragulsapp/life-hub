@@ -28,12 +28,23 @@ export function DashboardView() {
   const budgets = useLiveQuery(() => db.budgets.toArray(), []) ?? [];
   const goals = useLiveQuery(() => db.goals.toArray(), []) ?? [];
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) ?? [];
+  const healthMetrics = useLiveQuery(() => db.healthMetrics.toArray(), []) ?? [];
+  const settings = useLiveQuery(() => db.appSettings.get(1), []);
 
   const now = new Date();
   const today = localDateStr(now);
   const monthKey = currentMonthKey(now);
 
-  const pillars = calcPillars(habits, logs, transactions, budgets, monthKey, now);
+  const pillars = calcPillars(
+    habits,
+    logs,
+    transactions,
+    budgets,
+    monthKey,
+    now,
+    healthMetrics,
+    settings?.bodyProfile,
+  );
   const balance = calcLifeBalance(pillars);
   const coachLine = dailyCoachMessage(
     habits,
