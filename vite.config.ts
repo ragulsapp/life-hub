@@ -10,6 +10,9 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
+      // We register the service worker ourselves in main.tsx, gated on
+      // Capacitor.isNativePlatform() — see the comment there for why.
+      injectRegister: false,
       includeAssets: ["icons/icon.svg", "icons/icon-192.png"],
       manifest: {
         name: "Life Mentor",
