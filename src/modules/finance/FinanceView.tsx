@@ -10,6 +10,7 @@ import { BudgetManager } from "./BudgetManager";
 import { SpendingHistory } from "./SpendingHistory";
 import { DebtManager } from "./DebtManager";
 import { RecurringManager } from "./RecurringManager";
+import { ReportsView } from "./ReportsView";
 import {
   calcMonthTotals,
   calcMRR,
@@ -18,10 +19,11 @@ import {
   expenseByCategory,
 } from "./financeSummary";
 
-type SubTab = "overview" | "debts";
+type SubTab = "overview" | "reports" | "debts";
 
 const SUB_TABS: { id: SubTab; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "reports", label: "Reports" },
   { id: "debts", label: "Debts" },
 ];
 
@@ -77,6 +79,8 @@ export function FinanceView() {
           <DebtManager />
           <RecurringManager />
         </div>
+      ) : subTab === "reports" ? (
+        <ReportsView />
       ) : (
         <>
         {safe && (

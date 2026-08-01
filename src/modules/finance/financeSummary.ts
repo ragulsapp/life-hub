@@ -1,5 +1,5 @@
 import type { Budget, FinanceCategory, Transaction } from "../../db/db";
-import { localMonthKey } from "../../lib/dates";
+import { addDaysStr, localMonthKey } from "../../lib/dates";
 
 export function currentMonthKey(date = new Date()): string {
   return localMonthKey(date); // YYYY-MM, local calendar (not UTC)
@@ -34,6 +34,21 @@ export function expenseByCategory(
     .sort((a, b) => b.total - a.total);
 }
 
+/** Income totals grouped by category for the month, sorted high → low. */
+export function incomeByCategory(
+  transactions: Transaction[],
+  monthKey: string,
+): { category: string; total: number }[] {
+  const map = new Map<string, number>();
+  for (const t of transactions) {
+    if (t.type !== "income" || !isInMonth(t.date, monthKey)) continue;
+    map.set(t.category, (map.get(t.category) ?? 0) + t.amount);
+  }
+  return [...map.entries()]
+    .map(([category, total]) => ({ category, total }))
+    .sort((a, b) => b.total - a.total);
+}
+
 /** Previous month key, e.g. "2026-01" → "2025-12". */
 export function previousMonthKey(monthKey: string): string {
   const [y, m] = monthKey.split("-").map(Number);
@@ -53,6 +68,40 @@ export function calcMonthTotals(
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);
   return { totalIncome, totalExpense, net: totalIncome - totalExpense };
+}
+
+type PeriodTotals = { totalIncome: number; totalExpense: number; net: number };
+
+function sumTotals(transactions: Transaction[]): PeriodTotals {
+  const totalIncome = transactions
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = transactions
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + t.amount, 0);
+  return { totalIncome, totalExpense, net: totalIncome - totalExpense };
+}
+
+/** Totals for a single calendar day (YYYY-MM-DD). */
+export function calcDayTotal(transactions: Transaction[], date: string): PeriodTotals {
+  return sumTotals(transactions.filter((t) => t.date === date));
+}
+
+/** Totals for the 7-day window starting at `weekStart` (inclusive both ends). */
+export function calcWeekTotal(
+  transactions: Transaction[],
+  weekStart: string,
+): PeriodTotals {
+  const weekEnd = addDaysStr(weekStart, 6);
+  return sumTotals(
+    transactions.filter((t) => t.date >= weekStart && t.date <= weekEnd),
+  );
+}
+
+/** Totals for a calendar year. */
+export function calcYearTotals(transactions: Transaction[], year: number): PeriodTotals {
+  const prefix = String(year);
+  return sumTotals(transactions.filter((t) => t.date.startsWith(prefix)));
 }
 
 /**

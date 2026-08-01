@@ -1,12 +1,16 @@
 import { describe, it, expect } from "vitest";
 import type { Budget, FinanceCategory, Transaction } from "../src/db/db";
 import {
+  calcDayTotal,
   calcMRR,
   calcMonthTotals,
   calcSafeToSpendToday,
+  calcWeekTotal,
+  calcYearTotals,
   categoryDeltas,
   currentMonthKey,
   expenseByCategory,
+  incomeByCategory,
   isInMonth,
   previousMonthKey,
   sumByCategory,
@@ -86,6 +90,42 @@ describe("business metrics", () => {
       { category: "Rent", total: 12000 },
       { category: "Food", total: 3000 },
     ]);
+  });
+
+  it("incomeByCategory sorts high to low, mirroring expenseByCategory", () => {
+    const rows = incomeByCategory(SAMPLE, M);
+    expect(rows).toEqual([
+      { category: "Salary", total: 50000 },
+      { category: "Freelance Income", total: 10000 },
+      { category: "Business", total: 5000 },
+    ]);
+  });
+});
+
+describe("period totals", () => {
+  it("calcDayTotal only counts a single day", () => {
+    const out = calcDayTotal(SAMPLE, "2026-07-10");
+    expect(out).toEqual({ totalIncome: 0, totalExpense: 12000, net: -12000 });
+  });
+
+  it("calcWeekTotal covers a 7-day window inclusive of both ends", () => {
+    // Week starting 2026-07-05 covers 07-05..07-11.
+    const out = calcWeekTotal(SAMPLE, "2026-07-05");
+    expect(out.totalIncome).toBe(15000); // Freelance 10k + Business 5k
+    expect(out.totalExpense).toBe(15000); // Rent 12k + Food 3k
+  });
+
+  it("calcWeekTotal excludes transactions outside the window", () => {
+    // Week starting 2026-07-01 covers 07-01..07-07 — excludes the 10th/11th.
+    const out = calcWeekTotal(SAMPLE, "2026-07-01");
+    expect(out.totalExpense).toBe(0);
+  });
+
+  it("calcYearTotals sums the whole year, across months", () => {
+    const out = calcYearTotals(SAMPLE, 2026);
+    const expectedIncome = 50000 + 10000 + 5000 + 99999; // all 2026 rows
+    expect(out.totalIncome).toBe(expectedIncome);
+    expect(out.totalExpense).toBe(15000);
   });
 });
 

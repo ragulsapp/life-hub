@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { localDateStr, localTimeStr, localMonthKey, tomorrowStr } from "../src/lib/dates";
+import {
+  addDaysStr,
+  localDateStr,
+  localMonthKey,
+  localTimeStr,
+  startOfWeekStr,
+  tomorrowStr,
+} from "../src/lib/dates";
 
 afterEach(() => vi.useRealTimers());
 
@@ -59,5 +66,40 @@ describe("tomorrowStr", () => {
     // Not every zone observes DST, but the date-component construction used
     // here is correct regardless — verified against a plain calendar case.
     expect(tomorrowStr(new Date(2026, 1, 28))).toBe("2026-03-01"); // 2026 is not a leap year
+  });
+});
+
+describe("addDaysStr", () => {
+  it("adds days within a month", () => {
+    expect(addDaysStr("2026-07-05", 6)).toBe("2026-07-11");
+  });
+
+  it("rolls over a month boundary", () => {
+    expect(addDaysStr("2026-07-28", 6)).toBe("2026-08-03");
+  });
+
+  it("subtracts with a negative count", () => {
+    expect(addDaysStr("2026-07-05", -6)).toBe("2026-06-29");
+  });
+
+  it("is a no-op for zero days", () => {
+    expect(addDaysStr("2026-07-05", 0)).toBe("2026-07-05");
+  });
+});
+
+describe("startOfWeekStr", () => {
+  it("returns the same day when now is a Sunday", () => {
+    // 2026-07-05 is a Sunday.
+    expect(startOfWeekStr(new Date(2026, 6, 5))).toBe("2026-07-05");
+  });
+
+  it("returns the most recent Sunday for a mid-week day", () => {
+    // 2026-07-08 is a Wednesday.
+    expect(startOfWeekStr(new Date(2026, 6, 8))).toBe("2026-07-05");
+  });
+
+  it("rolls back across a month boundary", () => {
+    // 2026-08-01 is a Saturday; the prior Sunday is 2026-07-26.
+    expect(startOfWeekStr(new Date(2026, 7, 1))).toBe("2026-07-26");
   });
 });

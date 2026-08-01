@@ -28,3 +28,17 @@ export function localMonthKey(d: Date = new Date()): string {
 export function tomorrowStr(now: Date = new Date()): string {
   return localDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
 }
+
+/** `dateStr` (YYYY-MM-DD) shifted by `days` (may be negative), built from
+ *  date components so month/year rollovers are exact. */
+export function addDaysStr(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return localDateStr(new Date(y, m - 1, d + days));
+}
+
+/** Most recent Sunday on/before `now`, as YYYY-MM-DD — the app's week start. */
+export function startOfWeekStr(now: Date = new Date()): string {
+  return localDateStr(
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()),
+  );
+}
