@@ -10,7 +10,8 @@ import { calcLifeBalance, calcPillars } from "../../lib/lifePillars";
 import { getRecommendation } from "../../lib/recommendations";
 import { dailyCoachMessage, greeting } from "../../lib/coachMessages";
 import { useSettingsUi } from "../../lib/settingsUi";
-import { currentMonthKey } from "../finance/financeSummary";
+import { quoteForDay } from "../../lib/quotes";
+import { calcSafeToSpendToday, currentMonthKey } from "../finance/financeSummary";
 import { isDueOn } from "../habits/habitStreaks";
 import { setHabitDone } from "../habits/habitActions";
 import { TodayAgenda } from "./TodayAgenda";
@@ -97,6 +98,8 @@ export function DashboardView() {
 
   const pinned = habits.filter((h) => h.pinned && !h.archived).slice(0, 2);
   const todayGoal = goals.find((g) => g.term === "today" && g.status === "active");
+  const quote = quoteForDay(now);
+  const safe = calcSafeToSpendToday(transactions, budgets, monthKey, now);
 
   const saveBrainDump = async () => {
     const text = brainDump.trim();
@@ -143,66 +146,11 @@ export function DashboardView() {
 
       <BackupNudge />
 
-      <Card title="Life Balance">
-        <div className="flex items-center gap-4">
-          <ProgressRing percent={balance ?? 0} size={72} strokeWidth={7}>
-            <span className="text-sm font-extrabold text-slate-700 dark:text-slate-100">
-              {balance === null ? "—" : balance}
-            </span>
-          </ProgressRing>
-          <div className="flex-1">
-            <PillarBar scores={pillars} />
-          </div>
-        </div>
-      </Card>
+      <p className="px-1 text-sm italic text-slate-500 dark:text-slate-400">
+        “{quote}”
+      </p>
 
-      <Card title="One Focus" delay={0.03}>
-        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-          {recommendation.message}
-        </p>
-      </Card>
-
-      <Card title="Today's Goal" delay={0.04}>
-        {todayGoal ? (
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-            🎯 {todayGoal.title}
-          </p>
-        ) : (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Set today's goal.
-          </p>
-        )}
-      </Card>
-
-      {pinned.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          {pinned.map((h) => {
-            const done = doneToday.has(h.name);
-            return (
-              <motion.button
-                key={h.id}
-                onClick={() => setHabitDone(h.name, today, !done)}
-                aria-pressed={done}
-                whileTap={{ scale: 0.94 }}
-                className={`relative overflow-hidden rounded-3xl p-5 text-center transition-colors ${
-                  done
-                    ? "text-slate-900 shadow-lg"
-                    : "glass border border-white/60 bg-white/70 text-slate-400 dark:border-white/5 dark:bg-slate-800/60 dark:text-slate-500"
-                }`}
-                style={done ? { backgroundColor: h.color } : undefined}
-              >
-                <div className="text-2xl">{h.icon}</div>
-                <div className="mt-1 text-base font-bold">{h.name}</div>
-                <div className="text-xs font-medium opacity-80">
-                  {done ? "Done today ✓" : "Tap to log"}
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
-      )}
-
-      <Card title="Today's Mission" delay={0.06}>
+      <Card title="Today's Mission" delay={0.02}>
         {mission.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Nothing scheduled today. Add a habit to build momentum.
@@ -257,6 +205,82 @@ export function DashboardView() {
           </>
         )}
       </Card>
+
+      <Card title="Today's Goal" delay={0.03}>
+        {todayGoal ? (
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+            🎯 {todayGoal.title}
+          </p>
+        ) : (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Set today's goal.
+          </p>
+        )}
+      </Card>
+
+      {safe && (
+        <Card title="Safe Spending Today" delay={0.04}>
+          <div className="flex items-baseline justify-between">
+            <div
+              className={`text-2xl font-extrabold tracking-tight ${
+                safe.remaining >= 0 ? "text-emerald-500" : "text-red-500"
+              }`}
+            >
+              ₹{safe.perDay.toLocaleString()}
+            </div>
+            <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+              ₹{safe.remaining.toLocaleString()} {safe.remaining >= 0 ? "left" : "over"} this month
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <Card title="One Priority Recommendation" delay={0.05}>
+        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+          {recommendation.message}
+        </p>
+      </Card>
+
+      <Card title="Life Balance" delay={0.06}>
+        <div className="flex items-center gap-4">
+          <ProgressRing percent={balance ?? 0} size={72} strokeWidth={7}>
+            <span className="text-sm font-extrabold text-slate-700 dark:text-slate-100">
+              {balance === null ? "—" : balance}
+            </span>
+          </ProgressRing>
+          <div className="flex-1">
+            <PillarBar scores={pillars} />
+          </div>
+        </div>
+      </Card>
+
+      {pinned.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {pinned.map((h) => {
+            const done = doneToday.has(h.name);
+            return (
+              <motion.button
+                key={h.id}
+                onClick={() => setHabitDone(h.name, today, !done)}
+                aria-pressed={done}
+                whileTap={{ scale: 0.94 }}
+                className={`relative overflow-hidden rounded-3xl p-5 text-center transition-colors ${
+                  done
+                    ? "text-slate-900 shadow-lg"
+                    : "glass border border-white/60 bg-white/70 text-slate-400 dark:border-white/5 dark:bg-slate-800/60 dark:text-slate-500"
+                }`}
+                style={done ? { backgroundColor: h.color } : undefined}
+              >
+                <div className="text-2xl">{h.icon}</div>
+                <div className="mt-1 text-base font-bold">{h.name}</div>
+                <div className="text-xs font-medium opacity-80">
+                  {done ? "Done today ✓" : "Tap to log"}
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      )}
 
       <Card title="Quick Brain Dump" delay={0.09}>
         <textarea

@@ -9,10 +9,12 @@ import { useDarkMode } from "./lib/theme";
 import { SchedulerProvider } from "./lib/scheduler";
 import { installAudioUnlock } from "./lib/alarmSound";
 import { isNative, type NotificationExtra } from "./lib/notify";
+import { localDateStr } from "./lib/dates";
 import { Toaster } from "./components/Toaster";
 import { SettingsPanel } from "./modules/settings/SettingsPanel";
 import { PlanTomorrowPanel } from "./modules/alarms/PlanTomorrowPanel";
 import { ConfirmRecurringSheet } from "./modules/finance/ConfirmRecurringSheet";
+import { MorningBrief } from "./modules/dashboard/MorningBrief";
 import { SettingsUiContext } from "./lib/settingsUi";
 import {
   HomeIcon,
@@ -109,6 +111,11 @@ function App() {
   if (settings === undefined) return null;
   if (!settings?.onboardingComplete) return <OnboardingWizard />;
 
+  // Re-derives from `settings` on every render, so writing today's date in
+  // MorningBrief's own dismiss handler is enough to close it reactively —
+  // no separate boolean state needed here.
+  const showMorningBrief = settings.morningBriefShownDate !== localDateStr();
+
   return (
     <SchedulerProvider>
       <SettingsUiContext.Provider
@@ -203,6 +210,7 @@ function App() {
             onClose={() => setConfirmRecurringId(null)}
           />
         )}
+        {showMorningBrief && <MorningBrief onDismiss={() => {}} />}
       </div>
       </SettingsUiContext.Provider>
     </SchedulerProvider>

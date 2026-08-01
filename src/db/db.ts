@@ -377,6 +377,9 @@ export interface AppSettings {
   /** Poll-fallback dedupe only (browser/PWA testing) — native scheduling
    *  doesn't need this, the OS only fires the daily schedule once. */
   nightReminderLastDate?: string;
+  /** Gates the once-a-day Morning Brief overlay — shown again whenever this
+   *  no longer matches today. */
+  morningBriefShownDate?: string;
 }
 
 export const DEFAULT_FAST_HOURS = 12;
