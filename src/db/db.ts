@@ -380,6 +380,19 @@ export interface AppSettings {
   /** Gates the once-a-day Morning Brief overlay — shown again whenever this
    *  no longer matches today. */
   morningBriefShownDate?: string;
+  /**
+   * One-per-day gate for the four Smart Notification triggers. Bundled into
+   * one structured field (rather than a per-row lastReminderDate) because
+   * these conditions are cross-entity/global, not tied to one row. Reset
+   * whenever `date` no longer matches today.
+   */
+  smartNotified?: {
+    date: string;
+    habitsLeft?: boolean;
+    budgetClose?: boolean;
+    missionOneLeft?: boolean;
+    missionComplete?: boolean;
+  };
 }
 
 export const DEFAULT_FAST_HOURS = 12;

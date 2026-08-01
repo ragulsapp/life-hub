@@ -12,6 +12,9 @@ import { resyncNativeReminders } from "./reminderSync";
 import { localDateStr, localMonthKey } from "./dates";
 import { alarmDueState, reminderDue } from "./reminderLogic";
 import { isPending } from "../modules/finance/recurringSummary";
+import { calcDayTotal, calcSafeToSpendToday } from "../modules/finance/financeSummary";
+import { isDueOn } from "../modules/habits/habitStreaks";
+import { missionState, smartTriggersDue } from "./smartNotifications";
 
 interface SchedulerContext {
   activeAlarm: Alarm | null;
@@ -196,6 +199,94 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
           `${r.category} — ₹${r.amount.toLocaleString()}`,
           { kind: "recurring-due", recurringId: r.id },
         );
+      }
+
+      // --- Smart Notifications: four contextual nudges, gated one-per-day
+      // via appSettings.smartNotified — bundled into one structured field
+      // rather than a per-row lastReminderDate because these conditions are
+      // cross-entity/global, not tied to one row. ---
+      const smartSettings = await db.appSettings.get(1);
+      const smartNotified =
+        smartSettings?.smartNotified?.date === today
+          ? smartSettings.smartNotified
+          : { date: today };
+
+      if (
+        !smartNotified.habitsLeft ||
+        !smartNotified.budgetClose ||
+        !smartNotified.missionOneLeft ||
+        !smartNotified.missionComplete
+      ) {
+        const [smHabits, smLogsToday, smTasks, smTransactions, smBudgets] =
+          await Promise.all([
+            db.habits.toArray(),
+            db.habitLogs.where("date").equals(today).toArray(),
+            db.tasks.toArray(),
+            db.transactions.toArray(),
+            db.budgets.toArray(),
+          ]);
+        const smDoneToday = new Set(
+          smLogsToday.filter((l) => l.completed).map((l) => l.habitName),
+        );
+        const smDueHabits = smHabits.filter(
+          (h) => !h.archived && isDueOn(h.schedule, now),
+        );
+        const smHabitsRemaining = smDueHabits.filter((h) => !smDoneToday.has(h.name)).length;
+        const smMission = missionState(
+          smDueHabits.length,
+          smHabitsRemaining,
+          smTasks.filter((t) => !t.done).length,
+        );
+        const smSafe = calcSafeToSpendToday(smTransactions, smBudgets, thisMonth, now);
+
+        const triggers = smartTriggersDue(
+          {
+            now,
+            habitsRemaining: smHabitsRemaining,
+            missionSize: smMission.size,
+            missionRemaining: smMission.remaining,
+            todaySpend: calcDayTotal(smTransactions, today).totalExpense,
+            safePerDay: smSafe?.perDay ?? null,
+          },
+          smartNotified,
+        );
+
+        if (triggers.length > 0) {
+          const patch = { ...smartNotified };
+          for (const trigger of triggers) {
+            switch (trigger.kind) {
+              case "habitsLeft":
+                patch.habitsLeft = true;
+                await showLocalNotification(
+                  "Almost there",
+                  `You have ${trigger.count} habit${trigger.count === 1 ? "" : "s"} left today.`,
+                );
+                break;
+              case "budgetClose":
+                patch.budgetClose = true;
+                await showLocalNotification(
+                  "Budget check",
+                  "You're close to today's budget.",
+                );
+                break;
+              case "missionOneLeft":
+                patch.missionOneLeft = true;
+                await showLocalNotification(
+                  "So close",
+                  "You're one task away from completing today's mission.",
+                );
+                break;
+              case "missionComplete":
+                patch.missionComplete = true;
+                await showLocalNotification(
+                  "Mission Accomplished ✅",
+                  "Congratulations! You completed today's mission.",
+                );
+                break;
+            }
+          }
+          await db.appSettings.update(1, { smartNotified: patch });
+        }
       }
     };
 
