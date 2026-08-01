@@ -17,6 +17,14 @@ import {
 export const isNative = Capacitor.isNativePlatform();
 
 /**
+ * Payload carried on a scheduled notification so a tap can route to the
+ * right in-app panel. Read from `ActionPerformed.notification.extra` by the
+ * listener registered in App.tsx — no pub-sub router needed, App.tsx already
+ * owns every "open X full-screen panel" boolean.
+ */
+export type NotificationExtra = { kind: "night-reminder" };
+
+/**
  * Channel ids are versioned because **an Android notification channel is
  * immutable once created**. Its importance and sound are fixed at creation and
  * `createChannel` on an existing id silently does nothing — so a channel that
@@ -147,6 +155,7 @@ export async function scheduleDailyReminder(
   title: string,
   body: string,
   time: string, // "HH:MM"
+  extra?: NotificationExtra,
 ): Promise<void> {
   if (!isNative) return;
   await ensureChannels();
@@ -161,6 +170,7 @@ export async function scheduleDailyReminder(
         // Without a channel carrying a sound, this arrives silently.
         channelId: channelId(reminderSound),
         schedule: { on: { hour, minute }, allowWhileIdle: true },
+        extra,
       },
     ],
   });
@@ -175,3 +185,7 @@ export async function cancelReminder(id: number): Promise<void> {
 export const habitNotifId = (habitId: number) => 100_000 + habitId;
 export const taskNotifId = (taskId: number) => 200_000 + taskId;
 export const noteNotifId = (noteId: number) => 300_000 + noteId;
+
+/** Fixed id for the singleton nightly reminder — well clear of the row-id
+ *  ranges above. */
+export const NIGHT_REMINDER_NOTIF_ID = 900_001;

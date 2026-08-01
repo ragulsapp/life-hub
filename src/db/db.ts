@@ -154,6 +154,10 @@ export interface Task {
   reminderEnabled?: boolean;
   reminderTime?: string; // HH:MM
   lastReminderDate?: string;
+  /** Manual position from drag-reordering (e.g. in Plan Tomorrow). Tasks
+   *  without one sort by createdAt — existing tasks are unaffected until the
+   *  user actually reorders something. */
+  order?: number;
 }
 
 export type AlarmMission = "math" | "memory";
@@ -339,6 +343,16 @@ export interface AppSettings {
   fastingEnabled?: boolean;
   /** Which built-in tone habit/task/note reminders use. */
   reminderSound?: SoundId;
+  /**
+   * Nightly "plan tomorrow" nudge. On by default (undefined and `true` both
+   * mean on) — this is a core ritual the app offers, not an opt-in practice
+   * like fasting, so existing installs get it without a migration.
+   */
+  nightReminderEnabled?: boolean;
+  nightReminderTime?: string; // HH:MM, defaults to "21:00"
+  /** Poll-fallback dedupe only (browser/PWA testing) — native scheduling
+   *  doesn't need this, the OS only fires the daily schedule once. */
+  nightReminderLastDate?: string;
 }
 
 export const DEFAULT_FAST_HOURS = 12;

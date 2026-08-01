@@ -11,16 +11,18 @@ import {
   taskNotifId,
 } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
+import { sortByOrder } from "../../lib/taskOrder";
 
 export function TaskList() {
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) ?? [];
   const [title, setTitle] = useState("");
   const [editingReminder, setEditingReminder] = useState<number | null>(null);
 
-  const sorted = [...tasks].sort((a, b) => {
-    if (a.done !== b.done) return a.done ? 1 : -1;
-    return b.createdAt - a.createdAt;
-  });
+  // Stable sort: order/createdAt first, then done status regroups on top —
+  // ties (same done status) keep their relative order from the first pass.
+  const sorted = sortByOrder(tasks).sort((a, b) =>
+    a.done === b.done ? 0 : a.done ? 1 : -1,
+  );
 
   const add = async () => {
     const t = title.trim();

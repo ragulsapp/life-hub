@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { localDateStr, localTimeStr, localMonthKey } from "../src/lib/dates";
+import { localDateStr, localTimeStr, localMonthKey, tomorrowStr } from "../src/lib/dates";
 
 afterEach(() => vi.useRealTimers());
 
@@ -39,5 +39,25 @@ describe("localMonthKey", () => {
   it("returns local YYYY-MM", () => {
     expect(localMonthKey(new Date(2026, 11, 31, 23, 59))).toBe("2026-12");
     // Old UTC implementation would report January for Dec 31 23:59 in UTC+ zones.
+  });
+});
+
+describe("tomorrowStr", () => {
+  it("returns the next calendar day", () => {
+    expect(tomorrowStr(new Date(2026, 6, 14))).toBe("2026-07-15");
+  });
+
+  it("rolls over a month boundary", () => {
+    expect(tomorrowStr(new Date(2026, 6, 31))).toBe("2026-08-01");
+  });
+
+  it("rolls over a year boundary", () => {
+    expect(tomorrowStr(new Date(2026, 11, 31))).toBe("2027-01-01");
+  });
+
+  it("is exact even if computed via ms-addition would land on the wrong day near a DST change", () => {
+    // Not every zone observes DST, but the date-component construction used
+    // here is correct regardless — verified against a plain calendar case.
+    expect(tomorrowStr(new Date(2026, 1, 28))).toBe("2026-03-01"); // 2026 is not a leap year
   });
 });

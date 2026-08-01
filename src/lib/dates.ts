@@ -22,3 +22,9 @@ export function localTimeStr(d: Date = new Date()): string {
 export function localMonthKey(d: Date = new Date()): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 }
+
+/** Tomorrow's local calendar date as YYYY-MM-DD. Built from the date
+ *  components (not `+ 86400000`ms) so month/year rollovers are exact. */
+export function tomorrowStr(now: Date = new Date()): string {
+  return localDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+}

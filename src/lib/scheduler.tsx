@@ -142,6 +142,22 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
             await showLocalNotification("Note reminder", n.title);
           }
         }
+
+        // Night Reminder: native gets this from the OS schedule (see the
+        // resync effect above); this poll path is the browser/PWA fallback.
+        const settings = await db.appSettings.get(1);
+        if (
+          settings &&
+          settings.nightReminderEnabled !== false &&
+          settings.nightReminderLastDate !== today &&
+          reminderDue(settings.nightReminderTime ?? "21:00", now)
+        ) {
+          await db.appSettings.update(1, { nightReminderLastDate: today });
+          await showLocalNotification(
+            "Plan tomorrow",
+            "Plan tomorrow before you sleep.",
+          );
+        }
       }
 
       // --- Fast reached its length: notify once, keep it running. Neutral

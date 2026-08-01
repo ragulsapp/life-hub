@@ -6,6 +6,7 @@ import { Card } from "../../components/Card";
 import { AlarmForm } from "./AlarmForm";
 import { TaskList } from "./TaskList";
 import { WakeHistory } from "./WakeHistory";
+import { PlanTomorrowPanel } from "./PlanTomorrowPanel";
 import { useScheduler } from "../../lib/scheduler";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import {
@@ -45,6 +46,7 @@ export function AlarmsView() {
   const [perm, setPerm] = useState<"granted" | "denied" | "default">(
     "default",
   );
+  const [planTomorrowOpen, setPlanTomorrowOpen] = useState(false);
   useEffect(() => {
     notificationPermission().then(setPerm);
   }, []);
@@ -193,9 +195,26 @@ export function AlarmsView() {
         )}
       </div>
 
+      <Card title="Plan Tomorrow" delay={0.04}>
+        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+          Lay out tomorrow's tasks tonight — also opens automatically from the
+          Night Reminder notification.
+        </p>
+        <button
+          onClick={() => setPlanTomorrowOpen(true)}
+          className="w-full rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:bg-slate-700/60 dark:text-slate-100"
+        >
+          Plan tomorrow
+        </button>
+      </Card>
+
       <Card title="Tasks" delay={0.05}>
         <TaskList />
       </Card>
+
+      {planTomorrowOpen && (
+        <PlanTomorrowPanel onClose={() => setPlanTomorrowOpen(false)} />
+      )}
     </div>
   );
 }

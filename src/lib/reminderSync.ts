@@ -1,8 +1,10 @@
 import { db, type SoundId } from "../db/db";
 import {
+  cancelReminder,
   ensureChannels,
   habitNotifId,
   isNative,
+  NIGHT_REMINDER_NOTIF_ID,
   noteNotifId,
   scheduleDailyReminder,
   setReminderSound,
@@ -22,10 +24,11 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
   if (sound) setReminderSound(sound);
   await ensureChannels();
 
-  const [habits, tasks, notes] = await Promise.all([
+  const [habits, tasks, notes, settings] = await Promise.all([
     db.habits.toArray(),
     db.tasks.toArray(),
     db.notes.toArray(),
+    db.appSettings.get(1),
   ]);
 
   for (const h of habits) {
@@ -57,5 +60,18 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
         n.reminderTime,
       );
     }
+  }
+
+  // On by default — undefined (pre-existing installs) and `true` both mean on.
+  if (settings?.nightReminderEnabled !== false) {
+    await scheduleDailyReminder(
+      NIGHT_REMINDER_NOTIF_ID,
+      "Plan tomorrow",
+      "Plan tomorrow before you sleep.",
+      settings?.nightReminderTime ?? "21:00",
+      { kind: "night-reminder" },
+    );
+  } else {
+    await cancelReminder(NIGHT_REMINDER_NOTIF_ID);
   }
 }

@@ -13,6 +13,7 @@ import { useDarkMode } from "../../lib/theme";
 import { BodyProfileForm } from "../health/BodyProfileForm";
 import { ReminderSoundPicker } from "../alarms/ReminderSoundPicker";
 import { setFastingEnabled } from "../health/healthActions";
+import { resyncNativeReminders } from "../../lib/reminderSync";
 
 /**
  * Everything that used to live in the header, plus body basics.
@@ -99,6 +100,18 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const settings = useLiveQuery(() => db.appSettings.get(1), []);
   const [darkMode, toggleDark] = useDarkMode();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // undefined (pre-existing installs) and `true` both mean on — see db.ts.
+  const nightOn = settings?.nightReminderEnabled !== false;
+
+  const toggleNightReminder = async () => {
+    await db.appSettings.update(1, { nightReminderEnabled: !nightOn });
+    await resyncNativeReminders();
+  };
+
+  const setNightReminderTime = async (time: string) => {
+    await db.appSettings.update(1, { nightReminderTime: time });
+    await resyncNativeReminders();
+  };
 
   const lastBackup = settings?.lastBackupAt
     ? new Date(settings.lastBackupAt).toLocaleDateString()
@@ -205,6 +218,40 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           <div className="p-2">
             <ReminderSoundPicker />
           </div>
+          <Row
+            icon="🌃"
+            label="Night reminder"
+            hint={
+              nightOn
+                ? `Plan tomorrow — ${settings?.nightReminderTime ?? "21:00"}`
+                : "Off"
+            }
+            onClick={toggleNightReminder}
+            trailing={
+              <span
+                className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors ${
+                  nightOn ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"
+                }`}
+              >
+                <motion.span
+                  layout
+                  transition={{ type: "spring", stiffness: 500, damping: 32 }}
+                  className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow"
+                  style={{ left: nightOn ? 22 : 2 }}
+                />
+              </span>
+            }
+          />
+          {nightOn && (
+            <div className="px-3 pb-2">
+              <input
+                type="time"
+                value={settings?.nightReminderTime ?? "21:00"}
+                onChange={(e) => setNightReminderTime(e.target.value)}
+                className="!p-1.5 text-sm rounded-xl border border-slate-200 bg-white/50 text-slate-900 outline-none dark:border-slate-600 dark:bg-slate-900/30 dark:text-white"
+              />
+            </div>
+          )}
           <Row
             icon="🌙"
             label="Track fasts"

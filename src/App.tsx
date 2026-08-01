@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import type { SVGProps } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLiveQuery } from "dexie-react-hooks";
+import { LocalNotifications } from "@capacitor/local-notifications";
 import { db, ensureSeeded } from "./db/db";
 import { OnboardingWizard } from "./modules/onboarding/OnboardingWizard";
 import { useDarkMode } from "./lib/theme";
 import { SchedulerProvider } from "./lib/scheduler";
 import { installAudioUnlock } from "./lib/alarmSound";
+import { isNative, type NotificationExtra } from "./lib/notify";
 import { Toaster } from "./components/Toaster";
 import { SettingsPanel } from "./modules/settings/SettingsPanel";
+import { PlanTomorrowPanel } from "./modules/alarms/PlanTomorrowPanel";
 import { SettingsUiContext } from "./lib/settingsUi";
 import {
   HomeIcon,
@@ -64,6 +67,7 @@ const VIEWS: Record<Tab, () => React.ReactElement> = {
 function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [planTomorrowOpen, setPlanTomorrowOpen] = useState(false);
   useDarkMode(); // applies the .dark class to <html> as a side effect
   const settings = useLiveQuery(() => db.appSettings.get(1));
 
@@ -73,6 +77,25 @@ function App() {
     navigator.storage?.persist?.().catch(() => {});
     // First user gesture unlocks audio so scheduled alarms can ring (H1).
     installAudioUnlock();
+  }, []);
+
+  // Routes a notification tap to the right in-app panel. Registered
+  // unconditionally on every launch (not gated behind onboarding/settings
+  // loading below) — Capacitor retains a tap that happened before a listener
+  // was attached and replays it once one is, so a cold launch by tap is not
+  // a race regardless of exactly when this effect runs.
+  useEffect(() => {
+    if (!isNative) return;
+    const handle = LocalNotifications.addListener(
+      "localNotificationActionPerformed",
+      (event) => {
+        const extra = event.notification.extra as NotificationExtra | undefined;
+        if (extra?.kind === "night-reminder") setPlanTomorrowOpen(true);
+      },
+    );
+    return () => {
+      handle.then((h) => h.remove());
+    };
   }, []);
 
   const ActiveView = VIEWS[tab];
@@ -166,6 +189,9 @@ function App() {
         <Toaster />
         {settingsOpen && (
           <SettingsPanel onClose={() => setSettingsOpen(false)} />
+        )}
+        {planTomorrowOpen && (
+          <PlanTomorrowPanel onClose={() => setPlanTomorrowOpen(false)} />
         )}
       </div>
       </SettingsUiContext.Provider>
