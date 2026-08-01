@@ -12,6 +12,7 @@ import { inputClass } from "../../components/inputStyles";
 import { toast } from "../../lib/toast";
 import { createHabitFromTemplate } from "../habits/habitActions";
 import { saveBodyProfile } from "../health/healthActions";
+import { MONTH_NAMES } from "../health/BodyProfileForm";
 
 type Step = number;
 
@@ -54,6 +55,7 @@ export function OnboardingWizard() {
   const [expense, setExpense] = useState<string[]>([]);
   const [goals, setGoals] = useState<string[]>([]);
   const [birthYear, setBirthYear] = useState("");
+  const [birthMonth, setBirthMonth] = useState(""); // "" = not given
   const [heightCm, setHeightCm] = useState("");
   const [sex, setSex] = useState<BodyProfile["sex"]>("unspecified");
   const [saving, setSaving] = useState(false);
@@ -61,10 +63,14 @@ export function OnboardingWizard() {
   /** Only saved if the user actually filled something in — it's optional. */
   const bodyProfile: BodyProfile | null = (() => {
     const by = parseInt(birthYear, 10);
+    const bm = birthMonth ? parseInt(birthMonth, 10) : NaN;
     const h = parseFloat(heightCm);
     const patch: BodyProfile = {};
-    if (Number.isFinite(by) && by > 1900 && by <= new Date().getFullYear())
+    if (Number.isFinite(by) && by > 1900 && by <= new Date().getFullYear()) {
       patch.birthYear = by;
+      // A month with no year would be meaningless — only keep it alongside one.
+      if (Number.isFinite(bm)) patch.birthMonth = bm;
+    }
     if (Number.isFinite(h) && h > 50 && h < 260) patch.heightCm = h;
     if (sex && sex !== "unspecified") patch.sex = sex;
     return Object.keys(patch).length ? patch : null;
@@ -177,6 +183,23 @@ export function OnboardingWizard() {
               />
             </label>
           </div>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              Birth month — optional
+            </span>
+            <select
+              value={birthMonth}
+              onChange={(e) => setBirthMonth(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Not given — age may be off by a year</option>
+              {MONTH_NAMES.map((name, i) => (
+                <option key={name} value={i + 1}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
           <div>
             <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
               Sex — only affects one energy estimate

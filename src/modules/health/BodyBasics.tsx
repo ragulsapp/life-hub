@@ -50,7 +50,9 @@ export function BodyBasics({
 }) {
   const weight = latestValue(metrics, "weight");
   const height = profile.heightCm ?? null;
-  const age = profile.birthYear ? ageFromBirthYear(profile.birthYear) : null;
+  const age = profile.birthYear
+    ? ageFromBirthYear(profile.birthYear, profile.birthMonth)
+    : null;
   const reference = profile.bmiReference ?? "standard";
 
   const bmiValue = weight && height ? bmi(weight, height) : null;

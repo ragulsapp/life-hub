@@ -12,6 +12,12 @@ const SEX_OPTIONS: { value: NonNullable<BodyProfile["sex"]>; label: string }[] =
   { value: "unspecified", label: "Prefer not to say" },
 ];
 
+/** Shared with OnboardingWizard's own body-basics step, so both stay in sync. */
+export const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 const ACTIVITY_ORDER: ActivityLevel[] = [
   "sedentary",
   "light",
@@ -60,6 +66,7 @@ export function BodyProfileForm({
   onDone?: () => void;
 }) {
   const [birthYear, setBirthYear] = useState("");
+  const [birthMonth, setBirthMonth] = useState(""); // "" = not given
   const [heightCm, setHeightCm] = useState("");
   const [sex, setSex] = useState<BodyProfile["sex"]>("unspecified");
   const [activity, setActivity] = useState<ActivityLevel>("sedentary");
@@ -69,6 +76,7 @@ export function BodyProfileForm({
   // Seed once the live-queried profile arrives (it's undefined on first render).
   useEffect(() => {
     setBirthYear(profile?.birthYear ? String(profile.birthYear) : "");
+    setBirthMonth(profile?.birthMonth ? String(profile.birthMonth) : "");
     setHeightCm(profile?.heightCm ? String(profile.heightCm) : "");
     setSex(profile?.sex ?? "unspecified");
     setActivity(profile?.activityLevel ?? "sedentary");
@@ -77,6 +85,7 @@ export function BodyProfileForm({
 
   const save = async () => {
     const by = parseInt(birthYear, 10);
+    const bm = birthMonth ? parseInt(birthMonth, 10) : NaN;
     const h = parseFloat(heightCm);
     const thisYear = new Date().getFullYear();
     if (birthYear && (!Number.isFinite(by) || by < 1900 || by > thisYear)) {
@@ -89,6 +98,8 @@ export function BodyProfileForm({
     }
     await saveBodyProfile({
       birthYear: Number.isFinite(by) ? by : undefined,
+      // A month with no year would be meaningless — only save it alongside one.
+      birthMonth: Number.isFinite(by) && Number.isFinite(bm) ? bm : undefined,
       heightCm: Number.isFinite(h) ? h : undefined,
       sex,
       activityLevel: activity,
@@ -128,6 +139,27 @@ export function BodyProfileForm({
           />
         </label>
       </div>
+
+      <label className="flex min-w-0 flex-col gap-1">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+          Birth month — optional
+        </span>
+        <select
+          value={birthMonth}
+          onChange={(e) => setBirthMonth(e.target.value)}
+          className={inputClass}
+        >
+          <option value="">Not given — age may be off by a year</option>
+          {MONTH_NAMES.map((name, i) => (
+            <option key={name} value={i + 1}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <span className="text-xs text-slate-400">
+          Still no full birthdate — just enough to get your age right.
+        </span>
+      </label>
 
       <div>
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">

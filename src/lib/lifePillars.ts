@@ -113,7 +113,9 @@ function healthAdherenceOverWindow(
     if (hit !== null) parts.push(hit);
   }
 
-  const age = profile.birthYear ? ageFromBirthYear(profile.birthYear) : null;
+  const age = profile.birthYear
+    ? ageFromBirthYear(profile.birthYear, profile.birthMonth)
+    : null;
   const sleepMin =
     profile.sleepTargetHoursOverride ??
     (age ? sleepTargetHours(age).min : null);

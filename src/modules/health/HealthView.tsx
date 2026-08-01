@@ -45,7 +45,9 @@ export function HealthView() {
 
   const today = localDateStr();
   const weight = latestValue(metrics, "weight");
-  const age = profile?.birthYear ? ageFromBirthYear(profile.birthYear) : null;
+  const age = profile?.birthYear
+    ? ageFromBirthYear(profile.birthYear, profile.birthMonth)
+    : null;
 
   const personalWater = weight ? waterTargetMl(weight) : null;
   const waterTarget =

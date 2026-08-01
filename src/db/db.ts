@@ -43,6 +43,13 @@ export interface HealthMetric {
 export interface BodyProfile {
   /** Age is DERIVED from this — storing age itself would silently rot yearly. */
   birthYear?: number;
+  /**
+   * Optional, and deliberately month only — no day, so this still isn't a
+   * full birthdate. Without it, age is a plain year subtraction that's wrong
+   * for most of the year (it assumes the birthday already happened). With
+   * it, age is exact except within the birth month itself.
+   */
+  birthMonth?: number; // 1-12
   heightCm?: number;
   /** Optional: only affects the BMR estimate. "unspecified" shows a range. */
   sex?: "male" | "female" | "unspecified";

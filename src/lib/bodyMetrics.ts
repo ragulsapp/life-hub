@@ -24,9 +24,25 @@ const BMI_HEALTHY: Record<BmiReference, { min: number; max: number }> = {
   "asia-pacific": { min: 18.5, max: 22.9 },
 };
 
-/** Age in whole years, derived so it can never go stale. */
-export function ageFromBirthYear(birthYear: number, now = new Date()): number {
-  return now.getFullYear() - birthYear;
+/**
+ * Age in whole years, derived so it can never go stale.
+ *
+ * Without a birth month this is a plain calendar-year subtraction, which is
+ * wrong for most of the year — it silently assumes the birthday already
+ * happened, so it over-counts by one for everyone whose birthday is later
+ * in the year than "now". With `birthMonth` (1-12, no day — still no full
+ * birthdate collected) it's exact except within the birth month itself,
+ * where day-of-month is genuinely unknown.
+ */
+export function ageFromBirthYear(
+  birthYear: number,
+  birthMonth?: number,
+  now = new Date(),
+): number {
+  const years = now.getFullYear() - birthYear;
+  if (!birthMonth) return years;
+  const hasHadBirthdayThisYear = now.getMonth() + 1 >= birthMonth;
+  return hasHadBirthdayThisYear ? years : years - 1;
 }
 
 /** Adult BMI categories don't apply to minors. */

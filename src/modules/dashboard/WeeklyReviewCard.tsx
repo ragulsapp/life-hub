@@ -45,7 +45,9 @@ export function WeeklyReviewCard({
   const review = weeklyReview(habits, logs, transactions, tasks, goals);
 
   const weight = latestValue(healthMetrics, "weight");
-  const age = profile?.birthYear ? ageFromBirthYear(profile.birthYear) : null;
+  const age = profile?.birthYear
+    ? ageFromBirthYear(profile.birthYear, profile.birthMonth)
+    : null;
   const correlations = findCorrelations(habits, logs, healthMetrics, {
     sleepTargetHours:
       profile?.sleepTargetHoursOverride ??

@@ -33,15 +33,34 @@ export async function logMetric(
     return;
   }
 
-  const existing = await db.healthMetrics
-    .where("[date+metricType]")
-    .equals([date, metricType])
-    .first();
-  if (existing) {
-    await db.healthMetrics.update(existing.id, { value, note });
-  } else {
-    await db.healthMetrics.add({ date, metricType, value, note } as never);
-  }
+  // Wrapped in a transaction so the read-then-decide-then-write is atomic.
+  // Without this, two near-simultaneous calls for the same day (e.g. an
+  // Enter-key submit racing a click) could both see "no existing row" and
+  // both insert — leaving a duplicate pair where the next edit silently
+  // updates the wrong (hidden) one. IndexedDB itself serializes overlapping
+  // readwrite transactions on a store, so a second concurrent call now
+  // genuinely waits for the first to commit before its own lookup runs.
+  //
+  // Self-healing, not just forward-fixing: this also repairs any duplicate
+  // pair that already exists from BEFORE this fix shipped. `dailyValues()`
+  // treats the highest-id row as canonical, so that's the one edited here —
+  // and every other row for the same day is deleted in the same transaction,
+  // so a user who hit the old bug is fixed the next time they log that day,
+  // with no separate migration needed.
+  await db.transaction("rw", db.healthMetrics, async () => {
+    const rows = await db.healthMetrics
+      .where("[date+metricType]")
+      .equals([date, metricType])
+      .toArray();
+    if (rows.length === 0) {
+      await db.healthMetrics.add({ date, metricType, value, note } as never);
+      return;
+    }
+    const canonical = rows.reduce((a, b) => (b.id > a.id ? b : a));
+    const staleIds = rows.filter((r) => r.id !== canonical.id).map((r) => r.id);
+    if (staleIds.length > 0) await db.healthMetrics.bulkDelete(staleIds);
+    await db.healthMetrics.update(canonical.id, { value, note });
+  });
 }
 
 /** Add one glass of water to today. */

@@ -13,13 +13,30 @@ import {
 } from "../src/lib/bodyMetrics";
 
 describe("ageFromBirthYear", () => {
-  it("derives age from the current year", () => {
-    expect(ageFromBirthYear(1998, new Date(2026, 6, 30))).toBe(28);
+  it("without a birth month, derives age from the calendar year alone", () => {
+    expect(ageFromBirthYear(1998, undefined, new Date(2026, 6, 30))).toBe(28);
   });
 
-  it("stays correct across a year boundary — the reason age isn't stored", () => {
-    expect(ageFromBirthYear(1998, new Date(2026, 11, 31))).toBe(28);
-    expect(ageFromBirthYear(1998, new Date(2027, 0, 1))).toBe(29);
+  it("without a birth month, still increments on Jan 1 — the pre-fix behaviour, kept as the fallback", () => {
+    expect(ageFromBirthYear(1998, undefined, new Date(2026, 11, 31))).toBe(28);
+    expect(ageFromBirthYear(1998, undefined, new Date(2027, 0, 1))).toBe(29);
+  });
+
+  it("with a birth month, is exact even though the birthday hasn't happened yet this year", () => {
+    // Born December 1998; checked in June 2026 — birthday is 6 months away.
+    expect(ageFromBirthYear(1998, 12, new Date(2026, 5, 15))).toBe(27);
+  });
+
+  it("with a birth month, increments the day the birth month starts, not Jan 1", () => {
+    // Born December 1998; checked the day the birth month begins.
+    expect(ageFromBirthYear(1998, 12, new Date(2026, 11, 1))).toBe(28);
+    // One day earlier, still the prior age.
+    expect(ageFromBirthYear(1998, 12, new Date(2026, 10, 30))).toBe(27);
+  });
+
+  it("with a birth month, is correct for someone born in January", () => {
+    expect(ageFromBirthYear(1998, 1, new Date(2026, 0, 1))).toBe(28);
+    expect(ageFromBirthYear(1998, 1, new Date(2025, 11, 31))).toBe(27);
   });
 });
 
