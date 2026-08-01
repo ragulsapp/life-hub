@@ -200,6 +200,26 @@ export interface Budget {
   amount: number; // monthly limit
 }
 
+export type DebtType = "loan" | "emi" | "borrowed" | "lent";
+
+/**
+ * A running ledger entry for money owed either way — no interest/schedule
+ * concept, just principal vs. paid so far. `loan`/`emi`/`borrowed` are money
+ * the user owes; `lent` is money owed back to the user.
+ */
+export interface Debt {
+  id: number;
+  type: DebtType;
+  name: string;
+  amount: number;
+  paidAmount: number;
+  /** Derived by debtSummary.remainingAmount() — never stored directly. */
+  dueDate?: string; // YYYY-MM-DD
+  note?: string;
+  createdAt: number;
+  settledAt?: number;
+}
+
 export interface Note {
   id: number;
   title: string;
@@ -457,6 +477,7 @@ class LifeHubDB extends Dexie {
   financeCategories!: EntityTable<FinanceCategory, "id">;
   transactions!: EntityTable<Transaction, "id">;
   budgets!: EntityTable<Budget, "id">;
+  debts!: EntityTable<Debt, "id">;
   notes!: EntityTable<Note, "id">;
   goals!: EntityTable<Goal, "id">;
   metricGoals!: EntityTable<MetricGoal, "id">;
@@ -541,6 +562,10 @@ class LifeHubDB extends Dexie {
     // Purely a new table — nothing to backfill, so no upgrade callback.
     this.version(6).stores({
       wakeLogs: "++id, &date",
+    });
+    // Purely a new table — nothing to backfill, so no upgrade callback.
+    this.version(7).stores({
+      debts: "++id, type",
     });
   }
 }
