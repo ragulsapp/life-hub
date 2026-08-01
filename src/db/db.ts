@@ -268,11 +268,16 @@ export interface Sound {
 
 export type GoalStatus = "active" | "completed" | "abandoned";
 
+/** How far out a goal reaches. Non-indexed — existing goals render as
+ *  unclassified until edited, never silently reassigned. */
+export type GoalTerm = "long" | "short" | "today";
+
 export interface Goal {
   id: number;
   title: string;
   status: GoalStatus;
   targetDate?: string; // YYYY-MM-DD
+  term?: GoalTerm;
   /** Habit names that move this goal forward — surfaced as "today's step". */
   linkedHabits?: string[];
   /**

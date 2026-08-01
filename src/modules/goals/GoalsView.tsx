@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
-import { db, type GoalStatus } from "../../db/db";
+import { db, type Goal, type GoalStatus, type GoalTerm } from "../../db/db";
 import { Card } from "../../components/Card";
 import { GoalForm } from "./GoalForm";
 import { localDateStr } from "../../lib/dates";
@@ -11,6 +11,16 @@ const statusColor: Record<GoalStatus, string> = {
   completed: "bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-900",
   abandoned:
     "bg-slate-200 text-slate-500 dark:bg-slate-600/60 dark:text-slate-300",
+};
+
+/** "today" first — the most immediately actionable group. Undefined (goals
+ *  that predate this field) sorts last as "Unclassified", never hidden. */
+const TERM_ORDER: (GoalTerm | undefined)[] = ["today", "short", "long", undefined];
+const TERM_GROUP_LABEL: Record<string, string> = {
+  today: "Today",
+  short: "Short-term",
+  long: "Long-term",
+  undefined: "Unclassified",
 };
 
 export function GoalsView() {
@@ -31,6 +41,13 @@ export function GoalsView() {
   const finished = goals
     .filter((g) => g.status === "completed")
     .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
+
+  /** Grouped by term — "today" first, undefined ("Unclassified") last, so
+   *  pre-existing goals stay visible rather than silently reassigned. */
+  const groups = TERM_ORDER.map((term) => ({
+    term,
+    goals: sorted.filter((g) => g.term === term),
+  })).filter((g) => g.goals.length > 0);
 
   const cycleStatus = async (id: number, status: GoalStatus) => {
     const next = statusOrder[(statusOrder.indexOf(status) + 1) % statusOrder.length];
@@ -91,80 +108,106 @@ export function GoalsView() {
         </Card>
       )}
 
-      <div className="flex flex-col gap-2">
-        <AnimatePresence initial={false}>
-          {sorted.map((g) => (
-            <motion.div
-              key={g.id}
-              layout
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-            >
-              <Card>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-slate-900 dark:text-white">
-                      {g.title}
-                    </div>
-                    {g.targetDate && (
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        Target: {g.targetDate}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <motion.button
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => cycleStatus(g.id, g.status)}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold capitalize shadow-sm ${statusColor[g.status]}`}
-                    >
-                      {g.status}
-                    </motion.button>
-                    <button
-                      onClick={() => remove(g.id)}
-                      aria-label={`Delete goal "${g.title}"`}
-                      className="text-xs text-slate-400 hover:text-red-500"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
+      {groups.map(({ term, goals: groupGoals }) => (
+        <div key={String(term)} className="flex flex-col gap-2">
+          <div className="px-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            {TERM_GROUP_LABEL[String(term)]}
+          </div>
+          <AnimatePresence initial={false}>
+            {groupGoals.map((g) => (
+              <GoalCard
+                key={g.id}
+                g={g}
+                doneToday={doneToday}
+                cycleStatus={cycleStatus}
+                remove={remove}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+      ))}
+      {sorted.length === 0 && (
+        <div className="text-sm text-slate-500 dark:text-slate-400">
+          No goals yet.
+        </div>
+      )}
+    </div>
+  );
+}
 
-                {g.status === "active" && (g.linkedHabits?.length ?? 0) > 0 && (
-                  <div className="mt-3 border-t border-slate-200/70 pt-2 dark:border-slate-600/40">
-                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                      Today's step
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {g.linkedHabits!.map((name) => {
-                        const done = doneToday.has(name);
-                        return (
-                          <span
-                            key={name}
-                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                              done
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-                                : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
-                            }`}
-                          >
-                            {done ? "✓" : "○"} {name}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        {sorted.length === 0 && (
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            No goals yet.
+function GoalCard({
+  g,
+  doneToday,
+  cycleStatus,
+  remove,
+}: {
+  g: Goal;
+  doneToday: Set<string>;
+  cycleStatus: (id: number, status: GoalStatus) => void;
+  remove: (id: number) => void;
+}) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+    >
+      <Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="font-semibold text-slate-900 dark:text-white">
+              {g.title}
+            </div>
+            {g.targetDate && (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                Target: {g.targetDate}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => cycleStatus(g.id, g.status)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold capitalize shadow-sm ${statusColor[g.status]}`}
+            >
+              {g.status}
+            </motion.button>
+            <button
+              onClick={() => remove(g.id)}
+              aria-label={`Delete goal "${g.title}"`}
+              className="text-xs text-slate-400 hover:text-red-500"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {g.status === "active" && (g.linkedHabits?.length ?? 0) > 0 && (
+          <div className="mt-3 border-t border-slate-200/70 pt-2 dark:border-slate-600/40">
+            <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              Today's step
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {g.linkedHabits!.map((name) => {
+                const done = doneToday.has(name);
+                return (
+                  <span
+                    key={name}
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      done
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
+                    }`}
+                  >
+                    {done ? "✓" : "○"} {name}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         )}
-      </div>
-    </div>
+      </Card>
+    </motion.div>
   );
 }

@@ -1,12 +1,22 @@
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../../db/db";
+import { db, type GoalTerm } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
+
+const TERM_LABEL: Record<GoalTerm, string> = {
+  long: "Long-term",
+  short: "Short-term",
+  today: "Today",
+};
+const TERM_OPTIONS: GoalTerm[] = ["long", "short", "today"];
 
 export function GoalForm() {
   const [title, setTitle] = useState("");
   const [targetDate, setTargetDate] = useState("");
+  // "short" default matches every other form in the app defaulting to the
+  // most common case rather than forcing a blank choice.
+  const [term, setTerm] = useState<GoalTerm>("short");
   const [linked, setLinked] = useState<string[]>([]);
 
   const habits =
@@ -23,11 +33,13 @@ export function GoalForm() {
       title: title.trim(),
       status: "active",
       targetDate: targetDate || undefined,
+      term,
       linkedHabits: linked.length ? linked : undefined,
       createdAt: Date.now(),
     } as never);
     setTitle("");
     setTargetDate("");
+    setTerm("short");
     setLinked([]);
   };
 
@@ -39,6 +51,21 @@ export function GoalForm() {
         placeholder="New goal..."
         className={inputClass}
       />
+      <div className="flex gap-1.5">
+        {TERM_OPTIONS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTerm(t)}
+            className={`flex-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              term === t
+                ? "bg-cyan-500 text-white"
+                : "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
+            }`}
+          >
+            {TERM_LABEL[t]}
+          </button>
+        ))}
+      </div>
       <input
         value={targetDate}
         onChange={(e) => setTargetDate(e.target.value)}

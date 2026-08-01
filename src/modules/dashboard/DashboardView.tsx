@@ -96,6 +96,7 @@ export function DashboardView() {
   const missionComplete = mission.length > 0 && missionDone === mission.length;
 
   const pinned = habits.filter((h) => h.pinned && !h.archived).slice(0, 2);
+  const todayGoal = goals.find((g) => g.term === "today" && g.status === "active");
 
   const saveBrainDump = async () => {
     const text = brainDump.trim();
@@ -159,6 +160,18 @@ export function DashboardView() {
         <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
           {recommendation.message}
         </p>
+      </Card>
+
+      <Card title="Today's Goal" delay={0.04}>
+        {todayGoal ? (
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+            🎯 {todayGoal.title}
+          </p>
+        ) : (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Set today's goal.
+          </p>
+        )}
       </Card>
 
       {pinned.length > 0 && (
