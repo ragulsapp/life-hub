@@ -224,6 +224,25 @@ export interface Debt {
   settledAt?: number;
 }
 
+/**
+ * A monthly bill/income pattern (rent, salary, EMI, subscriptions) — not a
+ * real ledger entry until confirmed. Two separate month-stamps because
+ * "notified" and "confirmed" are different facts: `notifiedMonth` only
+ * guards re-notifying every poll tick, `generatedMonth` is the ONLY field
+ * that means "financially done" for that month.
+ */
+export interface RecurringTransaction {
+  id: number;
+  type: FinanceCategoryKind;
+  category: string;
+  amount: number;
+  dayOfMonth: number; // 1-31; clamped to the month's actual last day
+  active: boolean;
+  note?: string;
+  notifiedMonth?: string; // YYYY-MM
+  generatedMonth?: string; // YYYY-MM
+}
+
 export interface Note {
   id: number;
   title: string;
@@ -492,6 +511,7 @@ class LifeHubDB extends Dexie {
   transactions!: EntityTable<Transaction, "id">;
   budgets!: EntityTable<Budget, "id">;
   debts!: EntityTable<Debt, "id">;
+  recurringTransactions!: EntityTable<RecurringTransaction, "id">;
   notes!: EntityTable<Note, "id">;
   goals!: EntityTable<Goal, "id">;
   metricGoals!: EntityTable<MetricGoal, "id">;
@@ -580,6 +600,10 @@ class LifeHubDB extends Dexie {
     // Purely a new table — nothing to backfill, so no upgrade callback.
     this.version(7).stores({
       debts: "++id, type",
+    });
+    // Purely a new table — nothing to backfill, so no upgrade callback.
+    this.version(8).stores({
+      recurringTransactions: "++id, active",
     });
   }
 }

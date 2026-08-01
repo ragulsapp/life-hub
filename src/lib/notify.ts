@@ -22,7 +22,9 @@ export const isNative = Capacitor.isNativePlatform();
  * listener registered in App.tsx — no pub-sub router needed, App.tsx already
  * owns every "open X full-screen panel" boolean.
  */
-export type NotificationExtra = { kind: "night-reminder" };
+export type NotificationExtra =
+  | { kind: "night-reminder" }
+  | { kind: "recurring-due"; recurringId: number };
 
 /**
  * Channel ids are versioned because **an Android notification channel is
@@ -112,6 +114,7 @@ export function setReminderSound(sound: SoundId): void {
 export async function showLocalNotification(
   title: string,
   body: string,
+  extra?: NotificationExtra,
 ): Promise<void> {
   if ((await notificationPermission()) !== "granted") return;
   try {
@@ -124,6 +127,7 @@ export async function showLocalNotification(
             title,
             body,
             channelId: channelId(reminderSound),
+            extra,
           },
         ],
       });

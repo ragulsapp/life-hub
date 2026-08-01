@@ -12,6 +12,7 @@ import { isNative, type NotificationExtra } from "./lib/notify";
 import { Toaster } from "./components/Toaster";
 import { SettingsPanel } from "./modules/settings/SettingsPanel";
 import { PlanTomorrowPanel } from "./modules/alarms/PlanTomorrowPanel";
+import { ConfirmRecurringSheet } from "./modules/finance/ConfirmRecurringSheet";
 import { SettingsUiContext } from "./lib/settingsUi";
 import {
   HomeIcon,
@@ -68,6 +69,7 @@ function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [planTomorrowOpen, setPlanTomorrowOpen] = useState(false);
+  const [confirmRecurringId, setConfirmRecurringId] = useState<number | null>(null);
   useDarkMode(); // applies the .dark class to <html> as a side effect
   const settings = useLiveQuery(() => db.appSettings.get(1));
 
@@ -91,6 +93,8 @@ function App() {
       (event) => {
         const extra = event.notification.extra as NotificationExtra | undefined;
         if (extra?.kind === "night-reminder") setPlanTomorrowOpen(true);
+        else if (extra?.kind === "recurring-due")
+          setConfirmRecurringId(extra.recurringId);
       },
     );
     return () => {
@@ -192,6 +196,12 @@ function App() {
         )}
         {planTomorrowOpen && (
           <PlanTomorrowPanel onClose={() => setPlanTomorrowOpen(false)} />
+        )}
+        {confirmRecurringId !== null && (
+          <ConfirmRecurringSheet
+            recurringId={confirmRecurringId}
+            onClose={() => setConfirmRecurringId(null)}
+          />
         )}
       </div>
       </SettingsUiContext.Provider>

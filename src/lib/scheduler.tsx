@@ -9,8 +9,9 @@ import {
 import { db, DEFAULT_REMINDER_SOUND, type Alarm } from "../db/db";
 import { isNative, showLocalNotification } from "./notify";
 import { resyncNativeReminders } from "./reminderSync";
-import { localDateStr } from "./dates";
+import { localDateStr, localMonthKey } from "./dates";
 import { alarmDueState, reminderDue } from "./reminderLogic";
+import { isPending } from "../modules/finance/recurringSummary";
 
 interface SchedulerContext {
   activeAlarm: Alarm | null;
@@ -177,6 +178,24 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
             `You've reached ${f.targetHours} hours.`,
           );
         }
+      }
+
+      // --- Recurring transactions due this month: notify once, guarded by
+      // notifiedMonth. The permanent pending list in Finance → Debts
+      // (recurringSummary.pendingRecurring) is the real reliability
+      // backstop, independent of whether this notification ever fires — a
+      // monthly due-check doesn't warrant a second native-schedule system
+      // alongside the one habits/tasks/notes already have. ---
+      const thisMonth = localMonthKey(now);
+      const recurring = await db.recurringTransactions.toArray();
+      for (const r of recurring) {
+        if (!isPending(r, now) || r.notifiedMonth === thisMonth) continue;
+        await db.recurringTransactions.update(r.id, { notifiedMonth: thisMonth });
+        await showLocalNotification(
+          "Recurring payment due",
+          `${r.category} — ₹${r.amount.toLocaleString()}`,
+          { kind: "recurring-due", recurringId: r.id },
+        );
       }
     };
 

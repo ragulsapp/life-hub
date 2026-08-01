@@ -9,6 +9,7 @@ import { TransactionForm } from "./TransactionForm";
 import { BudgetManager } from "./BudgetManager";
 import { SpendingHistory } from "./SpendingHistory";
 import { DebtManager } from "./DebtManager";
+import { RecurringManager } from "./RecurringManager";
 import {
   calcMonthTotals,
   calcMRR,
@@ -72,7 +73,10 @@ export function FinanceView() {
       </div>
 
       {subTab === "debts" ? (
-        <DebtManager />
+        <div className="flex flex-col gap-4">
+          <DebtManager />
+          <RecurringManager />
+        </div>
       ) : (
         <>
         {safe && (
