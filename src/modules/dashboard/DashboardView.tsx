@@ -24,7 +24,7 @@ import { WeeklyReviewCard } from "./WeeklyReviewCard";
 export function DashboardView() {
   const [brainDump, setBrainDump] = useState("");
   const [saved, setSaved] = useState(false);
-  const { open: openSettings } = useSettingsUi();
+  const { open: openSettings, openSearch } = useSettingsUi();
 
   const habits = useLiveQuery(() => db.habits.toArray(), []) ?? [];
   const logs = useLiveQuery(() => db.habitLogs.toArray(), []) ?? [];
@@ -132,16 +132,27 @@ export function DashboardView() {
             {coachLine}
           </p>
         </div>
-        {/* Settings lives on the page body, not the header — the header sits
-            under the status bar and its targets were untappable. 44x44. */}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={openSettings}
-          aria-label="Settings"
-          className="-mr-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-lg text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
-        >
-          ⚙️
-        </motion.button>
+        {/* Settings and Search live on the page body, not the header — the
+            header sits under the status bar and its targets were
+            untappable. Both 44x44. */}
+        <div className="-mr-1 flex flex-shrink-0 items-center gap-1">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={openSearch}
+            aria-label="Search"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
+          >
+            🔍
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={openSettings}
+            aria-label="Settings"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
+          >
+            ⚙️
+          </motion.button>
+        </div>
       </motion.div>
 
       <BackupNudge />

@@ -15,6 +15,7 @@ import { SettingsPanel } from "./modules/settings/SettingsPanel";
 import { PlanTomorrowPanel } from "./modules/alarms/PlanTomorrowPanel";
 import { ConfirmRecurringSheet } from "./modules/finance/ConfirmRecurringSheet";
 import { MorningBrief } from "./modules/dashboard/MorningBrief";
+import { SearchPanel } from "./modules/search/SearchPanel";
 import { SettingsUiContext } from "./lib/settingsUi";
 import {
   HomeIcon,
@@ -72,6 +73,7 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [planTomorrowOpen, setPlanTomorrowOpen] = useState(false);
   const [confirmRecurringId, setConfirmRecurringId] = useState<number | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   useDarkMode(); // applies the .dark class to <html> as a side effect
   const settings = useLiveQuery(() => db.appSettings.get(1));
 
@@ -119,7 +121,7 @@ function App() {
   return (
     <SchedulerProvider>
       <SettingsUiContext.Provider
-        value={{ open: () => setSettingsOpen(true) }}
+        value={{ open: () => setSettingsOpen(true), openSearch: () => setSearchOpen(true) }}
       >
       <div className="mx-auto flex min-h-svh max-w-md flex-col">
         {/* Keeps `top-0`: offsetting by the inset would break the sticky
@@ -211,6 +213,12 @@ function App() {
           />
         )}
         {showMorningBrief && <MorningBrief onDismiss={() => {}} />}
+        {searchOpen && (
+          <SearchPanel
+            onClose={() => setSearchOpen(false)}
+            onNavigate={(t) => setTab(t)}
+          />
+        )}
       </div>
       </SettingsUiContext.Provider>
     </SchedulerProvider>
