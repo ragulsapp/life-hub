@@ -349,6 +349,13 @@ export interface AppSettings {
   ringingAlarmId?: number;
   /** First-run wizard finished (or explicitly skipped). */
   onboardingComplete?: boolean;
+  /**
+   * When onboarding finished — the anchor for the "First Month Completed"
+   * achievement. Deliberately NOT backfilled for installs that completed
+   * onboarding before this field existed: there's no honest value to
+   * invent, so those installs simply can't unlock it retroactively.
+   */
+  onboardingCompletedAt?: number;
   /** Cached auth user id — identity only, never used to sync life data. */
   authUserId?: string;
   /** Offline-grace snapshot; RevenueCat remains the source of truth. */
@@ -724,7 +731,10 @@ export async function applyOnboardingSelections(selection: {
         await db.goals.add({ title, status: "active" } as never);
       }
 
-      await db.appSettings.update(1, { onboardingComplete: true });
+      await db.appSettings.update(1, {
+        onboardingComplete: true,
+        onboardingCompletedAt: Date.now(),
+      });
     },
   );
 }

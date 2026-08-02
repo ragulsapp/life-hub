@@ -11,9 +11,18 @@ export function AchievementsCard() {
   const goals = useLiveQuery(() => db.goals.toArray(), []) ?? [];
   const transactions = useLiveQuery(() => db.transactions.toArray(), []) ?? [];
   const wakeLogs = useLiveQuery(() => db.wakeLogs.toArray(), []) ?? [];
+  const habits = useLiveQuery(() => db.habits.toArray(), []) ?? [];
+  const settings = useLiveQuery(() => db.appSettings.get(1), []);
   const unlockedRows = useLiveQuery(() => db.achievements.toArray(), []);
 
-  const all = evaluateAchievements(logs, goals, transactions, wakeLogs);
+  const all = evaluateAchievements(
+    logs,
+    goals,
+    transactions,
+    wakeLogs,
+    habits,
+    settings?.onboardingCompletedAt,
+  );
   const unlockedKeys = new Set((unlockedRows ?? []).map((a) => a.key));
 
   // Persist newly-earned badges so the celebration fires exactly once, even

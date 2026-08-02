@@ -5,7 +5,7 @@
  * time to reach, so hitting one actually means something. Pure functions over
  * local data, evaluated on render.
  */
-import type { Goal, HabitLog, Transaction, WakeLog } from "../../db/db";
+import type { Goal, Habit, HabitLog, Transaction, WakeLog } from "../../db/db";
 import { calcBestStreak } from "../habits/habitStreaks";
 import { calcBestWakeStreak } from "../../lib/wakeStreak";
 
@@ -21,9 +21,11 @@ export interface AchievementDef {
 
 const STREAK_TIERS = [7, 30, 100, 365];
 const COMPLETION_TIERS = [10, 50, 100, 500];
-const SAVINGS_TIERS = [10_000, 100_000, 500_000];
-const GOAL_TIERS = [1, 5, 25];
+const SAVINGS_TIERS = [10_000, 50_000, 100_000, 500_000];
+const GOAL_TIERS = [1, 5, 10, 25];
 const WAKE_TIERS = [7, 30, 100, 365];
+const WORKOUT_TIERS = [100];
+const FIRST_MONTH_DAYS = 30;
 
 export function evaluateAchievements(
   logs: HabitLog[],
@@ -31,6 +33,11 @@ export function evaluateAchievements(
   transactions: Transaction[],
   /** Optional so existing call sites keep working unchanged. */
   wakeLogs: WakeLog[] = [],
+  habits: Habit[] = [],
+  /** Undefined for installs that completed onboarding before this field
+   *  existed — the achievement simply doesn't appear for them, rather than
+   *  inventing a start date. */
+  onboardingCompletedAt?: number,
 ): AchievementDef[] {
   const out: AchievementDef[] = [];
 
@@ -106,6 +113,37 @@ export function evaluateAchievements(
       requirement: `Complete ${tier} goal${tier > 1 ? "s" : ""}`,
       progress: Math.min(completedGoals, tier),
       target: tier,
+    });
+  }
+
+  // Workouts — completions of habits under the "Athlete" identity, joined
+  // by name the same way identityStrength() in lifePillars.ts does.
+  const identityByName = new Map(habits.map((h) => [h.name, h.category]));
+  const workouts = logs.filter(
+    (l) => l.completed && identityByName.get(l.habitName) === "Athlete",
+  ).length;
+  for (const tier of WORKOUT_TIERS) {
+    out.push({
+      key: `workouts-${tier}`,
+      title: `${tier} Workouts`,
+      icon: "💪",
+      requirement: `Complete ${tier} Athlete-identity habits`,
+      progress: Math.min(workouts, tier),
+      target: tier,
+    });
+  }
+
+  // First month — anchored to onboarding completion, not backfilled for
+  // installs that finished onboarding before this field existed.
+  if (onboardingCompletedAt !== undefined) {
+    const daysSince = (Date.now() - onboardingCompletedAt) / 86_400_000;
+    out.push({
+      key: "first-month",
+      title: "First Month Completed",
+      icon: "📅",
+      requirement: `Use Life Mentor for ${FIRST_MONTH_DAYS} days`,
+      progress: Math.min(Math.max(daysSince, 0), FIRST_MONTH_DAYS),
+      target: FIRST_MONTH_DAYS,
     });
   }
 
