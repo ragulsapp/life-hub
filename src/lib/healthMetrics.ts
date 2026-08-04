@@ -7,6 +7,7 @@
  * `dailyValues` so they can never disagree about what a day's number is.
  */
 import { METRIC_AGGREGATION, type HealthMetric, type HealthMetricType } from "../db/db";
+import { addDaysStr, localDateStr } from "./dates";
 
 export interface DailyValue {
   date: string; // YYYY-MM-DD
@@ -56,6 +57,20 @@ export function valueOn(
 ): number | null {
   const hit = dailyValues(metrics, type).find((d) => d.date === date);
   return hit ? hit.value : null;
+}
+
+/**
+ * Slice a daily series down to the last `days` calendar days, ending today
+ * (inclusive). "Weekly trend" means the last 7 days, not every day the
+ * metric was ever logged.
+ */
+export function lastNDays(
+  series: DailyValue[],
+  days: number,
+  today: string = localDateStr(),
+): DailyValue[] {
+  const start = addDaysStr(today, -(days - 1));
+  return series.filter((d) => d.date >= start && d.date <= today);
 }
 
 /** The most recent logged value for a metric, or null. */

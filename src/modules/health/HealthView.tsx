@@ -11,7 +11,7 @@ import {
   sleepTargetHours,
   waterTargetMl,
 } from "../../lib/bodyMetrics";
-import { dailyValues, latestValue, valueOn } from "../../lib/healthMetrics";
+import { dailyValues, lastNDays, latestValue, valueOn } from "../../lib/healthMetrics";
 import { BodyBasics } from "./BodyBasics";
 import { BodyProfileForm } from "./BodyProfileForm";
 import { HealthEntryForm } from "./HealthEntryForm";
@@ -57,7 +57,9 @@ export function HealthView() {
 
   const weightSeries = dailyValues(metrics, "weight");
   const sleepSeries = dailyValues(metrics, "sleep-hours");
-  const waterSeries = dailyValues(metrics, "water-ml");
+  // "Weekly trend" means the last 7 calendar days, not every day ever
+  // logged — a months-old chart isn't what "this week" means.
+  const waterSeries = lastNDays(dailyValues(metrics, "water-ml"), 7, today);
   const energySeries = dailyValues(metrics, "energy-level");
 
   const hasProfile = profileIsUsable(profile);
@@ -153,7 +155,7 @@ export function HealthView() {
       </Card>
 
       {waterSeries.length > 1 && (
-        <Card title="Water Trend" delay={0.08}>
+        <Card title="Water Trend — This Week" delay={0.08}>
           <AreaChart
             values={waterSeries.map((d) => Math.round(d.value))}
             labels={waterSeries.map((d) => shortDate(d.date))}

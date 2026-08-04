@@ -2,10 +2,12 @@ import { describe, it, expect } from "vitest";
 import type { HealthMetric, HealthMetricType } from "../src/db/db";
 import {
   dailyValues,
+  lastNDays,
   latestValue,
   targetAdherence,
   valueOn,
 } from "../src/lib/healthMetrics";
+import { localDateStr } from "../src/lib/dates";
 
 let nextId = 1;
 const m = (
@@ -123,5 +125,43 @@ describe("targetAdherence", () => {
   it("returns null for a nonsense target", () => {
     const rows = [m("2026-07-01", "water-ml", 2000)];
     expect(targetAdherence(rows, "water-ml", 0, 3, dates)).toBeNull();
+  });
+});
+
+describe("lastNDays", () => {
+  const series = [
+    { date: "2026-07-20", value: 1 },
+    { date: "2026-07-25", value: 2 },
+    { date: "2026-07-28", value: 3 },
+    { date: "2026-07-29", value: 4 },
+    { date: "2026-07-30", value: 5 },
+    { date: "2026-07-31", value: 6 },
+  ];
+
+  it("keeps only the last N calendar days, inclusive of today", () => {
+    // "Today" is 2026-07-31; 7 days back reaches 2026-07-25 inclusive.
+    expect(lastNDays(series, 7, "2026-07-31")).toEqual([
+      { date: "2026-07-25", value: 2 },
+      { date: "2026-07-28", value: 3 },
+      { date: "2026-07-29", value: 4 },
+      { date: "2026-07-30", value: 5 },
+      { date: "2026-07-31", value: 6 },
+    ]);
+  });
+
+  it("excludes a point exactly one day older than the window", () => {
+    // 2026-07-20 is 11 days before 2026-07-31 — outside a 7-day window.
+    expect(lastNDays(series, 7, "2026-07-31").some((d) => d.date === "2026-07-20")).toBe(
+      false,
+    );
+  });
+
+  it("is empty when there is no data in range", () => {
+    expect(lastNDays(series, 3, "2026-01-01")).toEqual([]);
+  });
+
+  it("defaults `today` to the real current local date when omitted", () => {
+    const recent = [{ date: localDateStr(), value: 42 }];
+    expect(lastNDays(recent, 7)).toEqual(recent);
   });
 });

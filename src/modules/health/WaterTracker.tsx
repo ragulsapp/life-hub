@@ -5,7 +5,7 @@ import { ProgressRing } from "../../components/ProgressRing";
 import { inputClass } from "../../components/inputStyles";
 import { localDateStr } from "../../lib/dates";
 import { valueOn } from "../../lib/healthMetrics";
-import { addGlass, logMetric, removeLastGlass } from "./healthActions";
+import { addGlass, logMetric, removeLastGlass, setTodayWaterTotal } from "./healthActions";
 
 /**
  * Water as a quantity, not a checkbox — "did you drink water today" is
@@ -24,13 +24,27 @@ export function WaterTracker({
   const drunk = valueOn(metrics, "water-ml", today) ?? 0;
   const pct = targetMl > 0 ? Math.min(100, (drunk / targetMl) * 100) : 0;
   const glasses = Math.round(drunk / GLASS_ML);
+  const remaining = Math.max(0, targetMl - drunk);
   const [custom, setCustom] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
 
   const addCustom = async () => {
     const ml = parseFloat(custom);
     if (!Number.isFinite(ml) || ml <= 0) return;
     await logMetric("water-ml", ml, today);
     setCustom("");
+  };
+
+  const startEdit = () => {
+    setEditValue(String(Math.round(drunk)));
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    const ml = parseFloat(editValue);
+    if (Number.isFinite(ml) && ml >= 0) await setTodayWaterTotal(ml, today);
+    setEditing(false);
   };
 
   const litres = (ml: number) => (ml / 1000).toFixed(1);
@@ -44,12 +58,48 @@ export function WaterTracker({
           </span>
         </ProgressRing>
         <div className="min-w-0 flex-1">
-          <div className="text-lg font-bold text-slate-900 dark:text-white">
-            {litres(drunk)} of {litres(targetMl)} L
-          </div>
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                type="number"
+                inputMode="decimal"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && saveEdit()}
+                className={`w-24 !p-1.5 text-sm ${inputClass}`}
+              />
+              <span className="text-xs text-slate-400">ml</span>
+              <button
+                onClick={saveEdit}
+                className="rounded-lg bg-cyan-500 px-2.5 py-1.5 text-xs font-semibold text-white"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                className="text-xs font-medium text-slate-400 hover:underline"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={startEdit}
+              aria-label="Edit today's water total"
+              className="flex items-center gap-1.5 text-left"
+            >
+              <span className="text-lg font-bold text-slate-900 dark:text-white">
+                {litres(drunk)} of {litres(targetMl)} L
+              </span>
+              <span className="text-xs text-slate-400">✎</span>
+            </button>
+          )}
           <div className="text-xs text-slate-500 dark:text-slate-400">
             {glasses} {glasses === 1 ? "glass" : "glasses"} today
-            {drunk >= targetMl && targetMl > 0 && " · target reached"}
+            {drunk >= targetMl && targetMl > 0
+              ? " · target reached"
+              : ` · Remaining: ${Math.round(remaining)} ml`}
           </div>
         </div>
       </div>

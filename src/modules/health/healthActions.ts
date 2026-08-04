@@ -79,6 +79,30 @@ export async function removeLastGlass(date = localDateStr()): Promise<void> {
 }
 
 /**
+ * Set a day's water total to an exact value — for tap-to-edit correction,
+ * where the user means "this many ml total," not "add this many." Deletes
+ * every water-ml row for the day and inserts one row holding the corrected
+ * total, wrapped in the same read+delete+write transaction pattern as the
+ * A1 fix so a concurrent `addGlass` can't race the edit into a lost update.
+ */
+export async function setTodayWaterTotal(
+  ml: number,
+  date = localDateStr(),
+): Promise<void> {
+  if (!Number.isFinite(ml) || ml < 0) return;
+  await db.transaction("rw", db.healthMetrics, async () => {
+    const rows = await db.healthMetrics
+      .where("[date+metricType]")
+      .equals([date, "water-ml"])
+      .toArray();
+    if (rows.length > 0) await db.healthMetrics.bulkDelete(rows.map((r) => r.id));
+    if (ml > 0) {
+      await db.healthMetrics.add({ date, metricType: "water-ml", value: ml } as never);
+    }
+  });
+}
+
+/**
  * Patch the body profile. Read-modify-write because Dexie's `update` would
  * replace the whole nested object, silently dropping the other fields.
  */
