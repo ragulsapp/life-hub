@@ -13,6 +13,7 @@ import { toast } from "../../lib/toast";
 import { createHabitFromTemplate } from "../habits/habitActions";
 import { saveBodyProfile } from "../health/healthActions";
 import { MONTH_NAMES } from "../health/BodyProfileForm";
+import { requestNotificationPermission } from "../../lib/notify";
 
 type Step = number;
 
@@ -59,6 +60,15 @@ export function OnboardingWizard() {
   const [heightCm, setHeightCm] = useState("");
   const [sex, setSex] = useState<BodyProfile["sex"]>("unspecified");
   const [saving, setSaving] = useState(false);
+  const [notifStatus, setNotifStatus] = useState<
+    "idle" | "asking" | "granted" | "denied"
+  >("idle");
+
+  const enableNotifications = async () => {
+    setNotifStatus("asking");
+    const result = await requestNotificationPermission();
+    setNotifStatus(result === "granted" ? "granted" : "denied");
+  };
 
   /** Only saved if the user actually filled something in — it's optional. */
   const bodyProfile: BodyProfile | null = (() => {
@@ -126,7 +136,7 @@ export function OnboardingWizard() {
     {
       title: "Welcome to Life Mentor",
       subtitle:
-        "One place that tells you what to do next — habits, money, goals, all in one view.",
+        "One place that tells you what to do next — habits, money, goals, all in one view. Takes about 2 minutes.",
       body: (
         <div className="flex flex-col gap-3 text-sm text-slate-600 dark:text-slate-300">
           <p>
@@ -274,6 +284,36 @@ export function OnboardingWizard() {
           selected={goals}
           onToggle={toggle(setGoals)}
         />
+      ),
+    },
+    {
+      title: "Stay on track",
+      subtitle:
+        "Get a nudge for the reminders you set — habits, tasks, and your nightly plan. Fully optional.",
+      body: (
+        <div className="flex flex-col gap-4">
+          {notifStatus === "granted" ? (
+            <p className="text-sm font-medium text-emerald-500">
+              Notifications enabled ✓
+            </p>
+          ) : notifStatus === "denied" ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              No problem — you can turn this on later from Settings.
+            </p>
+          ) : (
+            <Button
+              onClick={enableNotifications}
+              disabled={notifStatus === "asking"}
+              className="w-full"
+            >
+              {notifStatus === "asking" ? "Asking…" : "Enable notifications"}
+            </Button>
+          )}
+          <p className="text-xs text-slate-400">
+            Reminders only fire for things you schedule yourself — nothing is
+            sent automatically.
+          </p>
+        </div>
       ),
     },
   ];

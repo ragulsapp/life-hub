@@ -93,7 +93,9 @@ describe("evaluateAchievements — first month", () => {
     const fm = all.find((a) => a.key === "first-month")!;
     expect(fm).toBeDefined();
     expect(fm.progress).toBeGreaterThanOrEqual(14);
-    expect(fm.progress).toBeLessThanOrEqual(15);
+    // Slightly above 15 to absorb the real-clock drift between computing
+    // `fifteenDaysAgo` here and evaluateAchievements' own Date.now() call.
+    expect(fm.progress).toBeLessThanOrEqual(15.1);
     expect(isUnlocked(fm)).toBe(false);
   });
 
