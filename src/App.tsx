@@ -158,42 +158,49 @@ function App() {
           </AnimatePresence>
         </main>
 
-        {/* z-20: this had no z-index at all while the header had z-10 — a
-            latent paint-order bug. Bottom padding clears the gesture bar. */}
+        {/* Floating pill rather than a full-width bar — it reads as an object
+            on top of the page instead of chrome bolted to the bottom.
+            z-20: this had no z-index at all while the header had z-10, a
+            latent paint-order bug. The inset keeps it off the gesture bar;
+            it is margin here, not padding, because the pill's own rounded
+            edge has to sit above the bar rather than extend under it.
+
+            Labels are dropped: seven of them at ~46px each forced 10px text
+            that was unreadable anyway, and the icon plus the active glow-dot
+            already say where you are. */}
         <nav
-          className="glass fixed bottom-0 left-1/2 z-20 flex w-full max-w-md -translate-x-1/2 justify-around border-t border-slate-200/70 bg-white/80 pt-2 dark:border-slate-700/50 dark:bg-slate-900/80"
-          style={{ paddingBottom: "calc(var(--sab) + 0.5rem)" }}
+          className="glass fixed bottom-0 left-1/2 z-20 flex max-w-md -translate-x-1/2 items-center justify-around rounded-full border border-slate-200/70 bg-white/85 px-1.5 py-1.5 shadow-e3 dark:border-white/10 dark:bg-slate-800/80 dark:shadow-e3-dark"
+          style={{
+            marginBottom: "calc(var(--sab) + 0.75rem)",
+            width: "calc(100% - 2.25rem)",
+          }}
         >
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className="relative flex flex-col items-center px-1.5 py-1 text-[10px]"
+              aria-label={t.label}
+              aria-current={tab === t.id ? "page" : undefined}
+              // h-11 is not decoration: dropping the labels shrank the hit
+              // area to 30px, under Android's 48dp minimum. The icon stays
+              // 22px; the button around it carries the target.
+              className="relative flex h-11 w-11 items-center justify-center rounded-full"
             >
-              {tab === t.id && (
-                <motion.div
-                  layoutId="nav-pill"
-                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                  className="absolute inset-0 rounded-xl bg-cyan-500/10 dark:bg-cyan-400/10"
-                />
-              )}
               <t.Icon
                 active={tab === t.id}
-                className={`relative h-[22px] w-[22px] transition-all ${
+                className={`h-[22px] w-[22px] transition-colors ${
                   tab === t.id
-                    ? "scale-110 text-cyan-500 dark:text-cyan-400"
-                    : "scale-100 text-slate-400 dark:text-slate-500"
-                }`}
-              />
-              <span
-                className={`relative font-medium transition-colors ${
-                  tab === t.id
-                    ? "text-cyan-500 dark:text-cyan-400"
+                    ? "text-slate-900 dark:text-white"
                     : "text-slate-400 dark:text-slate-500"
                 }`}
-              >
-                {t.label}
-              </span>
+              />
+              {tab === t.id && (
+                <motion.span
+                  layoutId="nav-dot"
+                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  className="absolute bottom-1.5 h-1 w-1 rounded-full bg-cyan-500 shadow-[0_0_9px_var(--color-cyan-500)] dark:bg-cyan-300 dark:shadow-[0_0_9px_var(--color-cyan-300)]"
+                />
+              )}
             </button>
           ))}
         </nav>
