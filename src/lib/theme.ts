@@ -19,7 +19,7 @@ export function useDarkMode(): [boolean, () => void] {
       /* private mode — the app still works, just flashes on cold start */
     }
     const meta = document.querySelector('meta[name="theme-color"]');
-    meta?.setAttribute("content", darkMode ? "#0b1120" : "#f1f5f9");
+    meta?.setAttribute("content", darkMode ? "#0a0810" : "#f6f5f8");
     // The status bar now sits over our own header, so its icons must follow
     // OUR theme rather than Android's night setting. `Dark` means light
     // content on a dark background. No-ops off-device.
