@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
-import { db } from "../../db/db";
+import { db, PILLAR_META } from "../../db/db";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
-import { ProgressRing } from "../../components/ProgressRing";
+import { AuraOrb } from "../../components/AuraOrb";
 import { localDateStr } from "../../lib/dates";
 import { calcLifeBalance, calcPillars } from "../../lib/lifePillars";
 import { getRecommendation } from "../../lib/recommendations";
@@ -24,6 +24,12 @@ import { WeeklyReviewCard } from "./WeeklyReviewCard";
 export function DashboardView() {
   const [brainDump, setBrainDump] = useState("");
   const [saved, setSaved] = useState(false);
+  // Which pillar the orb is focused on, if any. Tapping the same one again
+  // clears it and the orb returns to the blended overall balance.
+  const [focusPillar, setFocusPillar] = useState<{
+    pillar: string;
+    colour: string;
+  } | null>(null);
   const { open: openSettings, openSearch } = useSettingsUi();
 
   const habits = useLiveQuery(() => db.habits.toArray(), []) ?? [];
@@ -96,6 +102,13 @@ export function DashboardView() {
   const missionDone = mission.filter((m) => m.done).length;
   const missionComplete = mission.length > 0 && missionDone === mission.length;
 
+  // The orb shows one pillar's score while that pillar is focused, otherwise
+  // the blended balance. Derived rather than stored so it can never drift.
+  const focused = focusPillar
+    ? (pillars.find((p) => p.pillar === focusPillar.pillar) ?? null)
+    : null;
+  const orbScore = focused ? focused.score : balance;
+
   const pinned = habits.filter((h) => h.pinned && !h.archived).slice(0, 2);
   const todayGoal = goals.find((g) => g.term === "today" && g.status === "active");
   const quote = quoteForDay(now);
@@ -125,12 +138,16 @@ export function DashboardView() {
         className="flex items-start justify-between gap-3"
       >
         <div className="min-w-0">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.19em] text-slate-400 dark:text-slate-500">
+            {now.toLocaleDateString(undefined, {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </p>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             {greeting(now)}
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {coachLine}
-          </p>
         </div>
         {/* Settings and Search live on the page body, not the header — the
             header sits under the status bar and its targets were
@@ -154,6 +171,21 @@ export function DashboardView() {
           </motion.button>
         </div>
       </motion.div>
+
+      {/* The orb is the hero, not a widget inside a card — it is the first
+          thing the eye lands on and the surface the assistant will live on
+          later. The coach line sits directly beneath it, which is what makes
+          it read as the app speaking rather than a caption. */}
+      <div className="-mt-2 flex flex-col items-center">
+        <AuraOrb
+          score={orbScore}
+          focus={focusPillar?.colour}
+          label={focused ? PILLAR_META[focused.pillar].label : "Balance"}
+        />
+        <p className="-mt-2 max-w-[272px] text-center text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          {coachLine}
+        </p>
+      </div>
 
       <BackupNudge />
 
@@ -252,17 +284,18 @@ export function DashboardView() {
         </p>
       </Card>
 
-      <Card title="Life Balance" delay={0.06}>
-        <div className="flex items-center gap-4">
-          <ProgressRing percent={balance ?? 0} size={72} strokeWidth={7}>
-            <span className="text-sm font-extrabold text-slate-700 dark:text-slate-100">
-              {balance === null ? "—" : balance}
-            </span>
-          </ProgressRing>
-          <div className="flex-1">
-            <PillarBar scores={pillars} />
-          </div>
-        </div>
+      {/* The overall number moved to the orb, so this card is now the
+          breakdown behind it — tapping a pillar focuses the orb on it. */}
+      <Card title="Four pillars" delay={0.06}>
+        <PillarBar
+          scores={pillars}
+          selected={focusPillar?.pillar ?? null}
+          onSelect={(pillar, colour) =>
+            setFocusPillar((cur) =>
+              cur?.pillar === pillar ? null : { pillar, colour },
+            )
+          }
+        />
       </Card>
 
       {pinned.length > 0 && (

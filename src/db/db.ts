@@ -410,14 +410,17 @@ export const DEFAULT_FAST_HOURS = 12;
  */
 export type Pillar = "health" | "wealth" | "knowledge" | "productivity";
 
-export const PILLAR_META: Record<
-  Pillar,
-  { label: string; icon: string; color: string }
-> = {
-  health: { label: "Health", icon: "❤️", color: "#fb7185" },
-  wealth: { label: "Wealth", icon: "💰", color: "#f59e0b" },
-  knowledge: { label: "Knowledge", icon: "🧠", color: "#a78bfa" },
-  productivity: { label: "Productivity", icon: "⚡", color: "#22d3ee" },
+/**
+ * Colours are the Aura pillar set — they are also what the orb blends, so the
+ * dot beside a score and the light inside the sphere are the same hue. The
+ * emoji icon was dropped: four coloured glyphs at 16px read as clip-art next
+ * to real data, and the colour already carries the identity.
+ */
+export const PILLAR_META: Record<Pillar, { label: string; color: string }> = {
+  health: { label: "Health", color: "#ff8a73" },
+  wealth: { label: "Wealth", color: "#3fd9a4" },
+  knowledge: { label: "Knowledge", color: "#a98bff" },
+  productivity: { label: "Productivity", color: "#4fd8e8" },
 };
 
 /** Identity a habit builds. Users pick one; it determines pillar scoring. */
