@@ -166,7 +166,19 @@ body {
   height: 0;
 }
 
+/**
+ * Frosted surfaces.
+ *
+ * Deliberately ONLY the standard property. Writing the `-webkit-` prefixed
+ * twin alongside it made Lightning CSS decide the prefix was sufficient for
+ * its target set and drop the standard declaration — the built rule came out
+ * as `.glass{-webkit-backdrop-filter:blur(14px)}`. Chrome has since removed
+ * that alias (`CSS.supports('-webkit-backdrop-filter', ...)` is false as of
+ * 148), so every frosted surface in the app was rendering with no blur at all
+ * on modern Android WebView.
+ *
+ * Do not "helpfully" re-add the prefixed line: it silently deletes this one.
+ */
 .glass {
   backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
