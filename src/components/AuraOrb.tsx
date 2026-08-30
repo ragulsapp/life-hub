@@ -256,6 +256,27 @@ export function AuraOrb({
         boostRef.current = 0.075;
       }}
     >
+      {/*
+        The orb carries its own dark ground.
+
+        It is drawn with additive ('lighter') blending and reads as a lit
+        object, which only works against darkness — on the light theme it
+        washed out to a smudge and the white readout measured 1.09:1 against
+        the page, i.e. invisible. Rather than making the orb theme-aware (two
+        renderers to keep in sync), the surface under it is always dark.
+
+        In dark mode this is within a few percent of the page colour, so the
+        seam does not show; in light mode it reads as a deliberate dark well,
+        which is how the reference art presents the sphere anyway.
+      */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, #120b20 0%, #0d0918 46%, rgba(10,8,16,.72) 63%, rgba(10,8,16,0) 76%)",
+        }}
+      />
       <div
         aria-hidden
         className="pointer-events-none absolute rounded-full"
