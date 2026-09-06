@@ -3,8 +3,20 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+/**
+ * Where the app is served from.
+ *
+ * The Capacitor WebView serves the bundle from the root of the APK, so the
+ * Android build MUST stay at "/". GitHub Pages serves a project site under
+ * /<repo>/, so the iPhone-installable PWA build needs that prefix instead —
+ * set PAGES_BASE in that workflow only. Hardcoding either one breaks the
+ * other, which is why this is an env var rather than a constant.
+ */
+const base = process.env.PAGES_BASE ?? "/";
+
 // https://vite.dev/config/
 export default defineConfig({
+  base,
   plugins: [
     react(),
     tailwindcss(),
@@ -22,8 +34,10 @@ export default defineConfig({
         theme_color: "#0f172a",
         background_color: "#0f172a",
         display: "standalone",
-        start_url: "/",
-        scope: "/",
+        // Must follow `base`: on a project Pages site a start_url of "/" sends
+        // the installed icon to the domain root, not the app.
+        start_url: base,
+        scope: base,
         icons: [
           {
             src: "icons/icon-192.png",
