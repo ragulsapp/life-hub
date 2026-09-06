@@ -43,8 +43,17 @@ if ('serviceWorker' in navigator) {
     })
     caches?.keys().then((keys) => keys.forEach((k) => caches.delete(k)))
   } else {
+    // Path and scope both come from BASE_URL, never hardcoded: the bundle is
+    // served from "/" inside the APK but from "/<repo>/" on GitHub Pages, and
+    // a worker cannot claim a scope above its own directory. Hardcoding "/"
+    // 404s on Pages, which silently costs the app its entire offline story.
+    // The catch matters too — an unhandled rejection here trips the global
+    // handler above and toasts a misleading "failed to save" at the user.
+    const swUrl = `${import.meta.env.BASE_URL}sw.js`
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      navigator.serviceWorker
+        .register(swUrl, { scope: import.meta.env.BASE_URL })
+        .catch((err) => console.error('Service worker registration failed:', err))
     })
   }
 }
