@@ -155,27 +155,79 @@ export function AuraOrb({
       };
     };
 
-    const draw = () => {
+    // Paints exactly one frame and schedules nothing. Keeping "render" and
+    // "keep rendering" separate is what lets the theme observer below repaint
+    // safely — calling a self-scheduling draw() from there would start a
+    // second concurrent rAF loop and double the spin speed.
+    const renderFrame = () => {
       tick += 1;
       angle += 0.0035 + boostRef.current;
       boostRef.current *= 0.94;
 
-      ctx.clearRect(0, 0, SIZE, SIZE);
-      ctx.globalCompositeOperation = "lighter";
+      // Read the theme per frame rather than capturing it: the toggle can flip
+      // while this is mounted, and one cheap classList check is far less work
+      // than tearing the loop down and restarting it.
+      const dark = document.documentElement.classList.contains("dark");
 
-      // lit core — the sphere reads as a body, not a cloud of dots
-      const core = ctx.createRadialGradient(
-        CX - R * 0.3, CY - R * 0.34, R * 0.06,
-        CX, CY, R * 1.02,
-      );
-      core.addColorStop(0, "rgba(150,130,255,0.55)");
-      core.addColorStop(0.34, "rgba(76,60,180,0.30)");
-      core.addColorStop(0.72, "rgba(30,18,70,0.22)");
-      core.addColorStop(1, "rgba(8,4,20,0)");
-      ctx.fillStyle = core;
-      ctx.beginPath();
-      ctx.arc(CX, CY, R * 1.05, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.clearRect(0, 0, SIZE, SIZE);
+      // Additive blending is what makes the orb read as a LIT object, but it
+      // only works against darkness — on white every channel saturates and the
+      // whole thing washes out. So the light theme draws a solid, shaded ball
+      // normally instead. Same geometry, same rings, different material.
+      ctx.globalCompositeOperation = dark ? "lighter" : "source-over";
+
+      if (dark) {
+        // glowing core: bright centre falling off to nothing at the rim
+        const core = ctx.createRadialGradient(
+          CX - R * 0.3, CY - R * 0.34, R * 0.06,
+          CX, CY, R * 1.02,
+        );
+        core.addColorStop(0, "rgba(150,130,255,0.55)");
+        core.addColorStop(0.34, "rgba(76,60,180,0.30)");
+        core.addColorStop(0.72, "rgba(30,18,70,0.22)");
+        core.addColorStop(1, "rgba(8,4,20,0)");
+        ctx.fillStyle = core;
+        ctx.beginPath();
+        ctx.arc(CX, CY, R * 1.05, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // solid ball, lit from the upper left, with a hard edge at the rim so
+        // it reads as an object sitting on the page rather than a smudge
+        const body = ctx.createRadialGradient(
+          CX - R * 0.35, CY - R * 0.4, R * 0.05,
+          CX, CY, R,
+        );
+        // Kept pale on purpose. The readout sits at the sphere's geometric
+        // centre, which — because the gradient origin is offset to the lit
+        // upper-left — lands around stop 0.53, not 0. A mid-violet there gave
+        // the dark text only 3.07:1. These stops put the centre in the pale
+        // lavenders so the number clears AA comfortably, and the saturated
+        // rim plus the rings still carry the Aura colour.
+        body.addColorStop(0, "#ffffff");
+        body.addColorStop(0.32, "#ede9fe");
+        body.addColorStop(0.66, "#c9bbfb");
+        body.addColorStop(1, "#9d86f0");
+        ctx.fillStyle = body;
+        ctx.beginPath();
+        ctx.arc(CX, CY, R, 0, Math.PI * 2);
+        ctx.fill();
+
+        // terminator: shading on the far side gives it volume
+        const shade = ctx.createRadialGradient(
+          CX + R * 0.36, CY + R * 0.42, R * 0.05,
+          CX + R * 0.1, CY + R * 0.14, R * 1.05,
+        );
+        shade.addColorStop(0, "rgba(46,28,120,0.20)");
+        shade.addColorStop(0.55, "rgba(46,28,120,0.06)");
+        shade.addColorStop(1, "rgba(46,28,120,0)");
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(CX, CY, R, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = shade;
+        ctx.fillRect(0, 0, SIZE, SIZE);
+        ctx.restore();
+      }
 
       for (const ring of rings) {
         const colour = focusRef.current || ring.colour;
@@ -197,7 +249,12 @@ export function AuraOrb({
               ctx.lineTo(pr.sx, pr.sy);
             }
           }
-          ctx.strokeStyle = rgba(colour, pass === 0 ? 0.14 : 0.55);
+          // On white, additive alphas this low vanish; solid strokes need to
+          // be more opaque to hold their own against the page.
+          ctx.strokeStyle = rgba(
+            colour,
+            dark ? (pass === 0 ? 0.14 : 0.55) : pass === 0 ? 0.3 : 0.85,
+          );
           ctx.lineWidth = ring.weight * (pass === 0 ? 0.8 : 1);
           ctx.stroke();
         }
@@ -221,7 +278,13 @@ export function AuraOrb({
       for (const p of points) {
         const pr = project(p);
         const d = (pr.depth + 1) / 2; // 0 back .. 1 front
-        ctx.fillStyle = rgba(focusRef.current || p.colour, 0.06 + d * d * 0.72);
+        // Dark: points ARE the light, so the back half fades to nothing.
+        // Light: they sit on an already-solid ball, so they stay legible but
+        // never fully opaque, otherwise the sphere turns into confetti.
+        ctx.fillStyle = rgba(
+          focusRef.current || p.colour,
+          dark ? 0.06 + d * d * 0.72 : 0.1 + d * d * 0.5,
+        );
         ctx.beginPath();
         ctx.arc(pr.sx, pr.sy, 0.5 + d * 1.7, 0, Math.PI * 2);
         ctx.fill();
@@ -229,23 +292,58 @@ export function AuraOrb({
 
       // specular — the highlight is what makes it read as a lit object
       ctx.globalCompositeOperation = "source-over";
+      ctx.save();
+      if (!dark) {
+        // Clip to the sphere: unclipped, a white highlight bleeds past the rim
+        // and haloes onto the page, which is what made the old version look
+        // like a smudge rather than an object.
+        ctx.beginPath();
+        ctx.arc(CX, CY, R, 0, Math.PI * 2);
+        ctx.clip();
+      }
       const spec = ctx.createRadialGradient(
         CX - R * 0.34, CY - R * 0.4, 0,
-        CX - R * 0.34, CY - R * 0.4, R * 0.85,
+        CX - R * 0.34, CY - R * 0.4, dark ? R * 0.85 : R * 0.6,
       );
-      spec.addColorStop(0, "rgba(255,255,255,0.30)");
-      spec.addColorStop(0.35, "rgba(255,255,255,0.05)");
+      spec.addColorStop(0, `rgba(255,255,255,${dark ? 0.3 : 0.72})`);
+      spec.addColorStop(0.35, `rgba(255,255,255,${dark ? 0.05 : 0.16})`);
       spec.addColorStop(1, "rgba(255,255,255,0)");
       ctx.fillStyle = spec;
       ctx.beginPath();
       ctx.arc(CX, CY, R * 1.1, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
 
-      if (!reduced) raf = requestAnimationFrame(draw);
     };
 
-    draw();
-    return () => cancelAnimationFrame(raf);
+    const loop = () => {
+      renderFrame();
+      raf = requestAnimationFrame(loop);
+    };
+
+    if (reduced) renderFrame();
+    else loop();
+
+    /**
+     * Repaint when the theme flips.
+     *
+     * The dark and light renders are different materials, and the choice is
+     * made per frame. With the loop running that self-corrects immediately —
+     * but under prefers-reduced-motion only one frame is ever drawn, so a
+     * theme toggle would otherwise strand the orb in the wrong material for
+     * the life of the mount. It also covers the first frame landing before
+     * the theme has resolved.
+     */
+    const themeObserver = new MutationObserver(renderFrame);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      themeObserver.disconnect();
+    };
   }, []);
 
   return (
@@ -257,29 +355,14 @@ export function AuraOrb({
       }}
     >
       {/*
-        The orb carries its own dark ground.
-
-        It is drawn with additive ('lighter') blending and reads as a lit
-        object, which only works against darkness — on the light theme it
-        washed out to a smudge and the white readout measured 1.09:1 against
-        the page, i.e. invisible. Rather than making the orb theme-aware (two
-        renderers to keep in sync), the surface under it is always dark.
-
-        In dark mode this is within a few percent of the page colour, so the
-        seam does not show; in light mode it reads as a deliberate dark well,
-        which is how the reference art presents the sphere anyway.
+        Ambient bloom only. An earlier attempt gave the orb its own dark disc
+        so the additive render would work on the light theme — but on white
+        that disc read as a black ring around the orb, which is worse than the
+        problem it solved. The renderer adapts to the theme instead.
       */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, #120b20 0%, #0d0918 46%, rgba(10,8,16,.72) 63%, rgba(10,8,16,0) 76%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute rounded-full"
+        className="pointer-events-none absolute rounded-full opacity-60 dark:opacity-100"
         style={{
           inset: "14%",
           background:
@@ -295,16 +378,20 @@ export function AuraOrb({
         role="img"
         aria-label={score === null ? `${label}: not enough data yet` : `${label}: ${score} out of 100`}
       />
+      {/*
+        The readout sits ON the sphere, so its colour follows the sphere's
+        material, not the page: white against the dark theme's glowing core,
+        near-black against the light theme's pale violet body. White on the
+        light ball measures ~2.6:1 — the reason this needed changing.
+      */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="text-[46px] font-semibold leading-none tracking-[-0.045em] text-white tabular-nums"
-          style={{ textShadow: "0 2px 26px rgba(8,4,20,.75)" }}
+          className="text-[46px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-[#1a1030] drop-shadow-[0_1px_10px_rgba(255,255,255,0.45)] dark:text-white dark:drop-shadow-[0_2px_26px_rgba(8,4,20,0.75)]"
         >
           {score === null ? "—" : score}
         </span>
         <span
-          className="mt-[7px] text-[9px] font-bold uppercase tracking-[0.24em] text-white/80"
-          style={{ textShadow: "0 1px 10px rgba(8,4,20,.8)" }}
+          className="mt-[7px] text-[9px] font-bold uppercase tracking-[0.24em] text-[#1a1030]/75 drop-shadow-[0_1px_8px_rgba(255,255,255,0.4)] dark:text-white/80 dark:drop-shadow-[0_1px_10px_rgba(8,4,20,0.8)]"
         >
           {label}
         </span>
