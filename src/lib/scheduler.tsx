@@ -290,11 +290,60 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    /**
+     * Tick on the minute, not on a stopwatch.
+     *
+     * This used to be setInterval(tick, 15000), whose phase is whenever the
+     * app happened to start. An alarm set for 07:00 fired on the next tick
+     * after 07:00:00 — on average 7.5s late and up to 15s late, which is
+     * exactly the lateness that was reported. No amount of shortening the
+     * interval fixes the phase; it only trades accuracy for battery.
+     *
+     * Every predicate in reminderLogic works in HH:MM, so the useful instant
+     * is the moment the minute changes. Re-aiming at each real minute
+     * boundary makes alarms land within ~200ms of their stated time while
+     * ticking a quarter as often as before.
+     *
+     * The small offset past :00 is deliberate — timers fire slightly early as
+     * often as slightly late, and waking at 06:59:59.98 would read the old
+     * minute and wait another full minute to ring.
+     */
+    const OFFSET_MS = 250;
+    let timer: number | undefined;
+
+    const scheduleNextTick = () => {
+      const now = Date.now();
+      const nextMinute = Math.floor(now / 60_000) * 60_000 + 60_000;
+      timer = window.setTimeout(run, nextMinute + OFFSET_MS - now);
+    };
+
+    const run = () => {
+      if (cancelled) return;
+      tick().catch(console.error);
+      scheduleNextTick();
+    };
+
+    /**
+     * A backgrounded tab has its timers throttled, and a suspended phone stops
+     * running them altogether, so the scheduled tick can be long overdue by
+     * the time the app is looked at again. Catch up on return to the
+     * foreground and re-aim at the next boundary. Cheap: the per-item
+     * lastFiredDate / lastReminderDate guards make an extra tick a no-op.
+     */
+    const onVisible = () => {
+      if (document.visibilityState !== "visible" || cancelled) return;
+      if (timer !== undefined) window.clearTimeout(timer);
+      run();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
     tick().catch(console.error);
-    const id = window.setInterval(() => tick().catch(console.error), 15000);
+    scheduleNextTick();
+
     return () => {
       cancelled = true;
-      clearInterval(id);
+      if (timer !== undefined) window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
