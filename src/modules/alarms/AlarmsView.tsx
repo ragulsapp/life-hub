@@ -3,6 +3,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db, type Alarm } from "../../db/db";
 import { Card } from "../../components/Card";
+import { BellIcon, CalendarIcon } from "../../components/Icons";
 import { AlarmForm } from "./AlarmForm";
 import { TaskList } from "./TaskList";
 import { WakeHistory } from "./WakeHistory";
@@ -127,62 +128,77 @@ export function AlarmsView() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97 }}
             >
-              <Card>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-baseline gap-2">
-                      <span
-                        className={`text-3xl font-extrabold tabular-nums ${
-                          a.enabled
-                            ? "text-slate-900 dark:text-white"
-                            : "text-slate-400 dark:text-slate-500"
-                        }`}
-                      >
-                        {a.time}
+              <Card className={a.enabled ? "" : "opacity-60"}>
+                {/* Time leads, everything else is secondary to it. A disabled
+                    alarm dims as a whole rather than only greying its digits,
+                    so its state reads without comparing two shades. */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div
+                      className={`text-[34px] font-semibold leading-none tracking-tight tabular-nums ${
+                        a.enabled
+                          ? "text-slate-900 dark:text-white"
+                          : "text-slate-400 dark:text-slate-500"
+                      }`}
+                    >
+                      {a.time}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      {a.label && (
+                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                          {a.label}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarIcon size={12} />
+                        {repeatLabel(a.days)}
                       </span>
-                      <span className="text-xs text-slate-400">
-                        {a.mission === "math" ? "🧮" : "🧠"}{" "}
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium dark:bg-white/5">
+                        {a.mission === "math" ? "Math" : "Memory"} ·{" "}
                         {["Easy", "Medium", "Hard"][a.difficulty - 1]}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {a.label ? `${a.label} · ` : ""}
-                      {repeatLabel(a.days)}
-                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => ringNow(a)}
-                      className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
-                      title="Preview this alarm now"
-                    >
-                      Ring now
-                    </button>
-                    <button
-                      onClick={() => toggle(a)}
-                      aria-label={`${a.enabled ? "Disable" : "Enable"} ${a.time} alarm`}
-                      aria-pressed={a.enabled}
-                      className={`relative h-6 w-11 rounded-full transition-colors ${
-                        a.enabled
-                          ? "bg-emerald-500"
-                          : "bg-slate-300 dark:bg-slate-600"
+                  <button
+                    onClick={() => toggle(a)}
+                    aria-label={`${a.enabled ? "Disable" : "Enable"} ${a.time} alarm`}
+                    aria-pressed={a.enabled}
+                    // A switch looks 28px tall but must still be a 44px target, so the
+                    // visible track is drawn inside a larger transparent button.
+                    className="relative flex h-11 w-12 flex-shrink-0 items-center justify-center"
+                  >
+                    <span
+                      className={`block h-7 w-12 rounded-full transition-colors ${
+                        a.enabled ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"
                       }`}
-                    >
-                      <motion.span
-                        layout
-                        className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow"
-                        animate={{ left: a.enabled ? 22 : 2 }}
-                      />
-                    </button>
-                    <button
-                      onClick={() => remove(a.id)}
-                      aria-label={`Delete ${a.time} alarm`}
-                      className="text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
-                    >
-                      ✕
-                    </button>
-                  </div>
+                    />
+                    <motion.span
+                      layout
+                      className="absolute h-6 w-6 rounded-full bg-white shadow"
+                      animate={{ left: a.enabled ? 22 : 2 }}
+                    />
+                  </button>
+                </div>
+
+                {/* Actions on their own row: both were well under the minimum
+                    touch target while crowded against the toggle, and the
+                    delete was a bare ✕ at 12px. */}
+                <div className="mt-3 flex gap-2 border-t border-slate-200/70 pt-3 dark:border-white/5">
+                  <button
+                    onClick={() => ringNow(a)}
+                    className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                  >
+                    <BellIcon size={13} on />
+                    Preview
+                  </button>
+                  <button
+                    onClick={() => remove(a.id)}
+                    aria-label={`Delete ${a.time} alarm`}
+                    className="h-11 rounded-xl px-4 text-[12px] font-semibold text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
+                  >
+                    Delete
+                  </button>
                 </div>
               </Card>
             </motion.div>
