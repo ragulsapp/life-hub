@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db } from "../../db/db";
+import { monthLabel } from "../../lib/dates";
 import { Card } from "../../components/Card";
 import { AnimatedNumber } from "../../components/AnimatedNumber";
 import { DonutChart, DONUT_PALETTE } from "../../components/DonutChart";
@@ -32,14 +33,27 @@ export function FinanceView() {
   const transactions = useLiveQuery(() => db.transactions.toArray(), []) ?? [];
   const categories = useLiveQuery(() => db.financeCategories.toArray(), []) ?? [];
   const budgets = useLiveQuery(() => db.budgets.toArray(), []) ?? [];
-  const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
-  const monthKey = currentMonthKey();
+  // The month being viewed. Every summary below is month-scoped, so this is
+  // what makes past months openable rather than just drawable.
+  const thisMonth = currentMonthKey();
+  const [monthKey, setMonthKey] = useState(thisMonth);
+  const viewingPast = monthKey !== thisMonth;
+
+  // The list showed every transaction ever, ignoring the month entirely — so
+  // even the current-month view was lying about what it was showing.
+  const sorted = [...transactions]
+    .filter((t) => t.date.startsWith(monthKey))
+    .sort((a, b) => b.date.localeCompare(a.date));
   const { totalIncome, totalExpense, net } = calcMonthTotals(
     transactions,
     monthKey,
   );
   const mrr = calcMRR(transactions, monthKey, categories);
-  const safe = calcSafeToSpendToday(transactions, budgets, monthKey);
+  // "Safe to spend today" divides what is left by the days remaining in the
+  // month — a projection that means nothing for a month already over.
+  const safe = viewingPast
+    ? null
+    : calcSafeToSpendToday(transactions, budgets, monthKey);
 
   const byCategory = expenseByCategory(transactions, monthKey);
   const donutSlices = byCategory.map((c, i) => ({
@@ -161,7 +175,12 @@ export function FinanceView() {
         </Card>
   
         <Card title="Spending History" delay={0.06}>
-          <SpendingHistory transactions={transactions} monthKey={monthKey} />
+          <SpendingHistory
+            transactions={transactions}
+            monthKey={thisMonth}
+            selectedKey={monthKey}
+            onSelectMonth={setMonthKey}
+          />
         </Card>
   
         <Card title="Budgets" delay={0.08}>
@@ -172,7 +191,21 @@ export function FinanceView() {
           <TransactionForm />
         </Card>
   
-        <Card title="Transactions" delay={0.1}>
+        <Card title={viewingPast ? `Transactions · ${monthLabel(monthKey)}` : "Transactions"} delay={0.1}>
+          {viewingPast && (
+            <button
+              type="button"
+              onClick={() => setMonthKey(thisMonth)}
+              className="mb-3 rounded-full bg-cyan-500/12 px-3 py-1.5 text-xs font-semibold text-cyan-600 dark:text-cyan-300"
+            >
+              ← Back to this month
+            </button>
+          )}
+          {sorted.length === 0 && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Nothing logged in {monthLabel(monthKey)}.
+            </p>
+          )}
           <ul className="flex flex-col gap-2">
             <AnimatePresence initial={false}>
               {sorted.map((t, i) => (

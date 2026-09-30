@@ -1,20 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import type { Transaction } from "../../db/db";
+import { monthLabel } from "../../lib/dates";
 import {
   calcMonthTotals,
   categoryDeltas,
   previousMonthKey,
 } from "./financeSummary";
-
-/** "2026-07" -> "Jul 2026" */
-function monthLabel(key: string): string {
-  const [y, m] = key.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString(undefined, {
-    month: "short",
-    year: "numeric",
-  });
-}
 
 /** The last `count` month keys, newest first, ending at `endKey`. */
 function recentMonths(endKey: string, count: number): string[] {
@@ -34,9 +26,15 @@ const money = (n: number) => `₹${Math.round(n).toLocaleString()}`;
 export function SpendingHistory({
   transactions,
   monthKey,
+  selectedKey,
+  onSelectMonth,
 }: {
   transactions: Transaction[];
+  /** Anchors which months the chart covers — always the real current month. */
   monthKey: string;
+  /** The month currently being viewed, highlighted in the chart. */
+  selectedKey?: string;
+  onSelectMonth?: (key: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -69,29 +67,50 @@ export function SpendingHistory({
       {/* Income vs expense per month */}
       <div>
         <div className="flex h-28 items-end gap-2">
-          {series.map((m) => (
-            <div key={m.key} className="flex flex-1 flex-col items-center gap-1">
-              <div className="flex h-full w-full items-end justify-center gap-0.5">
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${(m.totalIncome / peak) * 100}%` }}
-                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-1/2 min-h-[2px] rounded-t bg-emerald-400/70"
-                  title={`${monthLabel(m.key)} in: ${money(m.totalIncome)}`}
-                />
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${(m.totalExpense / peak) * 100}%` }}
-                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-1/2 min-h-[2px] rounded-t bg-rose-400/80"
-                  title={`${monthLabel(m.key)} out: ${money(m.totalExpense)}`}
-                />
-              </div>
-              <span className="text-[9px] text-slate-400">
-                {monthLabel(m.key).split(" ")[0]}
-              </span>
-            </div>
-          ))}
+          {/* Each month is a button, not a decorative bar. These carried only a
+              `title` tooltip before — invisible on a phone, which is why there
+              was no way to open a past month at all. */}
+          {series.map((m) => {
+            const isSel = m.key === selectedKey;
+            return (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => onSelectMonth?.(m.key)}
+                aria-pressed={isSel}
+                aria-label={`${monthLabel(m.key)}: ${money(m.totalIncome)} in, ${money(m.totalExpense)} out`}
+                className={`flex h-full flex-1 flex-col items-center gap-1 rounded-lg pt-1 transition-colors ${
+                  isSel
+                    ? "bg-cyan-500/12"
+                    : "hover:bg-slate-500/10 active:bg-slate-500/15"
+                }`}
+              >
+                <div className="flex h-full w-full items-end justify-center gap-0.5">
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${(m.totalIncome / peak) * 100}%` }}
+                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    className="w-1/2 min-h-[2px] rounded-t bg-emerald-400/70"
+                  />
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${(m.totalExpense / peak) * 100}%` }}
+                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    className="w-1/2 min-h-[2px] rounded-t bg-rose-400/80"
+                  />
+                </div>
+                <span
+                  className={`text-[9px] ${
+                    isSel
+                      ? "font-semibold text-cyan-600 dark:text-cyan-300"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {monthLabel(m.key).split(" ")[0]}
+                </span>
+              </button>
+            );
+          })}
         </div>
         <div className="mt-2 flex justify-center gap-4 text-[10px] text-slate-400">
           <span className="flex items-center gap-1">

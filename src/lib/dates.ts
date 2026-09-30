@@ -42,3 +42,12 @@ export function startOfWeekStr(now: Date = new Date()): string {
     new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()),
   );
 }
+
+/** "2026-07" -> "Jul 2026". Shared so the month name reads the same everywhere. */
+export function monthLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString(undefined, {
+    month: "short",
+    year: "numeric",
+  });
+}
