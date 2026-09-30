@@ -1,17 +1,35 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
+import { useDraft } from "../../lib/useDraft";
+
+interface NoteDraft {
+  title: string;
+  body: string;
+  tags: string[];
+  tagDraft: string;
+  pinned: boolean;
+  sensitive: boolean;
+}
+
+const EMPTY: NoteDraft = {
+  title: "",
+  body: "",
+  tags: [],
+  tagDraft: "",
+  pinned: false,
+  sensitive: false,
+};
 
 export function NoteEditor() {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagDraft, setTagDraft] = useState("");
-  const [pinned, setPinned] = useState(false);
-  const [sensitive, setSensitive] = useState(false);
+  // One draft object rather than six pieces of state: switching tabs unmounts
+  // this component, and everything typed here has to survive that.
+  const [draft, setDraft, clearDraft] = useDraft<NoteDraft>("note", EMPTY);
+  const { title, body, tags, tagDraft, pinned, sensitive } = draft;
+  const patch = (p: Partial<NoteDraft>) => setDraft((d) => ({ ...d, ...p }));
 
   const allNotes = useLiveQuery(() => db.notes.toArray(), []) ?? [];
 
@@ -36,11 +54,10 @@ export function NoteEditor() {
   const addTag = (raw: string) => {
     const tag = raw.trim().replace(/,$/, "");
     if (!tag || tags.includes(tag)) {
-      setTagDraft("");
+      patch({ tagDraft: "" });
       return;
     }
-    setTags((prev) => [...prev, tag]);
-    setTagDraft("");
+    patch({ tags: [...tags, tag], tagDraft: "" });
   };
 
   const save = async () => {
@@ -53,25 +70,22 @@ export function NoteEditor() {
       sensitive,
       createdAt: Date.now(),
     } as never);
-    setTitle("");
-    setBody("");
-    setTags([]);
-    setTagDraft("");
-    setPinned(false);
-    setSensitive(false);
+    // Only after the write lands — clearing first would lose the note if the
+    // add threw.
+    clearDraft(EMPTY);
   };
 
   return (
     <div className="flex flex-col gap-2">
       <input
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={(e) => patch({ title: e.target.value })}
         placeholder="Title"
         className={`font-medium ${inputClass}`}
       />
       <textarea
         value={body}
-        onChange={(e) => setBody(e.target.value)}
+        onChange={(e) => patch({ body: e.target.value })}
         placeholder="Write your note..."
         rows={4}
         className={inputClass}
@@ -96,7 +110,7 @@ export function NoteEditor() {
             <motion.button
               key={tag}
               whileTap={{ scale: 0.94 }}
-              onClick={() => setTags((p) => p.filter((t) => t !== tag))}
+              onClick={() => patch({ tags: tags.filter((t) => t !== tag) })}
               aria-label={`Remove tag ${tag}`}
               className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-medium text-white"
             >
@@ -111,7 +125,7 @@ export function NoteEditor() {
         onChange={(e) => {
           const v = e.target.value;
           if (v.endsWith(",")) addTag(v);
-          else setTagDraft(v);
+          else patch({ tagDraft: v });
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -141,7 +155,7 @@ export function NoteEditor() {
         <input
           type="checkbox"
           checked={pinned}
-          onChange={(e) => setPinned(e.target.checked)}
+          onChange={(e) => patch({ pinned: e.target.checked })}
           className="accent-cyan-500"
         />
         Pin this note
@@ -151,7 +165,7 @@ export function NoteEditor() {
         <input
           type="checkbox"
           checked={sensitive}
-          onChange={(e) => setSensitive(e.target.checked)}
+          onChange={(e) => patch({ sensitive: e.target.checked })}
           className="accent-amber-500"
         />
         Mark as sensitive

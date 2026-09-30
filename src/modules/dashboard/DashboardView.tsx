@@ -10,6 +10,7 @@ import { calcLifeBalance, calcPillars } from "../../lib/lifePillars";
 import { getRecommendation } from "../../lib/recommendations";
 import { dailyCoachMessage, greeting } from "../../lib/coachMessages";
 import { useSettingsUi } from "../../lib/settingsUi";
+import { useDraft } from "../../lib/useDraft";
 import { quoteForDay } from "../../lib/quotes";
 import { calcSafeToSpendToday, currentMonthKey } from "../finance/financeSummary";
 import { isDueOn } from "../habits/habitStreaks";
@@ -22,7 +23,9 @@ import { AchievementsCard } from "../achievements/AchievementsCard";
 import { WeeklyReviewCard } from "./WeeklyReviewCard";
 
 export function DashboardView() {
-  const [brainDump, setBrainDump] = useState("");
+  // Persisted: switching tabs unmounts this view, which used to silently
+  // destroy whatever had been typed here.
+  const [brainDump, setBrainDump, clearBrainDump] = useDraft("brainDump", "");
   const [saved, setSaved] = useState(false);
   // Which pillar the orb is focused on, if any. Tapping the same one again
   // clears it and the orb returns to the blended overall balance.
@@ -125,7 +128,7 @@ export function DashboardView() {
       sensitive: false,
       createdAt: Date.now(),
     } as never);
-    setBrainDump("");
+    clearBrainDump("");
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   };
