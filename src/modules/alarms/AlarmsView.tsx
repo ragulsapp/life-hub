@@ -78,7 +78,7 @@ export function AlarmsView() {
         {perm !== "granted" && (
           <button
             onClick={enableNotifications}
-            className="ml-1 font-semibold underline"
+            className="ml-1 inline-flex h-11 items-center rounded-full bg-amber-500/15 px-3 font-semibold text-amber-700 dark:text-amber-300"
           >
             Enable notifications
           </button>
@@ -218,8 +218,9 @@ export function AlarmsView() {
         </p>
         <button
           onClick={() => setPlanTomorrowOpen(true)}
-          className="w-full rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:bg-slate-700/60 dark:text-slate-100"
+          className="flex h-11 w-full items-center justify-center gap-1.5 rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10"
         >
+          <CalendarIcon size={14} />
           Plan tomorrow
         </button>
       </Card>

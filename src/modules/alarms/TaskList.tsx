@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TimeField } from "../../components/DateTimeField";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db } from "../../db/db";
@@ -135,11 +136,10 @@ export function TaskList() {
 
               {editingReminder === t.id && (
                 <div className="mt-2 flex items-center gap-2 border-t border-slate-200/60 pt-2 dark:border-slate-600/40">
-                  <input
-                    type="time"
-                    defaultValue={t.reminderTime ?? "09:00"}
-                    onChange={(e) => setReminder(t.id, t.title, e.target.value)}
-                    className={`!p-1.5 text-sm ${inputClass}`}
+                  <TimeField
+                    className="flex-1"
+                    value={t.reminderTime ?? "09:00"}
+                    onCommit={(v) => setReminder(t.id, t.title, v)}
                   />
                   {t.reminderEnabled && (
                     <button

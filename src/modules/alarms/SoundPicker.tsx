@@ -2,11 +2,109 @@ import { useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { BUILT_IN_SOUNDS, db, soundUrl, type SoundId } from "../../db/db";
 import { previewSound, previewUrl } from "../../lib/alarmSound";
+import {
+  BellIcon, CheckIcon, MusicIcon, PlayIcon, PlusIcon, SirenIcon, StopIcon, TrashIcon,
+} from "../../components/Icons";
 
 /** Exactly one of these is set; both unset means the generated siren. */
 export interface SoundSelection {
   soundId?: number;
   builtInSound?: SoundId;
+}
+
+/**
+ * One row shape for every sound — built-in, siren, and uploaded.
+ *
+ * These were three near-identical blocks that had already drifted: the rows
+ * sat at 20-24px with 22px preview buttons, well under the minimum target,
+ * and the selected state was a heavy filled bar whose blurb text became
+ * unreadable against it. Selection is now a tint and a check, matching how
+ * every other choice in the app is shown.
+ */
+function SoundRow({
+  icon,
+  name,
+  blurb,
+  selected,
+  onSelect,
+  playing,
+  onPreview,
+  onDelete,
+}: {
+  icon: React.ReactNode;
+  name: string;
+  blurb?: string;
+  selected: boolean;
+  onSelect: () => void;
+  playing?: boolean;
+  onPreview?: () => void;
+  onDelete?: () => void;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-1 rounded-xl border pl-3 pr-1 transition-colors ${
+        selected
+          ? "border-cyan-400/50 bg-cyan-500/10"
+          : "border-slate-200 hover:border-slate-300 dark:border-white/10 dark:hover:border-white/20"
+      }`}
+    >
+      <button
+        onClick={onSelect}
+        aria-pressed={selected}
+        className="flex h-12 min-w-0 flex-1 items-center gap-2.5 text-left"
+      >
+        <span
+          className={
+            selected
+              ? "text-cyan-600 dark:text-cyan-300"
+              : "text-slate-400 dark:text-slate-500"
+          }
+        >
+          {icon}
+        </span>
+        <span className="min-w-0 truncate text-sm">
+          <span
+            className={
+              selected
+                ? "font-semibold text-cyan-700 dark:text-cyan-200"
+                : "text-slate-700 dark:text-slate-200"
+            }
+          >
+            {name}
+          </span>
+          {blurb && (
+            <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
+              {blurb}
+            </span>
+          )}
+        </span>
+        {selected && (
+          <span className="ml-auto text-cyan-600 dark:text-cyan-300">
+            <CheckIcon size={15} />
+          </span>
+        )}
+      </button>
+
+      {onPreview && (
+        <button
+          onClick={onPreview}
+          aria-label={`${playing ? "Stop" : "Preview"} ${name}`}
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-500/10 dark:text-slate-400"
+        >
+          {playing ? <StopIcon size={13} /> : <PlayIcon size={13} />}
+        </button>
+      )}
+      {onDelete && (
+        <button
+          onClick={onDelete}
+          aria-label={`Delete sound ${name}`}
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
+        >
+          <TrashIcon size={14} />
+        </button>
+      )}
+    </div>
+  );
 }
 
 export function SoundPicker({
@@ -79,97 +177,46 @@ export function SoundPicker({
 
   return (
     <div className="flex flex-col gap-2">
-      {BUILT_IN_SOUNDS.map((s) => {
-        const selected = value.builtInSound === s.id;
-        return (
-          <div
-            key={s.id}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-              selected
-                ? "bg-cyan-500 text-white"
-                : "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
-            }`}
-          >
-            <button
-              onClick={() => onChange({ builtInSound: s.id })}
-              className="flex min-w-0 flex-1 items-center gap-2 text-left"
-            >
-              <span>🔔</span>
-              <span className="min-w-0 truncate">
-                {s.label}
-                <span
-                  className={`ml-1.5 text-xs ${selected ? "text-slate-900/60" : "opacity-60"}`}
-                >
-                  {s.blurb}
-                </span>
-              </span>
-              {selected && <span className="ml-auto">✓</span>}
-            </button>
-            <button
-              onClick={() => playPreview(s.id, () => previewUrl(soundUrl(s.id)))}
-              title="Preview"
-              aria-label={`${playing === s.id ? "Stop" : "Preview"} ${s.label}`}
-              className="px-1 text-base"
-            >
-              {playing === s.id ? "⏹" : "▶"}
-            </button>
-          </div>
-        );
-      })}
+      {BUILT_IN_SOUNDS.map((s) => (
+        <SoundRow
+          key={s.id}
+          icon={<BellIcon size={16} on />}
+          name={s.label}
+          blurb={s.blurb}
+          selected={value.builtInSound === s.id}
+          onSelect={() => onChange({ builtInSound: s.id })}
+          playing={playing === s.id}
+          onPreview={() => playPreview(s.id, () => previewUrl(soundUrl(s.id)))}
+        />
+      ))}
 
-      <button
-        onClick={() => onChange({})}
-        className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-          isSiren
-            ? "bg-cyan-500 text-white"
-            : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-300"
-        }`}
-      >
-        <span>📢 Siren (loud, keeps going)</span>
-        {isSiren && <span>✓</span>}
-      </button>
+      <SoundRow
+        icon={<SirenIcon size={16} />}
+        name="Siren"
+        blurb="loud, keeps going"
+        selected={isSiren}
+        onSelect={() => onChange({})}
+      />
 
       {sounds.map((s) => (
-        <div
+        <SoundRow
           key={s.id}
-          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-            value.soundId === s.id
-              ? "bg-cyan-500 text-white"
-              : "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
-          }`}
-        >
-          <button
-            onClick={() => onChange({ soundId: s.id })}
-            className="flex min-w-0 flex-1 items-center gap-2 text-left"
-          >
-            <span>🎵</span>
-            <span className="truncate">{s.name}</span>
-            {value.soundId === s.id && <span className="ml-auto">✓</span>}
-          </button>
-          <button
-            onClick={() => preview(s.id)}
-            title="Preview"
-            aria-label={`${playing === s.id ? "Stop" : "Preview"} "${s.name}"`}
-            className="px-1 text-base"
-          >
-            {playing === s.id ? "⏹" : "▶"}
-          </button>
-          <button
-            onClick={() => removeSound(s.id)}
-            title="Delete sound"
-            aria-label={`Delete sound "${s.name}"`}
-            className="px-1 text-xs opacity-60 hover:text-red-500 hover:opacity-100"
-          >
-            ✕
-          </button>
-        </div>
+          icon={<MusicIcon size={16} />}
+          name={s.name}
+          selected={value.soundId === s.id}
+          onSelect={() => onChange({ soundId: s.id })}
+          playing={playing === s.id}
+          onPreview={() => preview(s.id)}
+          onDelete={() => removeSound(s.id)}
+        />
       ))}
 
       <button
         onClick={() => fileRef.current?.click()}
-        className="rounded-lg border border-dashed border-slate-300 py-2 text-sm font-medium text-slate-500 hover:border-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 dark:border-slate-600"
+        className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 text-sm font-medium text-slate-500 transition-colors hover:border-cyan-400 hover:text-cyan-500 dark:border-white/15 dark:hover:text-cyan-300"
       >
-        ＋ Upload song / audio
+        <PlusIcon size={14} />
+        Upload song / audio
       </button>
       <input
         ref={fileRef}

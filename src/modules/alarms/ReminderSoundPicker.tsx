@@ -1,4 +1,5 @@
 import { useLiveQuery } from "dexie-react-hooks";
+import { BellIcon, CheckIcon } from "../../components/Icons";
 import {
   BUILT_IN_SOUNDS,
   db,
@@ -55,14 +56,15 @@ export function ReminderSoundPicker() {
             key={s.id}
             onClick={() => choose(s.id)}
             aria-pressed={current === s.id}
-            className={`flex min-h-11 items-center rounded-full px-4 text-sm font-medium transition-colors ${
+            className={`flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors ${
               current === s.id
                 ? "bg-cyan-500 text-white"
                 : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
             }`}
           >
-            🔔 {s.label}
-            {current === s.id && " ✓"}
+            <BellIcon size={14} on={current === s.id} />
+            {s.label}
+            {current === s.id && <CheckIcon size={14} />}
           </button>
         ))}
       </div>

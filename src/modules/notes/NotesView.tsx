@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TimeField } from "../../components/DateTimeField";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db } from "../../db/db";
@@ -128,13 +129,10 @@ export function NotesView() {
                 </div>
                 <div className="mt-2 flex items-center gap-2 border-t border-slate-200/60 pt-2 dark:border-slate-600/40">
                   {n.reminderEnabled && (
-                    <input
-                      type="time"
+                    <TimeField
+                      className="flex-1"
                       value={n.reminderTime ?? "09:00"}
-                      onChange={(e) =>
-                        toggleReminder(n.id, n.title, true, e.target.value)
-                      }
-                      className="rounded-md bg-slate-100 px-1 py-0.5 text-[11px] dark:bg-slate-700/50"
+                      onCommit={(v) => toggleReminder(n.id, n.title, true, v)}
                     />
                   )}
                   <button

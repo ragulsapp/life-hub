@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { TimeField } from "../../components/DateTimeField";
 import { motion } from "framer-motion";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../db/db";
@@ -244,11 +245,10 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           />
           {nightOn && (
             <div className="px-3 pb-2">
-              <input
-                type="time"
+              <TimeField
+                label="Remind me at"
                 value={settings?.nightReminderTime ?? "21:00"}
-                onChange={(e) => setNightReminderTime(e.target.value)}
-                className="!p-1.5 text-sm rounded-xl border border-slate-200 bg-white/50 text-slate-900 outline-none dark:border-slate-600 dark:bg-slate-900/30 dark:text-white"
+                onCommit={setNightReminderTime}
               />
             </div>
           )}

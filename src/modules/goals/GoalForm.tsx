@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DateField } from "../../components/DateTimeField";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type GoalTerm } from "../../db/db";
 import { Button } from "../../components/Button";
@@ -66,12 +67,7 @@ export function GoalForm() {
           </button>
         ))}
       </div>
-      <input
-        value={targetDate}
-        onChange={(e) => setTargetDate(e.target.value)}
-        type="date"
-        className={inputClass}
-      />
+      <DateField label="Target date" value={targetDate} onCommit={setTargetDate} />
 
       {habits.length > 0 && (
         <div>

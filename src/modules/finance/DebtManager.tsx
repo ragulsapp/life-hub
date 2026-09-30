@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DateField } from "../../components/DateTimeField";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db, type Debt, type DebtType } from "../../db/db";
@@ -85,12 +86,10 @@ function AddDebtForm() {
         placeholder="Amount (₹)"
         className={inputClass}
       />
-      <input
+      <DateField
+        label="Due date — optional"
         value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        type="date"
-        placeholder="Due date (optional)"
-        className={inputClass}
+        onCommit={setDueDate}
       />
       <input
         value={note}
