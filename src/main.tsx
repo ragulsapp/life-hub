@@ -50,9 +50,45 @@ if ('serviceWorker' in navigator) {
     // The catch matters too — an unhandled rejection here trips the global
     // handler above and toasts a misleading "failed to save" at the user.
     const swUrl = `${import.meta.env.BASE_URL}sw.js`
+
+    // Reload once the new worker takes over.
+    //
+    // Registering a worker is not the same as ever getting a new one. Without
+    // this the installed PWA serves its cached bundle indefinitely: the app
+    // was still showing a build from three weeks earlier, so every shipped fix
+    // was invisible on the device. The generated worker calls skipWaiting, so
+    // a new version activates as soon as it installs and `controllerchange`
+    // fires — that is the moment the page is still running old code against a
+    // new worker, and the only correct response is to reload.
+    //
+    // The guard matters: controllerchange can fire more than once, and without
+    // it the page reloads in a loop.
+    let reloading = false
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloading) return
+      reloading = true
+      window.location.reload()
+    })
+
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register(swUrl, { scope: import.meta.env.BASE_URL })
+        .then((reg) => {
+          // An iOS home-screen app is suspended and resumed rather than
+          // relaunched, so the browser's own update check may not run for
+          // days. Ask explicitly whenever the app comes back to the
+          // foreground; this is a cheap conditional request when nothing
+          // changed.
+          const checkForUpdate = () => {
+            if (document.visibilityState === 'visible') {
+              reg.update().catch(() => {
+                /* offline is the normal case here, not an error */
+              })
+            }
+          }
+          document.addEventListener('visibilitychange', checkForUpdate)
+          checkForUpdate()
+        })
         .catch((err) => console.error('Service worker registration failed:', err))
     })
   }
