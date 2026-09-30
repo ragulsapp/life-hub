@@ -4,6 +4,8 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db, type Habit } from "../../db/db";
 import { Card } from "../../components/Card";
+import { TimeField } from "../../components/DateTimeField";
+import { BellIcon } from "../../components/Icons";
 import { ProgressRing } from "../../components/ProgressRing";
 import { HabitForm } from "./HabitForm";
 import { HabitHistoryRow } from "./HabitHistoryRow";
@@ -196,25 +198,6 @@ function HabitCard({
               {showHeatmap ? "Show week" : "Show 12-week heatmap"}
             </button>
             <div className="flex items-center gap-2">
-              {habit.reminderEnabled && (
-                <input
-                  type="time"
-                  value={habit.reminderTime ?? "09:00"}
-                  onChange={async (e) => {
-                    await scheduleDailyReminder(
-                      habitNotifId(habit.id),
-                      "Habit reminder",
-                      `Time for: ${habit.name}`,
-                      e.target.value,
-                    );
-                    db.habits.update(habit.id, {
-                      reminderTime: e.target.value,
-                      lastReminderDate: reminderCreationGuard(e.target.value),
-                    });
-                  }}
-                  className="rounded-md bg-slate-100 px-1 py-0.5 text-[11px] dark:bg-slate-700/50"
-                />
-              )}
               <button
                 onClick={async () => {
                   const time = habit.reminderTime ?? "09:00";
@@ -235,16 +218,44 @@ function HabitCard({
                     lastReminderDate: reminderCreationGuard(time),
                   });
                 }}
-                className={`text-[11px] font-medium ${
+                className={`flex h-9 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition-colors ${
                   habit.reminderEnabled
-                    ? "text-cyan-500 dark:text-cyan-300"
-                    : "text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
+                    ? "bg-cyan-500/12 text-cyan-600 dark:text-cyan-300"
+                    : "text-slate-400 hover:bg-slate-500/10 hover:text-cyan-500 dark:hover:text-cyan-300"
                 }`}
               >
-                {habit.reminderEnabled ? "🔔 On" : "🔔 Remind"}
+                <BellIcon on={habit.reminderEnabled} />
+                {habit.reminderEnabled
+                  ? (habit.reminderTime ?? "09:00")
+                  : "Remind me"}
               </button>
             </div>
           </div>
+
+          {/* The time sits on its own row rather than crushed beside the
+              toggle. It used to be a 22px-tall, 11px-type input wedged into
+              that row — under half the minimum touch target, which is why it
+              could not be changed. */}
+          {habit.reminderEnabled && (
+            <div className="mt-3 border-t border-slate-200/70 pt-3 dark:border-white/5">
+              <TimeField
+                label="Remind me at"
+                value={habit.reminderTime ?? "09:00"}
+                onCommit={async (time) => {
+                  await scheduleDailyReminder(
+                    habitNotifId(habit.id),
+                    "Habit reminder",
+                    `Time for: ${habit.name}`,
+                    time,
+                  );
+                  db.habits.update(habit.id, {
+                    reminderTime: time,
+                    lastReminderDate: reminderCreationGuard(time),
+                  });
+                }}
+              />
+            </div>
+          )}
         </div>
       </Card>
     </motion.div>
