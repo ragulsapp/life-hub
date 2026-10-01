@@ -68,9 +68,6 @@ export function NotesView() {
 
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-        Notes
-      </h1>
 
       <Card title="New Note">
         <NoteEditor />

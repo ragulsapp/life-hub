@@ -20,56 +20,40 @@ import { SettingsUiContext } from "./lib/settingsUi";
 import {
   HomeIcon,
   HabitsIcon,
-  HealthIcon,
   FinanceIcon,
-  NotesIcon,
-  GoalsIcon,
-  AlarmIcon,
+  YouIcon,
 } from "./components/NavIcons";
-import { DashboardView } from "./modules/dashboard/DashboardView";
-import { HabitsView } from "./modules/habits/HabitsView";
-import { HealthView } from "./modules/health/HealthView";
 import { FinanceView } from "./modules/finance/FinanceView";
-import { NotesView } from "./modules/notes/NotesView";
-import { GoalsView } from "./modules/goals/GoalsView";
-import { AlarmsView } from "./modules/alarms/AlarmsView";
 import { AlarmOverlay } from "./modules/alarms/AlarmOverlay";
+import {
+  AlarmsScreen,
+  PlanView,
+  TodayView,
+  YouView,
+  type HabitsSection,
+  type YouSection,
+} from "./views/TabViews";
 
-type Tab =
-  | "dashboard"
-  | "habits"
-  | "health"
-  | "finance"
-  | "notes"
-  | "goals"
-  | "alarms";
+type Tab = "today" | "habits" | "money" | "you";
 
 const TABS: {
   id: Tab;
   label: string;
   Icon: (props: SVGProps<SVGSVGElement> & { active?: boolean }) => React.ReactElement;
 }[] = [
-  { id: "dashboard", label: "Home", Icon: HomeIcon },
-  { id: "habits", label: "Habits", Icon: HabitsIcon },
-  { id: "health", label: "Health", Icon: HealthIcon },
-  { id: "finance", label: "Finance", Icon: FinanceIcon },
-  { id: "notes", label: "Notes", Icon: NotesIcon },
-  { id: "goals", label: "Goals", Icon: GoalsIcon },
-  { id: "alarms", label: "Alarms", Icon: AlarmIcon },
+  { id: "today", label: "Today", Icon: HomeIcon },
+  { id: "habits", label: "Your plan", Icon: HabitsIcon },
+  { id: "money", label: "Money", Icon: FinanceIcon },
+  { id: "you", label: "You", Icon: YouIcon },
 ];
 
-const VIEWS: Record<Tab, () => React.ReactElement> = {
-  dashboard: DashboardView,
-  habits: HabitsView,
-  health: HealthView,
-  finance: FinanceView,
-  notes: NotesView,
-  goals: GoalsView,
-  alarms: AlarmsView,
-};
-
 function App() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setTab] = useState<Tab>("today");
+  // Sub-sections live here rather than inside each tab so that search can
+  // land on an exact view, not just the tab that contains it.
+  const [habitsSection, setHabitsSection] = useState<HabitsSection>("habits");
+  const [youSection, setYouSection] = useState<YouSection>("health");
+  const [alarmsOpen, setAlarmsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [planTomorrowOpen, setPlanTomorrowOpen] = useState(false);
   const [confirmRecurringId, setConfirmRecurringId] = useState<number | null>(null);
@@ -106,7 +90,16 @@ function App() {
     };
   }, []);
 
-  const ActiveView = VIEWS[tab];
+  /** Search returns a logical destination; this maps it onto tab + section. */
+  const goTo = (dest: "notes" | "goals" | "habits" | "finance") => {
+    if (dest === "finance") return setTab("money");
+    if (dest === "notes") {
+      setYouSection("notes");
+      return setTab("you");
+    }
+    setHabitsSection(dest === "goals" ? "goals" : "habits");
+    setTab("habits");
+  };
 
   // Wait for settings to load before deciding — otherwise the wizard flashes
   // on every launch for existing users.
@@ -153,7 +146,19 @@ function App() {
               exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
             >
-              <ActiveView />
+              {tab === "today" && (
+                <TodayView onOpenAlarms={() => setAlarmsOpen(true)} />
+              )}
+              {tab === "habits" && (
+                <PlanView
+                  section={habitsSection}
+                  onSection={setHabitsSection}
+                />
+              )}
+              {tab === "money" && <FinanceView />}
+              {tab === "you" && (
+                <YouView section={youSection} onSection={setYouSection} />
+              )}
             </motion.div>
           </AnimatePresence>
         </main>
@@ -169,15 +174,16 @@ function App() {
             that was unreadable anyway, and the icon plus the active glow-dot
             already say where you are. */}
         <nav
-          className="glass fixed bottom-0 left-1/2 z-20 flex max-w-md -translate-x-1/2 items-center justify-around rounded-full border border-slate-200/70 bg-white/85 py-1.5 shadow-e3 dark:border-white/10 dark:bg-slate-800/80 dark:shadow-e3-dark"
+          className="glass fixed bottom-0 left-1/2 z-20 flex max-w-md -translate-x-1/2 items-center justify-around rounded-full border border-slate-200/70 bg-white/85 px-2 py-1.5 shadow-e3 dark:border-white/10 dark:bg-slate-800/80 dark:shadow-e3-dark"
           style={{
             marginBottom: "calc(var(--sab) + 0.75rem)",
-            // Seven 44px targets need 308px. The old inset left only 284px at
-            // 320px wide, and because the buttons are flex children they
-            // silently shrank to 39px rather than overflowing — invisible
-            // unless measured. The gutter gives way instead of the targets;
-            // justify-around still spaces them out on roomier screens.
-            width: "calc(100% - 0.75rem)",
+            // Four 44px targets need 176px, so the pill can float clear of
+            // the screen edge again. It could not when there were seven:
+            // those needed 308px, more than this inset leaves at 320px wide,
+            // and because the buttons are flex children they silently shrank
+            // to 39px rather than overflowing. flex-shrink-0 below makes that
+            // failure impossible whatever the count.
+            width: "calc(100% - 2.25rem)",
           }}
         >
           {TABS.map((t) => (
@@ -210,6 +216,7 @@ function App() {
           ))}
         </nav>
 
+        {alarmsOpen && <AlarmsScreen onClose={() => setAlarmsOpen(false)} />}
         <AlarmOverlay />
         <Toaster />
         {settingsOpen && (
@@ -228,7 +235,7 @@ function App() {
         {searchOpen && (
           <SearchPanel
             onClose={() => setSearchOpen(false)}
-            onNavigate={(t) => setTab(t)}
+            onNavigate={goTo}
           />
         )}
       </div>

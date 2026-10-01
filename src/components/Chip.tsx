@@ -75,23 +75,38 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  label,
+  semantics = "tabs",
   className = "",
 }: {
   options: { id: T; label: string }[];
   value: T;
   onChange: (id: T) => void;
+  /** Worth setting for `semantics="radio"`, which has no visible heading. */
+  label?: string;
+  /**
+   * "tabs" when the control moves between views, "radio" when it picks a
+   * value inside a form. The two look identical and are announced very
+   * differently — and getting it wrong nests a tablist inside a tablist,
+   * which is how the goal-term picker ended up reading as navigation.
+   */
+  semantics?: "tabs" | "radio";
   className?: string;
 }) {
+  const isTabs = semantics === "tabs";
   return (
     <div
-      role="tablist"
+      role={isTabs ? "tablist" : "radiogroup"}
+      aria-label={label}
       className={`flex gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-slate-800/60 ${className}`}
     >
       {options.map((o) => (
         <button
           key={o.id}
-          role="tab"
-          aria-selected={value === o.id}
+          role={isTabs ? "tab" : "radio"}
+          {...(isTabs
+            ? { "aria-selected": value === o.id }
+            : { "aria-checked": value === o.id })}
           onClick={() => onChange(o.id)}
           className={`h-11 flex-1 rounded-xl text-sm font-semibold transition-colors ${
             value === o.id

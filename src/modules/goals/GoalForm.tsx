@@ -54,6 +54,8 @@ export function GoalForm() {
         className={inputClass}
       />
       <Segmented
+        semantics="radio"
+        label="Goal timeframe"
         options={TERM_OPTIONS.map((t) => ({ id: t, label: TERM_LABEL[t] }))}
         value={term}
         onChange={setTerm}

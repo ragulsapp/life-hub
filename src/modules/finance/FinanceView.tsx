@@ -71,7 +71,7 @@ export function FinanceView() {
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-        Finance
+        Money
       </h1>
 
       <Segmented options={SUB_TABS} value={subTab} onChange={setSubTab} />

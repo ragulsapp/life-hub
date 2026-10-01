@@ -66,9 +66,6 @@ export function HealthView() {
 
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-        Health
-      </h1>
 
       {/* --- Your Body: "am I okay?" --- */}
       {hasProfile && !editingProfile ? (

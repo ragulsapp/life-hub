@@ -85,3 +85,12 @@ export function AlarmIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function YouIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="8" r="3.6" />
+      <path d="M4.8 20a7.2 7.2 0 0 1 14.4 0" />
+    </svg>
+  );
+}

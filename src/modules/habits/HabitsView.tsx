@@ -317,9 +317,9 @@ export function HabitsView() {
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Habits
-        </h1>
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+          {totalDue > 0 ? "Today" : ""}
+        </span>
         {totalDue > 0 && (
           <ProgressRing percent={todayPercent} size={56} strokeWidth={5}>
             <span className="text-xs font-bold text-slate-700 dark:text-slate-200">

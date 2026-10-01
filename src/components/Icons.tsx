@@ -309,3 +309,11 @@ export function CircleIcon({ className = "", size = 14 }: IconProps) {
     </svg>
   );
 }
+
+export function ChevronRightIcon({ className = "", size = 14 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="m8 5 5 5-5 5" />
+    </svg>
+  );
+}
