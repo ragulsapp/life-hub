@@ -1,8 +1,8 @@
 # Life Mentor — UI/UX overhaul: plan and progress
 
-**Last updated:** 2026-10-02
+**Last updated:** 2026-10-02 (late)
 **Repo:** `ragulsapp/life-hub` · **Path:** `C:\Users\Ragulkumar\OneDrive\Desktop\claude-projects\life-hub`
-**Branch:** `main` · **Tree is clean as of this file.** Last commit: `9cd56d1`
+**Branch:** `main` · **Tree is clean as of this file.** Last commit: `e21063f`
 
 This file is the handoff. A session picking this up cold should read all of it
 before touching code — especially **Working rules** and **Environment gotchas**,
@@ -43,8 +43,13 @@ you push.*
 
 - Habits + Goals share "Your plan" — same thing at two timescales.
 - Health + Notes share "You".
-- Alarms is **pushed from Today**, not a tab. You set an alarm once and live
-  with it for months.
+- ~~Alarms is pushed from Today, not a tab.~~ **Reversed on 2026-10-02
+  (`e21063f`) by the owner's call, and he was right.** The reasoning was correct
+  about frequency and wrong about importance: the wake-up mission is the most
+  distinctive thing the app does, and burying it made the headline feature the
+  hardest thing to reach. **Five tabs now: Today / Your plan / Money / Alarms /
+  You.** Alarms also picked up the Phase 2 treatment it missed — form behind
+  `+`, real `EmptyState`.
 - The tab owns its title and sub-nav (`src/views/TabViews.tsx`); the four folded
   views no longer declare their own `<h1>`. Exactly one heading per screen.
 - Search maps its logical destination onto tab + section, so it still lands on
@@ -135,6 +140,98 @@ states, haptics on the native build.
 
 **Do not start Phase 6 in an unattended run** — it cannot be verified in the
 browser pane (see below) and needs on-device judgement.
+
+---
+
+## The ₹99 question — would a buyer pay for this?
+
+Researched 2026-10-02. Treat figures as approximate and worth re-checking.
+
+### Honest answer first
+
+**At ₹99 the price is not the problem. The shape is.** Paid-up-front is close
+to unsellable on Play Store India — the region runs on freemium volume, and the
+PPP-adjusted price for this market sits 40–60% below a US rate. A ₹99 paywall
+in front of install blocks the one thing a new app needs most: installs.
+
+**Free to install, ₹99 one-time to unlock, no subscription, no ads.** That keeps
+the honest story and removes the barrier.
+
+### What the market actually looks like
+
+| Who | Model | Why they win |
+| --- | --- | --- |
+| **Alarmy** | Free + ads; ~$59.99/yr | 120M downloads, 8M MAU, 13 years, 9 dismiss missions. Owns "it WILL wake you". |
+| **Loop Habit Tracker** | Completely free, open source, no ads, no account | The best free Android habit tracker. Also the strongest privacy story in the category. |
+| **HabitNow** | Freemium; **backup is behind premium** | Most Play ratings of any dedicated habit tracker. Has widgets. |
+| **Daylio** | Freemium, ads on Android | 462k+ reviews. Mood journal; habits fall out of activity tags. |
+
+### The uncomfortable part
+
+**Every single module here is weaker than its category leader.** Loop is better
+at habits. Alarmy is better at alarms. A dedicated expense app is better at
+money. Google Keep is better at notes. Nobody buys the fourth-best habit
+tracker.
+
+So the product cannot be sold as "habits + money + alarms". It has to be sold as
+something none of them are.
+
+### The three things that are genuinely ours
+
+1. **One app, no account, no cloud, no ads.** Loop has this for habits alone.
+   Nobody has it across money + health + habits + alarms. And "my spending never
+   leaves this phone" carries far more weight than "my habit ticks never leave
+   this phone". This is already true of the architecture — it is a claim we can
+   make without building anything.
+2. **Cross-domain, which nobody does.** Wake-up → today's mission → habits →
+   money → health feeding one balance number and one daily recommendation. The
+   correlation lines in `WeeklyReviewCard` ("based on N days of your own logs")
+   are the seed of the only feature here that a competitor structurally cannot
+   copy without becoming an all-in-one app themselves.
+3. **Pay once, against Alarmy's ~₹5,000/yr.** A clean, honest story in a market
+   tired of subscriptions.
+
+**The bet, stated plainly:** that one coherent app beats four good separate ones
+for someone who wants a single place. That is a real bet, not a certainty, and
+it only pays if the integration produces insight the user could not get by
+installing four free apps.
+
+### What would stop me buying — in priority order
+
+1. **No widgets.** Habit and money apps live on the home screen. HabitNow has
+   them; we do not. Biggest functional gap.
+2. **"What if I lose my phone?"** Offline with no cloud makes backup the
+   number-one objection, and it gets sharper the more finance history is in
+   there. Export exists but is a manual nudge. Needs: automatic scheduled local
+   backup, an obvious restore path, and a user-initiated export to their own
+   Drive. *(Note the competitive irony: HabitNow puts backup behind premium. Ours
+   being free and local is a selling point, if it is visible.)*
+3. **No way to try it** before paying.
+4. **Store screenshots of an empty app.** They must show populated, real-looking
+   data.
+5. **Alarm reliability.** Alarmy's entire brand is that it will get you up. Our
+   wake-up *mission* needs the app running. Say so plainly in the listing —
+   under-promise here rather than earn one-star reviews.
+6. **Looks like a side project.** This is what phases 1–5 address, and it is
+   the precondition for all of the above mattering.
+
+### Phase 7 — ship-readiness (after Phase 5; not for an unattended run)
+
+Derived engineering work, roughly in order of impact:
+
+1. **Home-screen widgets** — today's mission, habit ticks, safe-to-spend.
+2. **Backup that reassures** — automatic local backup on a schedule, a visible
+   "last backed up" state, one-tap restore, user-initiated export to their own
+   Drive. No server, ever.
+3. **Free / paid split** — decide the line. A defensible one: everything core
+   free; ₹99 unlocks the cross-domain layer (weekly review, correlations,
+   balance history, reports) — i.e. charge for the thing nobody else has, not
+   for basic functionality.
+4. **Store listing** — screenshots with real data; lead with "no account, no
+   cloud, no ads, pay once"; Play Data Safety form filled honestly (it is a
+   genuine advantage here).
+5. **Honest alarm copy** — state the mission's limitation rather than hide it.
+6. **Import** from Loop / HabitNow so switching is not a cold start.
 
 ---
 
@@ -243,14 +340,23 @@ PWA: https://ragulsapp.github.io/life-hub/ (deploys from `main` via
 
 ## If you are an unattended scheduled run
 
-Do **Phase 4** only. Then stop and write your results back into this file.
+Do **Phase 4 only**. Then stop and write your results back into this file.
 
+- The **₹99 / market section above is research for the owner, not work for you.**
+  Do not act on it. Phase 7 is explicitly not for an unattended run.
+- The Alarms tab change (`e21063f`) is **already done** — five tabs ship today.
+  Do not revisit it.
 - Work in small commits, pushing each.
-- Meet the full definition of done above before each commit.
-- Do **not** start Phase 6.
-- Do **not** touch the database schema, the alarm scheduler, or anything under
-  `src/lib/` that handles notifications — those are load-bearing and were fixed
-  recently.
-- If a judgement call is genuinely ambiguous (e.g. whether to cut the quote),
-  pick the option that removes the most without losing information, note the
-  choice in this file, and move on. Do not block.
+- Meet the full definition of done above before each commit, including
+  `grep -rn 'TEMP-VERIFY' src` coming back empty.
+- Do **not** start Phase 5 or Phase 6.
+- Do **not** touch the Dexie schema, the alarm scheduler, or anything under
+  `src/lib/` handling notifications — load-bearing and recently fixed.
+- Do **not** add a network call of any kind.
+- If a judgement call is genuinely ambiguous (e.g. whether to cut the quote from
+  Home), pick the option that removes the most without losing information,
+  record the choice in this file, and keep going. Do not block — the owner is
+  asleep.
+
+Finish by updating the Phase 4 entry above with what shipped and what you
+measured, then commit and push this file too.
