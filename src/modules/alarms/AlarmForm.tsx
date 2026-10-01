@@ -19,7 +19,7 @@ const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 const sectionLabel =
   "mb-2 text-caption font-semibold text-slate-500 dark:text-slate-400";
 
-export function AlarmForm() {
+export function AlarmForm({ onSaved }: { onSaved?: () => void } = {}) {
   const [time, setTime] = useState("07:00");
   const [label, setLabel] = useState("");
   const [days, setDays] = useState<number[]>([]);
@@ -54,6 +54,7 @@ export function AlarmForm() {
     setLabel("");
     setTime("07:00");
     setDays([]);
+    onSaved?.();
   };
 
   return (

@@ -1,12 +1,9 @@
-import { motion } from "framer-motion";
 import { Segmented } from "../components/Chip";
-import { CloseButton } from "../components/IconButton";
 import { DashboardView } from "../modules/dashboard/DashboardView";
 import { HabitsView } from "../modules/habits/HabitsView";
 import { GoalsView } from "../modules/goals/GoalsView";
 import { HealthView } from "../modules/health/HealthView";
 import { NotesView } from "../modules/notes/NotesView";
-import { AlarmsView } from "../modules/alarms/AlarmsView";
 
 /**
  * The four places the app has.
@@ -17,9 +14,9 @@ import { AlarmsView } from "../modules/alarms/AlarmsView";
  * is a PLACE you go, a segmented control moves between views of the same
  * subject, and anything you visit occasionally is a screen you push.
  *
- * Alarms is the clearest example of the last kind. You set an alarm once
- * and then live with it for months, so it does not deserve a permanent
- * seat; it is reached from Today, where the thing it affects actually is.
+ * Alarms keeps its own tab despite being a set-once feature: the wake-up
+ * mission is the most distinctive thing the app does, and burying it made
+ * the headline feature the hardest one to reach.
  */
 
 export type HabitsSection = "habits" | "goals";
@@ -57,8 +54,8 @@ function TabHeader<T extends string>({
   );
 }
 
-export function TodayView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
-  return <DashboardView onOpenAlarms={onOpenAlarms} />;
+export function TodayView() {
+  return <DashboardView />;
 }
 
 /**
@@ -103,27 +100,5 @@ export function YouView({
       />
       {section === "health" ? <HealthView /> : <NotesView />}
     </div>
-  );
-}
-
-/** Alarms as a pushed screen rather than a tab. */
-export function AlarmsScreen({ onClose }: { onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-0 z-40 overflow-y-auto bg-slate-50 dark:bg-slate-900"
-    >
-      <div
-        className="mx-auto max-w-md"
-        style={{ paddingTop: "calc(var(--sat) + 0.5rem)" }}
-      >
-        <div className="flex items-center justify-end px-4">
-          <CloseButton onClose={onClose} label="Close alarms" />
-        </div>
-        <AlarmsView />
-      </div>
-    </motion.div>
   );
 }

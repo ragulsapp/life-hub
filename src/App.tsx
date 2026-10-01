@@ -21,6 +21,7 @@ import {
   HomeIcon,
   HabitsIcon,
   FinanceIcon,
+  AlarmIcon,
   YouIcon,
 } from "./components/NavIcons";
 import { FinanceView } from "./modules/finance/FinanceView";
@@ -31,8 +32,9 @@ import { GoalForm } from "./modules/goals/GoalForm";
 import { NoteEditor } from "./modules/notes/NoteEditor";
 import { TransactionForm } from "./modules/finance/TransactionForm";
 import { AlarmOverlay } from "./modules/alarms/AlarmOverlay";
+import { AlarmForm } from "./modules/alarms/AlarmForm";
+import { AlarmsView } from "./modules/alarms/AlarmsView";
 import {
-  AlarmsScreen,
   PlanView,
   TodayView,
   YouView,
@@ -40,7 +42,7 @@ import {
   type YouSection,
 } from "./views/TabViews";
 
-type Tab = "today" | "habits" | "money" | "you";
+type Tab = "today" | "habits" | "money" | "alarms" | "you";
 
 const TABS: {
   id: Tab;
@@ -50,6 +52,10 @@ const TABS: {
   { id: "today", label: "Today", Icon: HomeIcon },
   { id: "habits", label: "Your plan", Icon: HabitsIcon },
   { id: "money", label: "Money", Icon: FinanceIcon },
+  // Alarms earns a seat after all: the wake-up mission is a headline
+  // feature, not a setting, and burying it behind Today made the thing the
+  // app is most distinctive for the hardest thing in it to reach.
+  { id: "alarms", label: "Alarms", Icon: AlarmIcon },
   { id: "you", label: "You", Icon: YouIcon },
 ];
 
@@ -59,7 +65,6 @@ function App() {
   // land on an exact view, not just the tab that contains it.
   const [habitsSection, setHabitsSection] = useState<HabitsSection>("habits");
   const [youSection, setYouSection] = useState<YouSection>("health");
-  const [alarmsOpen, setAlarmsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [planTomorrowOpen, setPlanTomorrowOpen] = useState(false);
@@ -114,6 +119,8 @@ function App() {
         : { title: "New goal", body: <GoalForm onSaved={done} /> };
     if (tab === "money")
       return { title: "New transaction", body: <TransactionForm onSaved={done} /> };
+    if (tab === "alarms")
+      return { title: "New alarm", body: <AlarmForm onSaved={done} /> };
     return youSection === "notes"
       ? { title: "New note", body: <NoteEditor onSaved={done} /> }
       : null; // Health logs in place; there is nothing to "add".
@@ -175,9 +182,7 @@ function App() {
               exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
             >
-              {tab === "today" && (
-                <TodayView onOpenAlarms={() => setAlarmsOpen(true)} />
-              )}
+              {tab === "today" && <TodayView />}
               {tab === "habits" && (
                 <PlanView
                   section={habitsSection}
@@ -185,6 +190,7 @@ function App() {
                 />
               )}
               {tab === "money" && <FinanceView />}
+              {tab === "alarms" && <AlarmsView />}
               {tab === "you" && (
                 <YouView section={youSection} onSection={setYouSection} />
               )}
@@ -261,7 +267,6 @@ function App() {
           </>
         )}
 
-        {alarmsOpen && <AlarmsScreen onClose={() => setAlarmsOpen(false)} />}
         <AlarmOverlay />
         <Toaster />
         {settingsOpen && (

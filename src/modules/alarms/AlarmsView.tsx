@@ -9,12 +9,12 @@ import {
   ClockIcon,
   TrophyIcon,
 } from "../../components/Icons";
-import { AlarmForm } from "./AlarmForm";
 import { TaskList } from "./TaskList";
 import { WakeHistory } from "./WakeHistory";
 import { PlanTomorrowPanel } from "./PlanTomorrowPanel";
 import { useScheduler } from "../../lib/scheduler";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
+import { EmptyState } from "../../components/EmptyState";
 import {
   notificationPermission,
   requestNotificationPermission,
@@ -127,10 +127,6 @@ export function AlarmsView() {
         </Card>
       )}
 
-      <Card title="New alarm">
-        <AlarmForm />
-      </Card>
-
       <div className="flex flex-col gap-3">
         <AnimatePresence initial={false}>
           {sorted.map((a) => (
@@ -219,7 +215,11 @@ export function AlarmsView() {
         </AnimatePresence>
         {sorted.length === 0 && (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            No alarms yet — add one above, then hit Preview to try the mission.
+            <EmptyState
+              icon={<BellIcon size={30} />}
+              title="No alarms yet"
+              hint="Tap + to set one, then Preview to try the wake-up mission."
+            />
           </div>
         )}
       </div>

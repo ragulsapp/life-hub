@@ -16,7 +16,6 @@ import { calcSafeToSpendToday, currentMonthKey } from "../finance/financeSummary
 import { isDueOn } from "../habits/habitStreaks";
 import { setHabitDone } from "../habits/habitActions";
 import { TodayAgenda } from "./TodayAgenda";
-import { AlarmIcon } from "../../components/NavIcons";
 import { BackupNudge } from "./BackupNudge";
 import { PillarBar } from "./PillarBar";
 import { AchievementsCard } from "../achievements/AchievementsCard";
@@ -25,12 +24,11 @@ import {
   CheckIcon,
   CheckSquareIcon,
   SearchIcon,
-  ChevronRightIcon,
   SettingsIcon,
   TargetIcon,
 } from "../../components/Icons";
 
-export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
+export function DashboardView() {
   // Persisted: switching tabs unmounts this view, which used to silently
   // destroy whatever had been typed here.
   const [brainDump, setBrainDump, clearBrainDump] = useDraft("brainDump", "");
@@ -385,18 +383,6 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
 
       <TodayAgenda />
 
-      {/* Alarms are set once and lived with, so they are reached from here
-          rather than holding a permanent seat in the nav. */}
-      <button
-        onClick={onOpenAlarms}
-        className="glass flex min-h-11 items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3 text-left transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-800/60 dark:hover:bg-slate-800"
-      >
-        <AlarmIcon className="h-5 w-5 flex-shrink-0 text-slate-500 dark:text-slate-400" />
-        <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-          Alarms &amp; wake-up mission
-        </span>
-        <ChevronRightIcon size={15} className="text-slate-300 dark:text-slate-600" />
-      </button>
       <WeeklyReviewCard
         habits={habits}
         logs={logs}
