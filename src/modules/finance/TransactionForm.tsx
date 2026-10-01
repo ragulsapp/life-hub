@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { db, type FinanceCategoryKind } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
+import { AddChip, Chip } from "../../components/Chip";
+import { PlusIcon } from "../../components/Icons";
 
 const todayStr = () => localDateStr();
 
@@ -81,29 +83,21 @@ export function TransactionForm() {
         </div>
         <div className="flex flex-wrap gap-2">
           {filtered.map((c) => (
-            <motion.button
+            <Chip
               key={c.id}
-              whileTap={{ scale: 0.94 }}
+              selected={activeCategory === c.name}
               onClick={() => {
                 setCategory(c.name);
                 setAddingCategory(false);
               }}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                activeCategory === c.name
-                  ? "bg-cyan-500 text-white"
-                  : "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
-              }`}
             >
               {c.name}
-            </motion.button>
+            </Chip>
           ))}
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={() => setAddingCategory((v) => !v)}
-            className="rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-500 hover:border-cyan-400 hover:text-cyan-500 dark:border-slate-600 dark:text-slate-400"
-          >
-            ＋ Add
-          </motion.button>
+          <AddChip onClick={() => setAddingCategory((v) => !v)}>
+            <PlusIcon size={14} />
+            Add
+          </AddChip>
         </div>
 
         {addingCategory && (

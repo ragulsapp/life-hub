@@ -93,11 +93,11 @@ export function MetricGoals({ metrics }: { metrics: HealthMetric[] }) {
                       e.key === "Enter" && save(m.type, m.defaultDir)
                     }
                     placeholder={`Target ${m.unit}`}
-                    className={`w-24 !p-1.5 text-sm ${inputClass}`}
+                    className={`h-11 w-24 !py-0 text-sm ${inputClass}`}
                   />
                   <button
                     onClick={() => save(m.type, m.defaultDir)}
-                    className="rounded-lg bg-cyan-500 px-2 py-1 text-xs font-semibold text-white"
+                    className="h-11 rounded-xl bg-cyan-500 px-3.5 text-sm font-semibold text-white"
                   >
                     Save
                   </button>
@@ -108,7 +108,7 @@ export function MetricGoals({ metrics }: { metrics: HealthMetric[] }) {
                     setEditing(m.type);
                     setDraft(goal ? String(goal.target) : "");
                   }}
-                  className="text-xs font-semibold text-slate-500 dark:text-slate-400"
+                  className="-mr-2 inline-flex h-11 items-center rounded-xl px-2 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-500/10 dark:text-slate-400"
                 >
                   {goal
                     ? `${prog?.current ?? "—"} → ${goal.target} ${m.unit}`

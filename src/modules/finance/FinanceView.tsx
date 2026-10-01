@@ -20,6 +20,7 @@ import {
   expenseByCategory,
 } from "./financeSummary";
 import { DeleteButton } from "../../components/IconButton";
+import { Segmented } from "../../components/Chip";
 
 type SubTab = "overview" | "reports" | "debts";
 
@@ -73,21 +74,7 @@ export function FinanceView() {
         Finance
       </h1>
 
-      <div className="flex gap-1.5 rounded-2xl bg-slate-100 p-1 dark:bg-slate-700/40">
-        {SUB_TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setSubTab(t.id)}
-            className={`flex-1 rounded-xl py-2 text-sm font-semibold transition-colors ${
-              subTab === t.id
-                ? "bg-white text-cyan-500 shadow-e1 dark:bg-slate-800 dark:text-cyan-300"
-                : "text-slate-500 dark:text-slate-400"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Segmented options={SUB_TABS} value={subTab} onChange={setSubTab} />
 
       {subTab === "debts" ? (
         <div className="flex flex-col gap-4">

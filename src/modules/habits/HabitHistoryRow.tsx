@@ -20,7 +20,7 @@ export function HabitHistoryRow({
           }}
           aria-label={`${cell.date}${cell.completed ? ", completed" : ""}`}
           aria-pressed={cell.completed}
-          className="flex flex-col items-center gap-1"
+          className="flex min-h-11 flex-col items-center justify-center gap-1"
         >
           <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
             {cell.weekday}

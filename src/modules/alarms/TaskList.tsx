@@ -96,13 +96,18 @@ export function TaskList() {
                   onClick={() => toggle(t.id, t.done)}
                   aria-label={`Mark "${t.title}" ${t.done ? "not done" : "done"}`}
                   aria-pressed={t.done}
-                  className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 text-xs ${
-                    t.done
-                      ? "border-emerald-500 bg-emerald-500 text-white"
-                      : "border-slate-300 dark:border-slate-500"
-                  }`}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center"
                 >
-                  {t.done && <CheckIcon size={13} />}
+                  {/* The circle looks 24px but the target around it is 44. */}
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                      t.done
+                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        : "border-slate-300 dark:border-slate-500"
+                    }`}
+                  >
+                    {t.done && <CheckIcon size={13} />}
+                  </span>
                 </button>
                 <span
                   className={`flex-1 ${

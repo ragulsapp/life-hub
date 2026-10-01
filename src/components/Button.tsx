@@ -32,7 +32,7 @@ export function Button({
     <motion.button
       whileTap={{ scale: 0.96 }}
       transition={{ type: "spring", stiffness: 500, damping: 30 }}
-      className={`rounded-2xl px-4 py-2.5 font-semibold transition-colors disabled:opacity-40 ${variantClasses[variant]} ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-2xl px-4 py-2.5 font-semibold transition-colors disabled:opacity-40 ${variantClasses[variant]} ${className}`}
       {...props}
     />
   );

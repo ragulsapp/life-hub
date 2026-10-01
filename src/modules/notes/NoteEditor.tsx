@@ -5,7 +5,7 @@ import { db } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import { useDraft } from "../../lib/useDraft";
-import { AlertIcon, XIcon } from "../../components/Icons";
+import { AlertIcon, PlusIcon, XIcon } from "../../components/Icons";
 
 interface NoteDraft {
   title: string;
@@ -146,25 +146,26 @@ export function NoteEditor() {
             <button
               key={tag}
               onClick={() => addTag(tag)}
-              className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
+              className="inline-flex h-11 items-center gap-1 rounded-full bg-slate-100 px-3.5 text-xs text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-700/60 dark:text-slate-300 dark:hover:bg-slate-700"
             >
-              + {tag}
+              <PlusIcon size={11} />
+              {tag}
             </button>
           ))}
         </div>
       )}
 
-      <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+      <label className="flex min-h-11 items-center gap-2.5 text-sm text-slate-600 dark:text-slate-300">
         <input
           type="checkbox"
           checked={pinned}
           onChange={(e) => patch({ pinned: e.target.checked })}
-          className="accent-cyan-500"
+          className="h-5 w-5 flex-shrink-0 accent-cyan-500"
         />
         Pin this note
       </label>
 
-      <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+      <label className="flex min-h-11 items-center gap-2.5 text-sm text-slate-600 dark:text-slate-300">
         <input
           type="checkbox"
           checked={sensitive}

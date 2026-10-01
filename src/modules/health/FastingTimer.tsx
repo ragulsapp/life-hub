@@ -4,6 +4,7 @@ import { db, DEFAULT_FAST_HOURS, FAST_TARGET_PRESETS } from "../../db/db";
 import { ProgressRing } from "../../components/ProgressRing";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
+import { Chip } from "../../components/Chip";
 import {
   requestNotificationPermission,
   showLocalNotification,
@@ -75,17 +76,9 @@ export function FastingTimer() {
           </div>
           <div className="flex flex-wrap gap-2">
             {FAST_TARGET_PRESETS.map((h) => (
-              <button
-                key={h}
-                onClick={() => setTarget(h)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                  target === h
-                    ? "bg-cyan-500 text-white"
-                    : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
-                }`}
-              >
+              <Chip key={h} selected={target === h} onClick={() => setTarget(h)}>
                 {h}h
-              </button>
+              </Chip>
             ))}
           </div>
         </div>

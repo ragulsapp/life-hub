@@ -223,7 +223,7 @@ export function HealthView() {
             </p>
             <button
               onClick={() => setFastingEnabled(true)}
-              className="self-start rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-white"
+              className="inline-flex h-11 items-center self-start rounded-full bg-cyan-500 px-5 text-sm font-semibold text-white"
             >
               Track my fasts
             </button>

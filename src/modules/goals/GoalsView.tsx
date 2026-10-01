@@ -173,7 +173,7 @@ function GoalCard({
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => cycleStatus(g.id, g.status)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold capitalize shadow-sm ${statusColor[g.status]}`}
+              className={`inline-flex h-11 items-center rounded-full px-4 text-xs font-semibold capitalize shadow-sm ${statusColor[g.status]}`}
             >
               {g.status}
             </motion.button>

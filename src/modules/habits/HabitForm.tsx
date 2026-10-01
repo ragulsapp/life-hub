@@ -10,6 +10,7 @@ import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import { toast } from "../../lib/toast";
 import { createHabitFromTemplate } from "./habitActions";
+import { Chip } from "../../components/Chip";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"]; // index 0=Sun
 
@@ -137,17 +138,13 @@ export function HabitForm() {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {IDENTITIES.map((id) => (
-                <button
+                <Chip
                   key={id.name}
+                  selected={identity === id.name}
                   onClick={() => setIdentity(id.name)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                    identity === id.name
-                      ? "bg-cyan-500 text-white"
-                      : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
-                  }`}
                 >
                   {id.icon} {id.name}
-                </button>
+                </Chip>
               ))}
             </div>
           </div>

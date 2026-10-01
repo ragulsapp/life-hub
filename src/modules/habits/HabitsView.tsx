@@ -88,7 +88,7 @@ function HabitCard({
         <div className="flex items-start justify-between">
           <button
             onClick={dueToday ? toggleToday : undefined}
-            className="flex flex-1 items-start gap-3 text-left"
+            className="flex min-h-11 flex-1 items-start gap-3 text-left"
           >
             <span
               className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-lg"
@@ -129,14 +129,18 @@ function HabitCard({
                 aria-pressed={completed}
                 whileTap={{ scale: 0.85 }}
                 animate={{ scale: completed ? 1.05 : 1 }}
-                className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm transition-colors"
-                style={{
-                  borderColor: completed ? habit.color : undefined,
-                  backgroundColor: completed ? habit.color : undefined,
-                  color: completed ? "#0f172a" : undefined,
-                }}
+                className="flex h-11 w-11 items-center justify-center"
               >
-                {completed && <CheckIcon size={15} />}
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors"
+                  style={{
+                    borderColor: completed ? habit.color : undefined,
+                    backgroundColor: completed ? habit.color : undefined,
+                    color: completed ? "#0f172a" : undefined,
+                  }}
+                >
+                  {completed && <CheckIcon size={15} />}
+                </span>
               </motion.button>
             ) : (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-700/50">
@@ -202,7 +206,7 @@ function HabitCard({
           <div className="mt-2 flex items-center justify-between">
             <button
               onClick={() => setShowHeatmap((v) => !v)}
-              className="text-[11px] font-medium text-cyan-500 hover:underline dark:text-cyan-400"
+              className="-ml-2 inline-flex h-11 items-center rounded-xl px-2 text-[11px] font-medium text-cyan-500 transition-colors hover:bg-cyan-500/10 dark:text-cyan-400"
             >
               {showHeatmap ? "Show week" : "Show 12-week heatmap"}
             </button>
@@ -227,7 +231,7 @@ function HabitCard({
                     lastReminderDate: reminderCreationGuard(time),
                   });
                 }}
-                className={`flex h-9 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition-colors ${
+                className={`flex h-11 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition-colors ${
                   habit.reminderEnabled
                     ? "bg-cyan-500/12 text-cyan-600 dark:text-cyan-300"
                     : "text-slate-400 hover:bg-slate-500/10 hover:text-cyan-500 dark:hover:text-cyan-300"

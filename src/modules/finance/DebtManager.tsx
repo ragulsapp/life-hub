@@ -18,6 +18,7 @@ import {
 } from "./debtSummary";
 import { addDebt, deleteDebt, recordDebtPayment } from "./debtActions";
 import { DeleteButton } from "../../components/IconButton";
+import { Chip } from "../../components/Chip";
 
 const TYPE_LABEL: Record<DebtType, string> = {
   loan: "Loan",
@@ -59,18 +60,9 @@ function AddDebtForm() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
         {TYPE_OPTIONS.map((t) => (
-          <motion.button
-            key={t}
-            whileTap={{ scale: 0.94 }}
-            onClick={() => setType(t)}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-              type === t
-                ? "bg-cyan-500 text-white"
-                : "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
-            }`}
-          >
+          <Chip key={t} selected={type === t} onClick={() => setType(t)}>
             {TYPE_LABEL[t]}
-          </motion.button>
+          </Chip>
         ))}
       </div>
       <input

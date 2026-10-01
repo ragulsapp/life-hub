@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, type GoalTerm } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
+import { Chip, Segmented } from "../../components/Chip";
 
 const TERM_LABEL: Record<GoalTerm, string> = {
   long: "Long-term",
@@ -52,21 +53,11 @@ export function GoalForm() {
         placeholder="New goal..."
         className={inputClass}
       />
-      <div className="flex gap-1.5">
-        {TERM_OPTIONS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTerm(t)}
-            className={`flex-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${
-              term === t
-                ? "bg-cyan-500 text-white"
-                : "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
-            }`}
-          >
-            {TERM_LABEL[t]}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        options={TERM_OPTIONS.map((t) => ({ id: t, label: TERM_LABEL[t] }))}
+        value={term}
+        onChange={setTerm}
+      />
       <DateField label="Target date" value={targetDate} onCommit={setTargetDate} />
 
       {habits.length > 0 && (
@@ -76,17 +67,13 @@ export function GoalForm() {
           </div>
           <div className="flex flex-wrap gap-1.5">
             {habits.map((h) => (
-              <button
+              <Chip
                 key={h.id}
+                selected={linked.includes(h.name)}
                 onClick={() => toggleHabit(h.name)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                  linked.includes(h.name)
-                    ? "bg-cyan-500 text-white"
-                    : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
-                }`}
               >
                 {h.icon} {h.name}
-              </button>
+              </Chip>
             ))}
           </div>
         </div>

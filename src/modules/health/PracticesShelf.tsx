@@ -65,7 +65,7 @@ export function PracticesShelf() {
                 whileTap={{ scale: 0.94 }}
                 onClick={() => add(p.name)}
                 aria-label={`Add ${p.name} to your habits`}
-                className="flex-shrink-0 rounded-full bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-white"
+                className="inline-flex h-11 flex-shrink-0 items-center rounded-full bg-cyan-500 px-4 text-xs font-semibold text-white"
               >
                 Add
               </motion.button>
