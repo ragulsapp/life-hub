@@ -4,12 +4,22 @@ import { motion } from "framer-motion";
 import { db } from "../../db/db";
 import { inputClass } from "../../components/inputStyles";
 import { searchAll, type SearchResult } from "./searchLogic";
+import { CloseButton } from "../../components/IconButton";
+import {
+  NoteIcon,
+  TargetIcon,
+  TrophyIcon,
+  WalletIcon,
+} from "../../components/Icons";
 
-const KIND_ICON: Record<SearchResult["kind"], string> = {
-  note: "📝",
-  goal: "🏆",
-  habit: "🎯",
-  transaction: "💸",
+const KIND_ICON: Record<
+  SearchResult["kind"],
+  (p: { size?: number }) => React.ReactElement
+> = {
+  note: NoteIcon,
+  goal: TrophyIcon,
+  habit: TargetIcon,
+  transaction: WalletIcon,
 };
 
 export function SearchPanel({
@@ -54,14 +64,7 @@ export function SearchPanel({
             placeholder="Search notes, goals, habits, transactions..."
             className={`flex-1 ${inputClass}`}
           />
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            aria-label="Close search"
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:bg-slate-700/60"
-          >
-            ✕
-          </motion.button>
+          <CloseButton onClose={onClose} label="Close search" />
         </div>
 
         {query.trim() === "" ? (
@@ -78,7 +81,12 @@ export function SearchPanel({
                   onClick={() => openResult(r)}
                   className="flex w-full items-center gap-3 rounded-2xl bg-white/70 p-3 text-left dark:bg-slate-800/60"
                 >
-                  <span className="text-lg">{KIND_ICON[r.kind]}</span>
+                  <span className="flex-shrink-0 text-slate-400 dark:text-slate-500">
+                    {(() => {
+                      const Icon = KIND_ICON[r.kind];
+                      return <Icon size={16} />;
+                    })()}
+                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-slate-900 dark:text-white">
                       {r.title}

@@ -19,6 +19,7 @@ import {
   currentMonthKey,
   expenseByCategory,
 } from "./financeSummary";
+import { DeleteButton } from "../../components/IconButton";
 
 type SubTab = "overview" | "reports" | "debts";
 
@@ -236,13 +237,7 @@ export function FinanceView() {
                       {t.type === "income" ? "+" : "-"}₹
                       {t.amount.toLocaleString()}
                     </span>
-                    <button
-                      onClick={() => remove(t.id)}
-                      aria-label={`Delete ${t.category} transaction of ₹${t.amount}`}
-                      className="text-xs text-slate-400 hover:text-red-500"
-                    >
-                      ✕
-                    </button>
+                    <DeleteButton onDelete={() => remove(t.id)} label={`Delete ${t.category} transaction of ₹${t.amount}`} />
                   </div>
                 </motion.li>
               ))}

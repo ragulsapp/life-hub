@@ -8,6 +8,7 @@ import { getRecommendation } from "../../lib/recommendations";
 import { greeting } from "../../lib/coachMessages";
 import { calcSafeToSpendToday, currentMonthKey } from "../finance/financeSummary";
 import { isDueOn } from "../habits/habitStreaks";
+import { TargetIcon } from "../../components/Icons";
 
 /**
  * Shown once when the calendar date changes (gated by
@@ -95,7 +96,17 @@ export function MorningBrief({ onDismiss }: { onDismiss: () => void }) {
                 Today's Goal
               </div>
               <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
-                {todayGoal ? `🎯 ${todayGoal.title}` : "Set today's goal."}
+                {todayGoal ? (
+                  <span className="inline-flex items-start gap-1.5">
+                    <TargetIcon
+                      size={14}
+                      className="mt-0.5 flex-shrink-0 text-cyan-500 dark:text-cyan-300"
+                    />
+                    {todayGoal.title}
+                  </span>
+                ) : (
+                  "Set today's goal."
+                )}
               </p>
             </div>
 

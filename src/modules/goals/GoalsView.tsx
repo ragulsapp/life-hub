@@ -4,6 +4,8 @@ import { db, type Goal, type GoalStatus, type GoalTerm } from "../../db/db";
 import { Card } from "../../components/Card";
 import { GoalForm } from "./GoalForm";
 import { localDateStr } from "../../lib/dates";
+import { DeleteButton } from "../../components/IconButton";
+import { CheckIcon, CircleIcon } from "../../components/Icons";
 
 const statusOrder: GoalStatus[] = ["active", "completed", "abandoned"];
 const statusColor: Record<GoalStatus, string> = {
@@ -86,7 +88,9 @@ export function GoalsView() {
                   : null;
               return (
                 <div key={g.id} className="flex items-center gap-2 text-sm">
-                  <span className="text-emerald-500">✓</span>
+                  <span className="flex-shrink-0 text-emerald-500">
+                    <CheckIcon size={14} />
+                  </span>
                   <span className="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">
                     {g.title}
                   </span>
@@ -173,13 +177,7 @@ function GoalCard({
             >
               {g.status}
             </motion.button>
-            <button
-              onClick={() => remove(g.id)}
-              aria-label={`Delete goal "${g.title}"`}
-              className="text-xs text-slate-400 hover:text-red-500"
-            >
-              ✕
-            </button>
+            <DeleteButton onDelete={() => remove(g.id)} label={`Delete goal "${g.title}"`} />
           </div>
         </div>
 
@@ -194,13 +192,14 @@ function GoalCard({
                 return (
                   <span
                     key={name}
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
                       done
                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                         : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
                     }`}
                   >
-                    {done ? "✓" : "○"} {name}
+                    {done ? <CheckIcon size={12} /> : <CircleIcon size={12} />}
+                    {name}
                   </span>
                 );
               })}

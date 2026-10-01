@@ -13,6 +13,11 @@ import {
 } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { sortByOrder } from "../../lib/taskOrder";
+import { DeleteButton } from "../../components/IconButton";
+import {
+  BellIcon,
+  CheckIcon,
+} from "../../components/Icons";
 
 export function TaskList() {
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) ?? [];
@@ -97,7 +102,7 @@ export function TaskList() {
                       : "border-slate-300 dark:border-slate-500"
                   }`}
                 >
-                  {t.done && "✓"}
+                  {t.done && <CheckIcon size={13} />}
                 </button>
                 <span
                   className={`flex-1 ${
@@ -117,21 +122,16 @@ export function TaskList() {
                       ? `Reminder set for ${t.reminderTime}`
                       : "Set reminder"
                   }
-                  className={`text-xs ${
+                  className={`inline-flex h-11 items-center gap-1 rounded-xl px-2 text-xs transition-colors hover:bg-cyan-500/10 ${
                     t.reminderEnabled
                       ? "text-cyan-500 dark:text-cyan-300"
                       : "text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
                   }`}
                 >
-                  {t.reminderEnabled ? `🔔 ${t.reminderTime}` : "🔔"}
+                  <BellIcon size={14} on={!!t.reminderEnabled} />
+                  {t.reminderEnabled && t.reminderTime}
                 </button>
-                <button
-                  onClick={() => remove(t.id)}
-                  aria-label={`Delete task "${t.title}"`}
-                  className="text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
-                >
-                  ✕
-                </button>
+                <DeleteButton onDelete={() => remove(t.id)} label={`Delete task "${t.title}"`} />
               </div>
 
               {editingReminder === t.id && (

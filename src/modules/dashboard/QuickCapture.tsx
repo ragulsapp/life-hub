@@ -6,15 +6,28 @@ import { toast } from "../../lib/toast";
 import { inputClass } from "../../components/inputStyles";
 import { Button } from "../../components/Button";
 import { logMetric } from "../health/healthActions";
+import {
+  CheckSquareIcon,
+  NoteIcon,
+  PlusIcon,
+  ScaleIcon,
+  TargetIcon,
+  WalletIcon,
+  XIcon,
+} from "../../components/Icons";
 
 type CaptureKind = "expense" | "note" | "goal" | "weight" | "task";
 
-const KINDS: { kind: CaptureKind; icon: string; label: string }[] = [
-  { kind: "expense", icon: "💸", label: "Expense" },
-  { kind: "task", icon: "☑️", label: "Task" },
-  { kind: "note", icon: "📝", label: "Note" },
-  { kind: "goal", icon: "🎯", label: "Goal" },
-  { kind: "weight", icon: "⚖️", label: "Weight" },
+const KINDS: {
+  kind: CaptureKind;
+  Icon: (p: { size?: number }) => React.ReactElement;
+  label: string;
+}[] = [
+  { kind: "expense", Icon: WalletIcon, label: "Expense" },
+  { kind: "task", Icon: CheckSquareIcon, label: "Task" },
+  { kind: "note", Icon: NoteIcon, label: "Note" },
+  { kind: "goal", Icon: TargetIcon, label: "Goal" },
+  { kind: "weight", Icon: ScaleIcon, label: "Weight" },
 ];
 
 /**
@@ -109,9 +122,9 @@ export function QuickCapture() {
         whileTap={{ scale: 0.9 }}
         onClick={() => setOpen((v) => !v)}
         aria-label="Quick capture"
-        className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 text-2xl text-white shadow-lg"
+        className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 text-white shadow-lg"
       >
-        {open ? "✕" : "+"}
+        {open ? <XIcon size={22} /> : <PlusIcon size={22} />}
       </motion.button>
 
       <AnimatePresence>
@@ -137,13 +150,14 @@ export function QuickCapture() {
                       setKind(k.kind);
                       setValue("");
                     }}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                    className={`inline-flex h-11 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition-colors ${
                       kind === k.kind
                         ? "bg-cyan-500 text-white"
                         : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
                     }`}
                   >
-                    {k.icon} {k.label}
+                    <k.Icon size={15} />
+                    {k.label}
                   </button>
                 ))}
               </div>

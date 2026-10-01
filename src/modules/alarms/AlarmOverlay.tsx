@@ -8,6 +8,7 @@ import { MathMission } from "./missions/MathMission";
 import { MemoryMission } from "./missions/MemoryMission";
 import { MorningBriefing } from "./MorningBriefing";
 import { recordWakeUp } from "./wakeActions";
+import { VolumeIcon } from "../../components/Icons";
 
 function LiveClock() {
   const [now, setNow] = useState(new Date());
@@ -139,9 +140,10 @@ export function AlarmOverlay() {
                 );
                 setNeedsTap(!audible);
               }}
-              className="rounded-2xl bg-amber-400 px-6 py-3 text-base font-bold text-slate-900"
+              className="inline-flex items-center gap-2 rounded-2xl bg-amber-400 px-6 py-3 text-base font-bold text-slate-900"
             >
-              🔊 Tap for sound
+              <VolumeIcon size={18} />
+              Tap for sound
             </motion.button>
           )}
 

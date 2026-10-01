@@ -7,6 +7,7 @@ import { inputClass } from "../../components/inputStyles";
 import { tomorrowStr } from "../../lib/dates";
 import { sortByOrder } from "../../lib/taskOrder";
 import { cancelReminder, taskNotifId } from "../../lib/notify";
+import { CloseButton, DeleteButton } from "../../components/IconButton";
 
 /**
  * Opened by tapping the Night Reminder notification, or manually. Planning
@@ -71,13 +72,7 @@ function TaskRow({
         </button>
       )}
 
-      <button
-        onClick={() => onDelete(task.id)}
-        aria-label={`Delete "${task.title}"`}
-        className="shrink-0 text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
-      >
-        ✕
-      </button>
+      <DeleteButton onDelete={() => onDelete(task.id)} label={`Delete "${task.title}"`} />
     </Reorder.Item>
   );
 }
@@ -139,14 +134,7 @@ export function PlanTomorrowPanel({ onClose }: { onClose: () => void }) {
             </h1>
             <p className="text-xs text-slate-400">{tomorrow}</p>
           </div>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            aria-label="Close"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:bg-slate-700/60"
-          >
-            ✕
-          </motion.button>
+          <CloseButton onClose={onClose} label="Close" />
         </div>
 
         <div className="flex gap-2">

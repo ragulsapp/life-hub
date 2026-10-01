@@ -21,6 +21,13 @@ import { PillarBar } from "./PillarBar";
 import { QuickCapture } from "./QuickCapture";
 import { AchievementsCard } from "../achievements/AchievementsCard";
 import { WeeklyReviewCard } from "./WeeklyReviewCard";
+import {
+  CheckIcon,
+  CheckSquareIcon,
+  SearchIcon,
+  SettingsIcon,
+  TargetIcon,
+} from "../../components/Icons";
 
 export function DashboardView() {
   // Persisted: switching tabs unmounts this view, which used to silently
@@ -86,7 +93,7 @@ export function DashboardView() {
     .map((h) => ({
       key: `h${h.id}`,
       label: h.name,
-      icon: h.icon,
+      icon: <span className="text-base">{h.icon}</span>,
       done: doneToday.has(h.name),
       toggle: () => setHabitDone(h.name, today, !doneToday.has(h.name)),
     }));
@@ -96,7 +103,7 @@ export function DashboardView() {
     .map((t) => ({
       key: `t${t.id}`,
       label: t.title,
-      icon: "☑️",
+      icon: <CheckSquareIcon size={16} />,
       done: false,
       toggle: () =>
         db.tasks.update(t.id, { done: true, completedAt: Date.now() }),
@@ -160,17 +167,17 @@ export function DashboardView() {
             whileTap={{ scale: 0.9 }}
             onClick={openSearch}
             aria-label="Search"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
           >
-            🔍
+            <SearchIcon size={19} />
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={openSettings}
             aria-label="Settings"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-lg text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
           >
-            ⚙️
+            <SettingsIcon size={19} />
           </motion.button>
         </div>
       </motion.div>
@@ -208,8 +215,9 @@ export function DashboardView() {
                 {missionDone} of {mission.length} done
               </span>
               {missionComplete && (
-                <span className="font-bold text-emerald-500">
-                  Mission Accomplished ✅
+                <span className="inline-flex items-center gap-1 font-bold text-emerald-500">
+                  <CheckIcon size={13} />
+                  Mission Accomplished
                 </span>
               )}
             </div>
@@ -232,9 +240,11 @@ export function DashboardView() {
                           : "border-slate-300 dark:border-slate-500"
                       }`}
                     >
-                      {m.done && "✓"}
+                      {m.done && <CheckIcon size={13} />}
                     </span>
-                    <span className="text-base">{m.icon}</span>
+                    <span className="flex-shrink-0 text-slate-400 dark:text-slate-500">
+                      {m.icon}
+                    </span>
                     <span
                       className={
                         m.done
@@ -254,8 +264,12 @@ export function DashboardView() {
 
       <Card title="Today's Goal" delay={0.03}>
         {todayGoal ? (
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-            🎯 {todayGoal.title}
+          <p className="flex items-start gap-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
+            <TargetIcon
+              size={15}
+              className="mt-0.5 flex-shrink-0 text-cyan-500 dark:text-cyan-300"
+            />
+            {todayGoal.title}
           </p>
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -321,7 +335,14 @@ export function DashboardView() {
                 <div className="text-2xl">{h.icon}</div>
                 <div className="mt-1 text-base font-bold">{h.name}</div>
                 <div className="text-xs font-medium opacity-80">
-                  {done ? "Done today ✓" : "Tap to log"}
+                  {done ? (
+                    <span className="inline-flex items-center gap-1">
+                      <CheckIcon size={11} />
+                      Done today
+                    </span>
+                  ) : (
+                    "Tap to log"
+                  )}
                 </div>
               </motion.button>
             );
@@ -344,9 +365,10 @@ export function DashboardView() {
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="text-sm font-medium text-emerald-500"
+                className="inline-flex items-center gap-1 text-sm font-medium text-emerald-500"
               >
-                Saved ✓
+                <CheckIcon size={13} />
+                Saved
               </motion.span>
             )}
           </AnimatePresence>

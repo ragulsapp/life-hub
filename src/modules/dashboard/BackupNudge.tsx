@@ -2,6 +2,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../db/db";
 import { exportBackup } from "../../lib/backup";
 import { toast } from "../../lib/toast";
+import { DownloadIcon } from "../../components/Icons";
 
 const STALE_AFTER_DAYS = 7;
 
@@ -38,8 +39,9 @@ export function BackupNudge() {
       </span>
       <button
         onClick={doExport}
-        className="flex-shrink-0 rounded-xl bg-amber-400 px-3 py-1.5 font-semibold text-slate-900"
+        className="inline-flex h-11 flex-shrink-0 items-center gap-1.5 rounded-xl bg-amber-400 px-3.5 font-semibold text-slate-900"
       >
+        <DownloadIcon size={14} />
         Export now
       </button>
     </div>

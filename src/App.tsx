@@ -169,10 +169,15 @@ function App() {
             that was unreadable anyway, and the icon plus the active glow-dot
             already say where you are. */}
         <nav
-          className="glass fixed bottom-0 left-1/2 z-20 flex max-w-md -translate-x-1/2 items-center justify-around rounded-full border border-slate-200/70 bg-white/85 px-1.5 py-1.5 shadow-e3 dark:border-white/10 dark:bg-slate-800/80 dark:shadow-e3-dark"
+          className="glass fixed bottom-0 left-1/2 z-20 flex max-w-md -translate-x-1/2 items-center justify-around rounded-full border border-slate-200/70 bg-white/85 py-1.5 shadow-e3 dark:border-white/10 dark:bg-slate-800/80 dark:shadow-e3-dark"
           style={{
             marginBottom: "calc(var(--sab) + 0.75rem)",
-            width: "calc(100% - 2.25rem)",
+            // Seven 44px targets need 308px. The old inset left only 284px at
+            // 320px wide, and because the buttons are flex children they
+            // silently shrank to 39px rather than overflowing — invisible
+            // unless measured. The gutter gives way instead of the targets;
+            // justify-around still spaces them out on roomier screens.
+            width: "calc(100% - 0.75rem)",
           }}
         >
           {TABS.map((t) => (
@@ -184,7 +189,7 @@ function App() {
               // h-11 is not decoration: dropping the labels shrank the hit
               // area to 30px, under Android's 48dp minimum. The icon stays
               // 22px; the button around it carries the target.
-              className="relative flex h-11 w-11 items-center justify-center rounded-full"
+              className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
             >
               <t.Icon
                 active={tab === t.id}

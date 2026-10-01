@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { exportBackup } from "../lib/backup";
+import { AlertIcon } from "./Icons";
 
 interface State {
   error: Error | null;
@@ -25,7 +26,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
 
     return (
       <div className="mx-auto flex min-h-svh max-w-md flex-col items-center justify-center gap-4 p-6 text-center">
-        <div className="text-4xl">😵</div>
+        <AlertIcon size={40} className="text-amber-500" />
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">
           Something broke
         </h1>

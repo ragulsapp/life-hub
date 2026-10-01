@@ -1,6 +1,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { motion } from "framer-motion";
 import { db } from "../../db/db";
+import { DeleteButton } from "../../components/IconButton";
 
 interface Row {
   id: number;
@@ -116,13 +117,7 @@ export function FastingHistory() {
                 </span>
               )}
             </span>
-            <button
-              onClick={() => remove(r.id)}
-              aria-label={`Delete ${r.date} fast record`}
-              className="text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
-            >
-              ✕
-            </button>
+            <DeleteButton onDelete={() => remove(r.id)} label={`Delete ${r.date} fast record`} />
           </div>
         ))}
       </div>

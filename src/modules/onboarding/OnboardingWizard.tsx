@@ -14,6 +14,7 @@ import { createHabitFromTemplate } from "../habits/habitActions";
 import { saveBodyProfile } from "../health/healthActions";
 import { MONTH_NAMES } from "../health/BodyProfileForm";
 import { requestNotificationPermission } from "../../lib/notify";
+import { CheckIcon } from "../../components/Icons";
 
 type Step = number;
 
@@ -293,8 +294,9 @@ export function OnboardingWizard() {
       body: (
         <div className="flex flex-col gap-4">
           {notifStatus === "granted" ? (
-            <p className="text-sm font-medium text-emerald-500">
-              Notifications enabled ✓
+            <p className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-500">
+              <CheckIcon size={14} />
+              Notifications enabled
             </p>
           ) : notifStatus === "denied" ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">

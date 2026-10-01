@@ -14,6 +14,7 @@ import {
   deleteRecurringTransaction,
   updateRecurringTransaction,
 } from "./recurringActions";
+import { DeleteButton } from "../../components/IconButton";
 
 function AddRecurringForm() {
   const [type, setType] = useState<FinanceCategoryKind>("expense");
@@ -144,13 +145,7 @@ function RecurringRow({ r }: { r: RecurringTransaction }) {
           >
             {r.active ? "Pause" : "Resume"}
           </button>
-          <button
-            onClick={() => deleteRecurringTransaction(r.id)}
-            aria-label={`Delete ${r.category}`}
-            className="text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
-          >
-            ✕
-          </button>
+          <DeleteButton onDelete={() => deleteRecurringTransaction(r.id)} label={`Delete ${r.category}`} />
         </div>
       </div>
       {pending && (

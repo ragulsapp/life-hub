@@ -15,6 +15,14 @@ import { BodyProfileForm } from "../health/BodyProfileForm";
 import { ReminderSoundPicker } from "../alarms/ReminderSoundPicker";
 import { setFastingEnabled } from "../health/healthActions";
 import { resyncNativeReminders } from "../../lib/reminderSync";
+import { CloseButton } from "../../components/IconButton";
+import {
+  DownloadIcon,
+  MoonIcon,
+  SunIcon,
+  SunriseIcon,
+  UploadIcon,
+} from "../../components/Icons";
 
 /**
  * Everything that used to live in the header, plus body basics.
@@ -38,7 +46,7 @@ function Row({
   trailing,
   danger,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   hint?: string;
   onClick?: () => void;
@@ -47,7 +55,9 @@ function Row({
 }) {
   const inner = (
     <>
-      <span className="w-6 flex-shrink-0 text-center text-base">{icon}</span>
+      <span className="flex w-6 flex-shrink-0 justify-center text-slate-400 dark:text-slate-500">
+        {icon}
+      </span>
       <span className="min-w-0 flex-1 text-left">
         <span
           className={`block text-sm font-medium ${
@@ -173,14 +183,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Settings
           </h1>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            aria-label="Close settings"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:bg-slate-700/60"
-          >
-            ✕
-          </motion.button>
+          <CloseButton onClose={onClose} label="Close settings" />
         </div>
 
         <Section title="About you">
@@ -194,7 +197,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
 
         <Section title="Appearance">
           <Row
-            icon={darkMode ? "🌙" : "☀️"}
+            icon={darkMode ? <MoonIcon size={16} /> : <SunIcon size={16} />}
             label="Dark mode"
             hint={darkMode ? "On" : "Off"}
             onClick={toggleDark}
@@ -220,7 +223,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             <ReminderSoundPicker />
           </div>
           <Row
-            icon="🌃"
+            icon={<SunriseIcon size={16} />}
             label="Night reminder"
             hint={
               nightOn
@@ -253,7 +256,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             </div>
           )}
           <Row
-            icon="🌙"
+            icon={<MoonIcon size={16} />}
             label="Track fasts"
             hint={
               settings?.fastingEnabled
@@ -282,13 +285,13 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
 
         <Section title="Your data">
           <Row
-            icon="⬇️"
+            icon={<DownloadIcon size={16} />}
             label="Export a backup"
             hint={`Last backup: ${lastBackup}`}
             onClick={handleExport}
           />
           <Row
-            icon="⬆️"
+            icon={<UploadIcon size={16} />}
             label="Restore from a backup"
             hint="Replaces everything currently in the app"
             onClick={() => fileInputRef.current?.click()}

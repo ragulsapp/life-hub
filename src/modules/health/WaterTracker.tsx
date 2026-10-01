@@ -6,6 +6,7 @@ import { inputClass } from "../../components/inputStyles";
 import { localDateStr } from "../../lib/dates";
 import { valueOn } from "../../lib/healthMetrics";
 import { addGlass, logMetric, removeLastGlass, setTodayWaterTotal } from "./healthActions";
+import { PencilIcon } from "../../components/Icons";
 
 /**
  * Water as a quantity, not a checkbox — "did you drink water today" is
@@ -87,12 +88,12 @@ export function WaterTracker({
             <button
               onClick={startEdit}
               aria-label="Edit today's water total"
-              className="flex items-center gap-1.5 text-left"
+              className="-mx-2 flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-left transition-colors hover:bg-slate-500/5"
             >
               <span className="text-lg font-bold text-slate-900 dark:text-white">
                 {litres(drunk)} of {litres(targetMl)} L
               </span>
-              <span className="text-xs text-slate-400">✎</span>
+              <PencilIcon size={13} className="text-slate-400" />
             </button>
           )}
           <div className="text-xs text-slate-500 dark:text-slate-400">

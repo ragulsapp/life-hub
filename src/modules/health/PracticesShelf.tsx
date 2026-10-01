@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { db, PRACTICES } from "../../db/db";
 import { toast } from "../../lib/toast";
 import { createHabitFromTemplate } from "../habits/habitActions";
+import { CheckIcon } from "../../components/Icons";
 
 /**
  * A shelf of practices to pick from — the app suggests, the user chooses.
@@ -55,8 +56,9 @@ export function PracticesShelf() {
               </div>
             </div>
             {added ? (
-              <span className="flex-shrink-0 text-xs font-semibold text-emerald-500">
-                Added ✓
+              <span className="inline-flex flex-shrink-0 items-center gap-1 text-xs font-semibold text-emerald-500">
+                <CheckIcon size={12} />
+                Added
               </span>
             ) : (
               <motion.button

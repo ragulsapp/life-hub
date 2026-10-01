@@ -279,7 +279,7 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
               case "missionComplete":
                 patch.missionComplete = true;
                 await showLocalNotification(
-                  "Mission Accomplished ✅",
+                  "Mission Accomplished",
                   "Congratulations! You completed today's mission.",
                 );
                 break;

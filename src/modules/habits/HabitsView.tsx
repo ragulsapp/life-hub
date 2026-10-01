@@ -5,7 +5,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { db, type Habit } from "../../db/db";
 import { Card } from "../../components/Card";
 import { TimeField } from "../../components/DateTimeField";
-import { BellIcon } from "../../components/Icons";
+import {
+  BellIcon,
+  CheckIcon,
+  FlameIcon,
+  PinIcon,
+  TrophyIcon,
+} from "../../components/Icons";
+import { DeleteButton } from "../../components/IconButton";
 import { ProgressRing } from "../../components/ProgressRing";
 import { HabitForm } from "./HabitForm";
 import { HabitHistoryRow } from "./HabitHistoryRow";
@@ -101,8 +108,14 @@ function HabitCard({
               </div>
               <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
                 <span>{scheduleLabel(habit.schedule)}</span>
-                <span>🔥 {streak}</span>
-                <span>🏆 {best}</span>
+                <span className="inline-flex items-center gap-1">
+                  <FlameIcon size={12} />
+                  {streak}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <TrophyIcon size={12} />
+                  {best}
+                </span>
                 <span>{rate}%/30d</span>
               </div>
             </div>
@@ -123,7 +136,7 @@ function HabitCard({
                   color: completed ? "#0f172a" : undefined,
                 }}
               >
-                {completed ? "✓" : ""}
+                {completed && <CheckIcon size={15} />}
               </motion.button>
             ) : (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-700/50">
@@ -132,7 +145,7 @@ function HabitCard({
             )}
             <button
               onClick={() => togglePinned(habit)}
-              className={`text-xs ${
+              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors hover:bg-cyan-500/10 ${
                 habit.pinned
                   ? "text-cyan-500 dark:text-cyan-300"
                   : "text-slate-300 hover:text-cyan-500 dark:text-slate-600"
@@ -145,16 +158,12 @@ function HabitCard({
               } Dashboard`}
               aria-pressed={!!habit.pinned}
             >
-              {habit.pinned ? "📌" : "📍"}
+              <PinIcon size={15} on={!!habit.pinned} />
             </button>
-            <button
-              onClick={removeHabit}
-              className="text-xs text-slate-300 hover:text-red-500 dark:text-slate-600"
-              title="Delete habit"
-              aria-label={`Delete habit "${habit.name}"`}
-            >
-              ✕
-            </button>
+            <DeleteButton
+              onDelete={removeHabit}
+              label={`Delete habit "${habit.name}"`}
+            />
           </div>
         </div>
 

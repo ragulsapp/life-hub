@@ -17,6 +17,7 @@ import {
   totalOwed,
 } from "./debtSummary";
 import { addDebt, deleteDebt, recordDebtPayment } from "./debtActions";
+import { DeleteButton } from "../../components/IconButton";
 
 const TYPE_LABEL: Record<DebtType, string> = {
   loan: "Loan",
@@ -166,13 +167,7 @@ function DebtRow({ debt }: { debt: Debt }) {
             {debt.note ? ` · ${debt.note}` : ""}
           </div>
         </div>
-        <button
-          onClick={() => deleteDebt(debt.id)}
-          aria-label={`Delete ${debt.name}`}
-          className="shrink-0 text-xs text-slate-400 hover:text-red-500"
-        >
-          ✕
-        </button>
+        <DeleteButton onDelete={() => deleteDebt(debt.id)} label={`Delete ${debt.name}`} />
       </div>
 
       {!settled && (

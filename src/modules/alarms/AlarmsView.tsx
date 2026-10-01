@@ -3,7 +3,12 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db, type Alarm } from "../../db/db";
 import { Card } from "../../components/Card";
-import { BellIcon, CalendarIcon } from "../../components/Icons";
+import {
+  BellIcon,
+  CalendarIcon,
+  ClockIcon,
+  TrophyIcon,
+} from "../../components/Icons";
 import { AlarmForm } from "./AlarmForm";
 import { TaskList } from "./TaskList";
 import { WakeHistory } from "./WakeHistory";
@@ -103,8 +108,16 @@ export function AlarmsView() {
                   : "Streak broken — the next one starts tomorrow"}
               </div>
               <div className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-slate-500 dark:text-slate-400">
-                <span>🏆 Best {best}</span>
-                {punctual !== null && <span>⏱️ {punctual}% on time</span>}
+                <span className="inline-flex items-center gap-1">
+                  <TrophyIcon size={12} />
+                  Best {best}
+                </span>
+                {punctual !== null && (
+                  <span className="inline-flex items-center gap-1">
+                    <ClockIcon size={12} />
+                    {punctual}% on time
+                  </span>
+                )}
               </div>
             </div>
           </div>

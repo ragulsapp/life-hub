@@ -2,12 +2,18 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../db/db";
 import { Card } from "../../components/Card";
 import { localTimeStr } from "../../lib/dates";
+import {
+  CheckSquareIcon,
+  ClockIcon,
+  NoteIcon,
+  TargetIcon,
+} from "../../components/Icons";
 
 interface AgendaItem {
   key: string;
   time: string;
   label: string;
-  icon: string;
+  Icon: (p: { size?: number; className?: string }) => React.ReactElement;
   kind: string;
 }
 
@@ -29,7 +35,7 @@ export function TodayAgenda() {
       key: `a${a.id}`,
       time: a.time,
       label: a.label || "Alarm",
-      icon: "⏰",
+      Icon: ClockIcon,
       kind: "Alarm",
     });
   }
@@ -39,7 +45,7 @@ export function TodayAgenda() {
       key: `h${h.id}`,
       time: h.reminderTime,
       label: h.name,
-      icon: "✅",
+      Icon: TargetIcon,
       kind: "Habit",
     });
   }
@@ -49,7 +55,7 @@ export function TodayAgenda() {
       key: `t${t.id}`,
       time: t.reminderTime,
       label: t.title,
-      icon: "☑️",
+      Icon: CheckSquareIcon,
       kind: "Task",
     });
   }
@@ -59,7 +65,7 @@ export function TodayAgenda() {
       key: `n${n.id}`,
       time: n.reminderTime,
       label: n.title,
-      icon: "📝",
+      Icon: NoteIcon,
       kind: "Note",
     });
   }
@@ -85,7 +91,9 @@ export function TodayAgenda() {
                 past ? "opacity-45" : ""
               }`}
             >
-              <span className="text-base">{item.icon}</span>
+              <span className="flex-shrink-0 text-slate-400 dark:text-slate-500">
+                <item.Icon size={15} />
+              </span>
               <span className="w-12 flex-shrink-0 font-semibold tabular-nums text-slate-700 dark:text-slate-200">
                 {item.time}
               </span>

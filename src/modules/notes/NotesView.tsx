@@ -13,6 +13,12 @@ import {
   scheduleDailyReminder,
 } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
+import { DeleteButton } from "../../components/IconButton";
+import {
+  AlertIcon,
+  BellIcon,
+  PinIcon,
+} from "../../components/Icons";
 
 export function NotesView() {
   const notes = useLiveQuery(() => db.notes.toArray(), []) ?? [];
@@ -90,28 +96,29 @@ export function NotesView() {
               <Card>
                 <div className="flex items-start justify-between">
                   <div className="font-semibold text-slate-900 dark:text-white">
-                    {n.pinned && "📌 "}
+                    {n.pinned && (
+                      <PinIcon
+                        size={14}
+                        on
+                        className="mr-1 inline-block align-[-1px] text-cyan-500 dark:text-cyan-300"
+                      />
+                    )}
                     {n.title}
                   </div>
                   <div className="flex gap-2 text-xs">
                     <button
                       onClick={() => togglePin(n.id, n.pinned)}
-                      className="text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
+                      className="inline-flex h-11 items-center rounded-xl px-2 text-slate-400 transition-colors hover:bg-cyan-500/10 hover:text-cyan-500 dark:hover:text-cyan-300"
                     >
                       {n.pinned ? "Unpin" : "Pin"}
                     </button>
-                    <button
-                      onClick={() => remove(n.id)}
-                      aria-label={`Delete note "${n.title}"`}
-                      className="text-slate-400 hover:text-red-500"
-                    >
-                      ✕
-                    </button>
+                    <DeleteButton onDelete={() => remove(n.id)} label={`Delete note "${n.title}"`} />
                   </div>
                 </div>
                 {n.sensitive && (
                   <div className="mt-2 rounded-xl border-2 border-amber-400 bg-amber-50 p-2 text-xs font-semibold text-amber-700 dark:border-amber-500/60 dark:bg-amber-900/20 dark:text-amber-300">
-                    ⚠️ Marked sensitive — review before sharing.
+                    <AlertIcon size={14} className="mr-1 inline-block align-[-2px]" />
+                    Marked sensitive — review before sharing.
                   </div>
                 )}
                 <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
@@ -144,15 +151,14 @@ export function NotesView() {
                         n.reminderTime,
                       )
                     }
-                    className={`text-[11px] font-medium ${
+                    className={`inline-flex h-11 items-center gap-1 rounded-xl px-2 text-[11px] font-medium transition-colors hover:bg-cyan-500/10 ${
                       n.reminderEnabled
                         ? "text-cyan-500 dark:text-cyan-300"
                         : "text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
                     }`}
                   >
-                    {n.reminderEnabled
-                      ? `🔔 Reminder on`
-                      : "🔔 Add reminder"}
+                    <BellIcon size={13} on={!!n.reminderEnabled} />
+                    {n.reminderEnabled ? "Reminder on" : "Add reminder"}
                   </button>
                 </div>
               </Card>

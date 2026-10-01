@@ -5,6 +5,7 @@ import { db } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import { useDraft } from "../../lib/useDraft";
+import { AlertIcon, XIcon } from "../../components/Icons";
 
 interface NoteDraft {
   title: string;
@@ -99,7 +100,8 @@ export function NoteEditor() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden rounded-xl border-2 border-amber-400 bg-amber-50 p-3 text-sm font-semibold text-amber-700 dark:border-amber-500/60 dark:bg-amber-900/20 dark:text-amber-300"
           >
-            ⚠️ Marked sensitive — review before sharing.
+            <AlertIcon size={15} className="mr-1 inline-block align-[-2px]" />
+            Marked sensitive — review before sharing.
           </motion.div>
         )}
       </AnimatePresence>
@@ -112,9 +114,10 @@ export function NoteEditor() {
               whileTap={{ scale: 0.94 }}
               onClick={() => patch({ tags: tags.filter((t) => t !== tag) })}
               aria-label={`Remove tag ${tag}`}
-              className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-medium text-white"
+              className="inline-flex h-11 items-center gap-1 rounded-full bg-cyan-500 px-3 text-xs font-medium text-white"
             >
-              {tag} ✕
+              {tag}
+              <XIcon size={12} />
             </motion.button>
           ))}
         </div>

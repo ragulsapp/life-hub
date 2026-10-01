@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import type { DayCell } from "./habitStreaks";
+import { CheckIcon } from "../../components/Icons";
 
 export function HabitHistoryRow({
   days,
@@ -33,7 +34,7 @@ export function HabitHistoryRow({
                 : "bg-slate-100 text-transparent dark:bg-slate-700/60"
             } ${cell.isToday ? "ring-2 ring-cyan-400 ring-offset-1 ring-offset-white dark:ring-offset-slate-800" : ""}`}
           >
-            {cell.completed ? "✓" : ""}
+            {cell.completed && <CheckIcon size={12} />}
           </motion.span>
         </button>
       ))}

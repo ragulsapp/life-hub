@@ -7,6 +7,7 @@ import { dailyCoachMessage } from "../../lib/coachMessages";
 import { getRecommendation } from "../../lib/recommendations";
 import { calcWakeStreak, wakeLine } from "../../lib/wakeStreak";
 import { isDueOn } from "../habits/habitStreaks";
+import { SunriseIcon } from "../../components/Icons";
 
 /**
  * Shown the moment the wake-up mission is beaten, before handing the user back
@@ -71,7 +72,7 @@ export function MorningBriefing({
       className="flex w-full max-w-sm flex-col gap-5"
     >
       <div className="text-center">
-        <div className="text-5xl">🌅</div>
+        <SunriseIcon size={56} className="mx-auto text-amber-300" />
         <div className="mt-3 text-3xl font-extrabold text-white">
           {streak > 0 ? `${streak}-morning streak` : "You're up"}
         </div>
