@@ -6,7 +6,6 @@ import { monthLabel } from "../../lib/dates";
 import { Card } from "../../components/Card";
 import { AnimatedNumber } from "../../components/AnimatedNumber";
 import { DonutChart, DONUT_PALETTE } from "../../components/DonutChart";
-import { TransactionForm } from "./TransactionForm";
 import { BudgetManager } from "./BudgetManager";
 import { SpendingHistory } from "./SpendingHistory";
 import { DebtManager } from "./DebtManager";
@@ -21,6 +20,8 @@ import {
 } from "./financeSummary";
 import { DeleteButton } from "../../components/IconButton";
 import { Segmented } from "../../components/Chip";
+import { EmptyState } from "../../components/EmptyState";
+import { WalletIcon } from "../../components/Icons";
 
 type SubTab = "overview" | "reports" | "debts";
 
@@ -149,7 +150,7 @@ export function FinanceView() {
               <AnimatedNumber value={mrr} prefix="₹" />
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              MRR (recurring income)
+              Recurring income, per month
             </div>
           </div>
         </Card>
@@ -174,11 +175,6 @@ export function FinanceView() {
         <Card title="Budgets" delay={0.08}>
           <BudgetManager transactions={transactions} />
         </Card>
-  
-        <Card title="Add Transaction" delay={0.1}>
-          <TransactionForm />
-        </Card>
-  
         <Card title={viewingPast ? `Transactions · ${monthLabel(monthKey)}` : "Transactions"} delay={0.1}>
           {viewingPast && (
             <button
@@ -188,11 +184,6 @@ export function FinanceView() {
             >
               ← Back to this month
             </button>
-          )}
-          {sorted.length === 0 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Nothing logged in {monthLabel(monthKey)}.
-            </p>
           )}
           <ul className="flex flex-col gap-2">
             <AnimatePresence initial={false}>
@@ -230,8 +221,16 @@ export function FinanceView() {
               ))}
             </AnimatePresence>
             {sorted.length === 0 && (
-              <li className="text-sm text-slate-500 dark:text-slate-400">
-                No transactions yet.
+              <li>
+                <EmptyState
+                  icon={<WalletIcon size={30} />}
+                  title={`Nothing logged in ${monthLabel(monthKey)}`}
+                  hint={
+                    viewingPast
+                      ? "This month is in the past — nothing was recorded."
+                      : "Tap + to record what you spent or earned."
+                  }
+                />
               </li>
             )}
           </ul>

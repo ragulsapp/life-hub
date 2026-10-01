@@ -10,7 +10,7 @@ import { PlusIcon } from "../../components/Icons";
 
 const todayStr = () => localDateStr();
 
-export function TransactionForm() {
+export function TransactionForm({ onSaved }: { onSaved?: () => void } = {}) {
   const categories = useLiveQuery(() => db.financeCategories.toArray(), []) ?? [];
   const [type, setType] = useState<FinanceCategoryKind>("income");
   const [amount, setAmount] = useState("");
@@ -56,6 +56,7 @@ export function TransactionForm() {
     } as never);
     setAmount("");
     setNote("");
+    onSaved?.();
   };
 
   return (

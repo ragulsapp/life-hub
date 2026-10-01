@@ -25,7 +25,7 @@ const EMPTY: NoteDraft = {
   sensitive: false,
 };
 
-export function NoteEditor() {
+export function NoteEditor({ onSaved }: { onSaved?: () => void } = {}) {
   // One draft object rather than six pieces of state: switching tabs unmounts
   // this component, and everything typed here has to survive that.
   const [draft, setDraft, clearDraft] = useDraft<NoteDraft>("note", EMPTY);
@@ -74,6 +74,7 @@ export function NoteEditor() {
     // Only after the write lands — clearing first would lose the note if the
     // add threw.
     clearDraft(EMPTY);
+    onSaved?.();
   };
 
   return (

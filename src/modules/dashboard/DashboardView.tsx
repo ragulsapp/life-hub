@@ -19,7 +19,6 @@ import { TodayAgenda } from "./TodayAgenda";
 import { AlarmIcon } from "../../components/NavIcons";
 import { BackupNudge } from "./BackupNudge";
 import { PillarBar } from "./PillarBar";
-import { QuickCapture } from "./QuickCapture";
 import { AchievementsCard } from "../achievements/AchievementsCard";
 import { WeeklyReviewCard } from "./WeeklyReviewCard";
 import {
@@ -408,7 +407,6 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
         profile={settings?.bodyProfile}
       />
       <AchievementsCard />
-      <QuickCapture />
     </div>
   );
 }

@@ -2,10 +2,14 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db, type Goal, type GoalStatus, type GoalTerm } from "../../db/db";
 import { Card } from "../../components/Card";
-import { GoalForm } from "./GoalForm";
 import { localDateStr } from "../../lib/dates";
 import { DeleteButton } from "../../components/IconButton";
-import { CheckIcon, CircleIcon } from "../../components/Icons";
+import {
+  CheckIcon,
+  CircleIcon,
+  TrophyIcon,
+} from "../../components/Icons";
+import { EmptyState } from "../../components/EmptyState";
 
 const statusOrder: GoalStatus[] = ["active", "completed", "abandoned"];
 const statusColor: Record<GoalStatus, string> = {
@@ -68,10 +72,6 @@ export function GoalsView() {
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
 
-      <Card title="Add Goal">
-        <GoalForm />
-      </Card>
-
       {finished.length > 0 && (
         <Card title="Completed" delay={0.03}>
           <div className="flex flex-col gap-2">
@@ -128,9 +128,11 @@ export function GoalsView() {
         </div>
       ))}
       {sorted.length === 0 && (
-        <div className="text-sm text-slate-500 dark:text-slate-400">
-          No goals yet.
-        </div>
+        <EmptyState
+          icon={<TrophyIcon size={30} />}
+          title="No goals yet"
+          hint="Name one thing you want to be true in a year. Tap + to add it."
+        />
       )}
     </div>
   );

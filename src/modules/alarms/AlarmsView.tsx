@@ -219,7 +219,7 @@ export function AlarmsView() {
         </AnimatePresence>
         {sorted.length === 0 && (
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            No alarms yet — add one above and hit “Ring now” to try the mission.
+            No alarms yet — add one above, then hit Preview to try the mission.
           </div>
         )}
       </div>

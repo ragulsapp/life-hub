@@ -10,11 +10,11 @@ import {
   CheckIcon,
   FlameIcon,
   PinIcon,
+  TargetIcon,
   TrophyIcon,
 } from "../../components/Icons";
 import { DeleteButton } from "../../components/IconButton";
 import { ProgressRing } from "../../components/ProgressRing";
-import { HabitForm } from "./HabitForm";
 import { HabitHistoryRow } from "./HabitHistoryRow";
 import { HabitHeatmap } from "./HabitHeatmap";
 import {
@@ -25,6 +25,7 @@ import {
 } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { deleteHabit, setHabitDone, togglePinned } from "./habitActions";
+import { EmptyState } from "../../components/EmptyState";
 import {
   calcBestStreak,
   calcCompletionRate,
@@ -329,10 +330,6 @@ export function HabitsView() {
         )}
       </div>
 
-      <Card title="Add Habit">
-        <HabitForm />
-      </Card>
-
       <div className="flex flex-col gap-3">
         <AnimatePresence initial={false}>
           {habits.map((habit, i) => (
@@ -345,9 +342,11 @@ export function HabitsView() {
           ))}
         </AnimatePresence>
         {habits.length === 0 && (
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            No habits yet — add one above.
-          </div>
+          <EmptyState
+            icon={<TargetIcon size={30} />}
+            title="No habits yet"
+            hint="Start with one you could do on your worst day. Tap + to add it."
+          />
         )}
       </div>
     </div>

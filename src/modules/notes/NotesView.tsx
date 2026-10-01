@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { db } from "../../db/db";
 import { Card } from "../../components/Card";
 import { inputClass } from "../../components/inputStyles";
-import { NoteEditor } from "./NoteEditor";
 import {
   cancelReminder,
   noteNotifId,
@@ -14,9 +13,11 @@ import {
 } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { DeleteButton } from "../../components/IconButton";
+import { EmptyState } from "../../components/EmptyState";
 import {
   AlertIcon,
   BellIcon,
+  NoteIcon,
   PinIcon,
 } from "../../components/Icons";
 
@@ -68,10 +69,6 @@ export function NotesView() {
 
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
-
-      <Card title="New Note">
-        <NoteEditor />
-      </Card>
 
       <input
         value={query}
@@ -163,9 +160,15 @@ export function NotesView() {
           ))}
         </AnimatePresence>
         {filtered.length === 0 && (
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            No notes found.
-          </div>
+          <EmptyState
+            icon={<NoteIcon size={30} />}
+            title={notes.length === 0 ? "No notes yet" : "Nothing matches"}
+            hint={
+              notes.length === 0
+                ? "Anything you want to keep. It never leaves this device. Tap + to write one."
+                : "Try a different word, or clear the filters."
+            }
+          />
         )}
       </div>
     </div>

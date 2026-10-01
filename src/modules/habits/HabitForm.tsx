@@ -16,7 +16,7 @@ const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"]; // index 0=Sun
 
 type ScheduleType = "daily" | "weekdays" | "times-per-week";
 
-export function HabitForm() {
+export function HabitForm({ onSaved }: { onSaved?: () => void } = {}) {
   const [name, setName] = useState("");
   const [icon, setIcon] = useState(HABIT_ICONS[0]);
   const [color, setColor] = useState(HABIT_COLORS[0]);
@@ -62,6 +62,7 @@ export function HabitForm() {
     }
     if (result === "restored") toast(`"${habitName}" is back in your habits.`);
     reset();
+    onSaved?.();
   };
 
   return (

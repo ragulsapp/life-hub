@@ -13,7 +13,7 @@ const TERM_LABEL: Record<GoalTerm, string> = {
 };
 const TERM_OPTIONS: GoalTerm[] = ["long", "short", "today"];
 
-export function GoalForm() {
+export function GoalForm({ onSaved }: { onSaved?: () => void } = {}) {
   const [title, setTitle] = useState("");
   const [targetDate, setTargetDate] = useState("");
   // "short" default matches every other form in the app defaulting to the
@@ -43,6 +43,7 @@ export function GoalForm() {
     setTargetDate("");
     setTerm("short");
     setLinked([]);
+    onSaved?.();
   };
 
   return (

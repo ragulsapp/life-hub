@@ -24,6 +24,12 @@ import {
   YouIcon,
 } from "./components/NavIcons";
 import { FinanceView } from "./modules/finance/FinanceView";
+import { CreateFab, Sheet } from "./components/Sheet";
+import { QuickCaptureBody } from "./modules/dashboard/QuickCapture";
+import { HabitForm } from "./modules/habits/HabitForm";
+import { GoalForm } from "./modules/goals/GoalForm";
+import { NoteEditor } from "./modules/notes/NoteEditor";
+import { TransactionForm } from "./modules/finance/TransactionForm";
 import { AlarmOverlay } from "./modules/alarms/AlarmOverlay";
 import {
   AlarmsScreen,
@@ -54,6 +60,7 @@ function App() {
   const [habitsSection, setHabitsSection] = useState<HabitsSection>("habits");
   const [youSection, setYouSection] = useState<YouSection>("health");
   const [alarmsOpen, setAlarmsOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [planTomorrowOpen, setPlanTomorrowOpen] = useState(false);
   const [confirmRecurringId, setConfirmRecurringId] = useState<number | null>(null);
@@ -89,6 +96,28 @@ function App() {
       handle.then((h) => h.remove());
     };
   }, []);
+
+  /**
+   * What "+" means depends on where you are. One button with a contextual
+   * target beats a menu asking which kind of thing you meant — that would
+   * just be the old seven-tab problem in a smaller box.
+   */
+  const create = (():
+    | { title: string; body: React.ReactElement }
+    | null => {
+    const done = () => setCreateOpen(false);
+    if (tab === "today")
+      return { title: "Quick capture", body: <QuickCaptureBody onDone={done} /> };
+    if (tab === "habits")
+      return habitsSection === "habits"
+        ? { title: "New habit", body: <HabitForm onSaved={done} /> }
+        : { title: "New goal", body: <GoalForm onSaved={done} /> };
+    if (tab === "money")
+      return { title: "New transaction", body: <TransactionForm onSaved={done} /> };
+    return youSection === "notes"
+      ? { title: "New note", body: <NoteEditor onSaved={done} /> }
+      : null; // Health logs in place; there is nothing to "add".
+  })();
 
   /** Search returns a logical destination; this maps it onto tab + section. */
   const goTo = (dest: "notes" | "goals" | "habits" | "finance") => {
@@ -215,6 +244,22 @@ function App() {
             </button>
           ))}
         </nav>
+
+        {create && (
+          <>
+            <CreateFab
+              onClick={() => setCreateOpen(true)}
+              label={create.title}
+            />
+            <Sheet
+              open={createOpen}
+              onClose={() => setCreateOpen(false)}
+              title={create.title}
+            >
+              {create.body}
+            </Sheet>
+          </>
+        )}
 
         {alarmsOpen && <AlarmsScreen onClose={() => setAlarmsOpen(false)} />}
         <AlarmOverlay />

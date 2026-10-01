@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { db } from "../../db/db";
 import { localDateStr } from "../../lib/dates";
 import { toast } from "../../lib/toast";
@@ -9,11 +8,9 @@ import { logMetric } from "../health/healthActions";
 import {
   CheckSquareIcon,
   NoteIcon,
-  PlusIcon,
   ScaleIcon,
   TargetIcon,
   WalletIcon,
-  XIcon,
 } from "../../components/Icons";
 
 type CaptureKind = "expense" | "note" | "goal" | "weight" | "task";
@@ -35,8 +32,7 @@ const KINDS: {
  * it being logged. Deliberately minimal fields — deeper editing lives in
  * each module.
  */
-export function QuickCapture() {
-  const [open, setOpen] = useState(false);
+export function QuickCaptureBody({ onDone }: { onDone: () => void }) {
   const [kind, setKind] = useState<CaptureKind | null>(null);
   const [value, setValue] = useState("");
   const [category, setCategory] = useState("");
@@ -45,10 +41,10 @@ export function QuickCapture() {
     useLiveExpenseCategories();
 
   const close = () => {
-    setOpen(false);
     setKind(null);
     setValue("");
     setCategory("");
+    onDone();
   };
 
   const submit = async () => {
@@ -118,102 +114,73 @@ export function QuickCapture() {
 
   return (
     <>
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Quick capture"
-        className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 text-white shadow-lg"
-      >
-        {open ? <XIcon size={22} /> : <PlusIcon size={22} />}
-      </motion.button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-20 flex items-end justify-center bg-slate-900/40 p-4 pb-40"
-            onClick={close}
+      <div className="mb-3 flex flex-wrap gap-2">
+        {KINDS.map((k) => (
+          <button
+            key={k.kind}
+            onClick={() => {
+              setKind(k.kind);
+              setValue("");
+            }}
+            aria-pressed={kind === k.kind}
+            className={`inline-flex h-11 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition-colors ${
+              kind === k.kind
+                ? "bg-cyan-500 text-white"
+                : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
+            }`}
           >
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-3xl bg-white p-4 shadow-xl dark:bg-slate-800"
-            >
-              <div className="mb-3 flex flex-wrap gap-2">
-                {KINDS.map((k) => (
-                  <button
-                    key={k.kind}
-                    onClick={() => {
-                      setKind(k.kind);
-                      setValue("");
-                    }}
-                    className={`inline-flex h-11 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition-colors ${
-                      kind === k.kind
-                        ? "bg-cyan-500 text-white"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
-                    }`}
-                  >
-                    <k.Icon size={15} />
-                    {k.label}
-                  </button>
-                ))}
-              </div>
+            <k.Icon size={15} />
+            {k.label}
+          </button>
+        ))}
+      </div>
 
-              {kind && (
-                <div className="flex flex-col gap-2">
-                  {kind === "expense" && expenseCategories.length > 0 && (
-                    <select
-                      value={category || expenseCategories[0]}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className={inputClass}
-                    >
-                      {expenseCategories.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  <input
-                    autoFocus
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && submit()}
-                    type={
-                      kind === "expense" || kind === "weight"
-                        ? "number"
-                        : "text"
-                    }
-                    inputMode={
-                      kind === "expense" || kind === "weight"
-                        ? "decimal"
-                        : "text"
-                    }
-                    placeholder={
-                      kind === "expense"
-                        ? "Amount (₹)"
-                        : kind === "weight"
-                          ? "Weight (kg)"
-                          : kind === "task"
-                            ? "What needs doing?"
-                            : kind === "goal"
-                              ? "What do you want to achieve?"
-                              : "What's on your mind?"
-                    }
-                    className={inputClass}
-                  />
-                  <Button onClick={submit} disabled={!value.trim()}>
-                    Save
-                  </Button>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {kind ? (
+        <div className="flex flex-col gap-2">
+          {kind === "expense" && expenseCategories.length > 0 && (
+            <select
+              value={category || expenseCategories[0]}
+              onChange={(e) => setCategory(e.target.value)}
+              className={inputClass}
+            >
+              {expenseCategories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          )}
+          <input
+            autoFocus
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+            type={kind === "expense" || kind === "weight" ? "number" : "text"}
+            inputMode={
+              kind === "expense" || kind === "weight" ? "decimal" : "text"
+            }
+            placeholder={
+              kind === "expense"
+                ? "Amount (₹)"
+                : kind === "weight"
+                  ? "Weight (kg)"
+                  : kind === "task"
+                    ? "What needs doing?"
+                    : kind === "goal"
+                      ? "What do you want to achieve?"
+                      : "What's on your mind?"
+            }
+            className={inputClass}
+          />
+          <Button onClick={submit} disabled={!value.trim()}>
+            Save
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Pick what you’re capturing.
+        </p>
+      )}
     </>
   );
 }
