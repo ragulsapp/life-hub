@@ -98,7 +98,7 @@ export function FastingHistory() {
               className="w-full min-h-[3px] rounded-t-md bg-cyan-400"
               title={`${r.date}: ${fmtHours(r.hours)} of ${r.target}h`}
             />
-            <span className="text-[9px] text-slate-400">{r.date}</span>
+            <span className="text-caption text-slate-500 dark:text-slate-400">{r.date}</span>
           </div>
         ))}
       </div>
@@ -112,7 +112,7 @@ export function FastingHistory() {
             <span className="min-w-0 flex-1 truncate font-medium text-slate-800 dark:text-slate-100">
               {fmtHours(r.hours)}
               {r.label && (
-                <span className="ml-1.5 text-xs font-normal text-slate-400">
+                <span className="ml-1.5 text-xs font-normal text-slate-500 dark:text-slate-400">
                   {r.label}
                 </span>
               )}

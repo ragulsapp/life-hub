@@ -124,7 +124,7 @@ export function HealthEntryForm({ metrics }: { metrics: HealthMetric[] }) {
         () => log("energy-level", "energy", energy, 10, "energy"),
         "1",
       )}
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
         Sleep counts toward the day you woke up. Saving again replaces today's
         entry rather than adding another.
       </p>

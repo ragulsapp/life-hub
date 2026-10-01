@@ -113,7 +113,7 @@ export function BudgetManager({
         );
       })}
       {expenseCategories.length === 0 && (
-        <span className="text-sm text-slate-400">
+        <span className="text-sm text-slate-500 dark:text-slate-400">
           Add expense categories to set budgets.
         </span>
       )}

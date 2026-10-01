@@ -77,7 +77,7 @@ export function ConfirmRecurringSheet({
         )}
         <button
           onClick={onClose}
-          className="mt-2 w-full py-2 text-sm font-medium text-slate-400"
+          className="mt-2 w-full py-2 text-sm font-medium text-slate-500 dark:text-slate-400"
         >
           Not now
         </button>

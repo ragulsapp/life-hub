@@ -65,7 +65,7 @@ export function GoalForm({ onSaved }: { onSaved?: () => void } = {}) {
 
       {habits.length > 0 && (
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+          <div className="mb-1 text-caption font-semibold text-slate-500 dark:text-slate-400">
             Daily steps — habits that move this forward
           </div>
           <div className="flex flex-wrap gap-1.5">

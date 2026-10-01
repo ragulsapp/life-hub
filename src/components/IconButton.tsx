@@ -54,7 +54,7 @@ export function DeleteButton({
     <button
       onClick={onDelete}
       aria-label={label}
-      className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-slate-500 ${className}`}
+      className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-slate-500 dark:text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500 ${className}`}
     >
       <TrashIcon size={15} />
     </button>

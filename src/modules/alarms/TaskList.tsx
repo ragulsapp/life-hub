@@ -112,7 +112,7 @@ export function TaskList() {
                 <span
                   className={`flex-1 ${
                     t.done
-                      ? "text-slate-400 line-through dark:text-slate-500"
+                      ? "text-slate-500 line-through dark:text-slate-400"
                       : "text-slate-900 dark:text-white"
                   }`}
                 >
@@ -130,7 +130,7 @@ export function TaskList() {
                   className={`inline-flex h-11 items-center gap-1 rounded-xl px-2 text-xs transition-colors hover:bg-cyan-500/10 ${
                     t.reminderEnabled
                       ? "text-cyan-500 dark:text-cyan-300"
-                      : "text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
+                      : "text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
                   }`}
                 >
                   <BellIcon size={14} on={!!t.reminderEnabled} />

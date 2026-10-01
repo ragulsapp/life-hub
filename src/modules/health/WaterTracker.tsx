@@ -70,7 +70,7 @@ export function WaterTracker({
                 onKeyDown={(e) => e.key === "Enter" && saveEdit()}
                 className={`w-24 !p-1.5 text-sm ${inputClass}`}
               />
-              <span className="text-xs text-slate-400">ml</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">ml</span>
               <button
                 onClick={saveEdit}
                 className="rounded-lg bg-cyan-500 px-2.5 py-1.5 text-xs font-semibold text-white"
@@ -79,7 +79,7 @@ export function WaterTracker({
               </button>
               <button
                 onClick={() => setEditing(false)}
-                className="text-xs font-medium text-slate-400 hover:underline"
+                className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:underline"
               >
                 Cancel
               </button>
@@ -93,7 +93,7 @@ export function WaterTracker({
               <span className="text-lg font-bold text-slate-900 dark:text-white">
                 {litres(drunk)} of {litres(targetMl)} L
               </span>
-              <PencilIcon size={13} className="text-slate-400" />
+              <PencilIcon size={13} className="text-slate-500 dark:text-slate-400" />
             </button>
           )}
           <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -142,7 +142,7 @@ export function WaterTracker({
       </div>
 
       {targetIsGeneric && (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Using a general adult guideline. Log your weight to get a target
           based on your body.
         </p>

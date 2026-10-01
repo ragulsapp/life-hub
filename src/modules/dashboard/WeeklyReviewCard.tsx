@@ -72,7 +72,7 @@ export function WeeklyReviewCard({
   ];
 
   return (
-    <Card title="Your Week" delay={0.11}>
+    <Card title="Your week" delay={0.11}>
       <div className="flex flex-col gap-3">
         {rows.map((r, i) => (
           <motion.div
@@ -82,11 +82,11 @@ export function WeeklyReviewCard({
             transition={{ ...T.enter, delay: 0.05 + i * 0.05 }}
             className="flex gap-2.5"
           >
-            <span className="mt-0.5 w-5 flex-shrink-0 text-slate-400 dark:text-slate-500">
+            <span className="mt-0.5 w-5 flex-shrink-0 text-slate-500 dark:text-slate-400">
               <r.Icon size={15} />
             </span>
             <div className="min-w-0">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              <div className="text-caption font-semibold text-slate-500 dark:text-slate-400">
                 {r.label}
               </div>
               <div className="text-sm text-slate-700 dark:text-slate-200">
@@ -107,7 +107,7 @@ export function WeeklyReviewCard({
                   <p className="text-sm text-slate-700 dark:text-slate-200">
                     {c.text}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-slate-400">
+                  <p className="mt-0.5 text-caption text-slate-500 dark:text-slate-400">
                     Based on {c.sample} days of your own logs.
                   </p>
                 </div>

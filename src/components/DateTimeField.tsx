@@ -66,7 +66,7 @@ function Field({
   return (
     <label className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
       {label && (
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+        <span className="text-caption font-semibold text-slate-500 dark:text-slate-400">
           {label}
         </span>
       )}
@@ -94,11 +94,11 @@ function Field({
         className={`w-full min-w-0 rounded-xl border border-slate-200 bg-white/60 tabular-nums text-slate-900 outline-none transition-colors focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/25 dark:border-white/10 dark:bg-slate-900/40 dark:text-white ${
           size === "lg"
             ? "h-16 px-4 text-3xl font-semibold tracking-tight"
-            : "h-12 px-3 text-[15px]"
+            : "h-12 px-3 text-body"
         }`}
       />
       {hint && (
-        <span className="text-[11px] text-slate-400 dark:text-slate-500">
+        <span className="text-caption text-slate-500 dark:text-slate-400">
           {hint}
         </span>
       )}

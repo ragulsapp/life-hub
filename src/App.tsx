@@ -231,7 +231,7 @@ function App() {
                 className={`h-[22px] w-[22px] transition-colors ${
                   tab === t.id
                     ? "text-slate-900 dark:text-white"
-                    : "text-slate-400 dark:text-slate-500"
+                    : "text-slate-500 dark:text-slate-400"
                 }`}
               />
               {tab === t.id && (

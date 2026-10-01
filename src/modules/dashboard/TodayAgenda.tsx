@@ -77,7 +77,7 @@ export function TodayAgenda() {
   const upcoming = items.filter((i) => i.time >= now).length;
 
   return (
-    <Card title="Today's Reminders" delay={0.12}>
+    <Card title="Today's reminders" delay={0.12}>
       <div className="mb-2 text-xs text-slate-500 dark:text-slate-400">
         {upcoming} upcoming · {items.length} total today
       </div>
@@ -91,7 +91,7 @@ export function TodayAgenda() {
                 past ? "opacity-45" : ""
               }`}
             >
-              <span className="flex-shrink-0 text-slate-400 dark:text-slate-500">
+              <span className="flex-shrink-0 text-slate-500 dark:text-slate-400">
                 <item.Icon size={15} />
               </span>
               <span className="w-12 flex-shrink-0 font-semibold tabular-nums text-slate-700 dark:text-slate-200">
@@ -100,7 +100,7 @@ export function TodayAgenda() {
               <span className="flex-1 truncate text-sm text-slate-700 dark:text-slate-200">
                 {item.label}
               </span>
-              <span className="text-[10px] uppercase tracking-wide text-slate-400">
+              <span className="text-caption text-slate-500 dark:text-slate-400">
                 {item.kind}
               </span>
             </li>

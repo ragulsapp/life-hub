@@ -49,7 +49,7 @@ function TabHeader<T extends string>({
 }) {
   return (
     <div className="flex flex-col gap-3 px-4 pt-4">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+      <h1 className="text-title text-slate-900 dark:text-white">
         {title}
       </h1>
       <Segmented options={sections} value={value} onChange={onChange} />

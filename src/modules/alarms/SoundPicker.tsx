@@ -57,7 +57,7 @@ function SoundRow({
           className={
             selected
               ? "text-cyan-600 dark:text-cyan-300"
-              : "text-slate-400 dark:text-slate-500"
+              : "text-slate-500 dark:text-slate-400"
           }
         >
           {icon}
@@ -73,7 +73,7 @@ function SoundRow({
             {name}
           </span>
           {blurb && (
-            <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
+            <span className="ml-1.5 text-xs text-slate-500 dark:text-slate-400">
               {blurb}
             </span>
           )}
@@ -98,7 +98,7 @@ function SoundRow({
         <button
           onClick={onDelete}
           aria-label={`Delete sound ${name}`}
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
         >
           <TrashIcon size={14} />
         </button>

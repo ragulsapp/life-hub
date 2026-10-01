@@ -21,7 +21,7 @@ function Stat({
 }) {
   return (
     <div className="min-w-0">
-      <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+      <div className="text-caption font-semibold text-slate-500 dark:text-slate-400">
         {label}
       </div>
       <div className="text-lg font-bold text-slate-900 dark:text-white">
@@ -142,7 +142,7 @@ export function BodyBasics({
         </div>
       )}
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
         General reference figures, not medical advice.
       </p>
     </div>

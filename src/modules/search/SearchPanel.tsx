@@ -68,11 +68,11 @@ export function SearchPanel({
         </div>
 
         {query.trim() === "" ? (
-          <p className="px-1 text-sm text-slate-400">
+          <p className="px-1 text-sm text-slate-500 dark:text-slate-400">
             Search across everything — offline, on this device.
           </p>
         ) : results.length === 0 ? (
-          <p className="px-1 text-sm text-slate-400">No matches for "{query}".</p>
+          <p className="px-1 text-sm text-slate-500 dark:text-slate-400">No matches for "{query}".</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {results.map((r) => (
@@ -81,7 +81,7 @@ export function SearchPanel({
                   onClick={() => openResult(r)}
                   className="flex w-full items-center gap-3 rounded-2xl bg-white/70 p-3 text-left dark:bg-slate-800/60"
                 >
-                  <span className="flex-shrink-0 text-slate-400 dark:text-slate-500">
+                  <span className="flex-shrink-0 text-slate-500 dark:text-slate-400">
                     {(() => {
                       const Icon = KIND_ICON[r.kind];
                       return <Icon size={16} />;

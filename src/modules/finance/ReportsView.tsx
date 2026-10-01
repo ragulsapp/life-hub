@@ -37,7 +37,7 @@ function recentMonths(endKey: string, count: number): string[] {
 
 function CategoryList({ rows }: { rows: { category: string; total: number }[] }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-slate-400">Nothing this month yet.</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">Nothing this month yet.</p>;
   }
   const max = Math.max(...rows.map((r) => r.total), 1);
   return (
@@ -135,7 +135,7 @@ export function ReportsView() {
         </div>
       </Card>
 
-      <Card title="Savings Over Time" delay={0.04}>
+      <Card title="Savings over time" delay={0.04}>
         <div className="flex h-24 items-center gap-2">
           {savings.map((s) => (
             <div key={s.key} className="flex h-full flex-1 flex-col items-center justify-center gap-1">
@@ -155,21 +155,21 @@ export function ReportsView() {
             </div>
           ))}
         </div>
-        <p className="mt-2 text-center text-xs text-slate-400">
+        <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
           Net (income − expense) per month, last {months.length} months.
         </p>
       </Card>
 
-      <Card title="Income Report" delay={0.06}>
+      <Card title="Income report" delay={0.06}>
         <CategoryList rows={income} />
       </Card>
 
-      <Card title="Expense Report" delay={0.08}>
+      <Card title="Expense report" delay={0.08}>
         <CategoryList rows={expense} />
       </Card>
 
       {budgetUsage.length > 0 && (
-        <Card title="Budget Usage" delay={0.1}>
+        <Card title="Budget usage" delay={0.1}>
           <ul className="flex flex-col gap-2">
             {budgetUsage.map((b) => {
               const pct = b.limit > 0 ? Math.min(100, (b.spent / b.limit) * 100) : 0;

@@ -102,7 +102,7 @@ export function NotesView() {
                   <div className="flex gap-2 text-xs">
                     <button
                       onClick={() => togglePin(n.id, n.pinned)}
-                      className="inline-flex h-11 items-center rounded-xl px-2 text-slate-400 transition-colors hover:bg-cyan-500/10 hover:text-cyan-500 dark:hover:text-cyan-300"
+                      className="inline-flex h-11 items-center rounded-xl px-2 text-slate-500 dark:text-slate-400 transition-colors hover:bg-cyan-500/10 hover:text-cyan-500 dark:hover:text-cyan-300"
                     >
                       {n.pinned ? "Unpin" : "Pin"}
                     </button>
@@ -145,10 +145,10 @@ export function NotesView() {
                         n.reminderTime,
                       )
                     }
-                    className={`inline-flex h-11 items-center gap-1 rounded-xl px-2 text-[11px] font-medium transition-colors hover:bg-cyan-500/10 ${
+                    className={`inline-flex h-11 items-center gap-1 rounded-xl px-2 text-caption font-medium transition-colors hover:bg-cyan-500/10 ${
                       n.reminderEnabled
                         ? "text-cyan-500 dark:text-cyan-300"
-                        : "text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
+                        : "text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300"
                     }`}
                   >
                     <BellIcon size={13} on={!!n.reminderEnabled} />

@@ -135,13 +135,13 @@ function DebtRow({ debt }: { debt: Debt }) {
             <span
               className={`font-medium ${
                 settled
-                  ? "text-slate-400 line-through dark:text-slate-500"
+                  ? "text-slate-500 line-through dark:text-slate-400"
                   : "text-slate-900 dark:text-white"
               }`}
             >
               {debt.name}
             </span>
-            <span className="shrink-0 rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-600/50 dark:text-slate-300">
+            <span className="shrink-0 rounded-full bg-slate-200 px-1.5 py-0.5 text-caption font-semibold text-slate-500 dark:bg-slate-600/50 dark:text-slate-300">
               {TYPE_LABEL[debt.type]}
             </span>
           </div>
@@ -184,7 +184,7 @@ function DebtRow({ debt }: { debt: Debt }) {
               </button>
               <button
                 onClick={() => setPaying(false)}
-                className="rounded-lg px-2 py-1 text-xs font-medium text-slate-400"
+                className="rounded-lg px-2 py-1 text-xs font-medium text-slate-500 dark:text-slate-400"
               >
                 Cancel
               </button>
@@ -216,7 +216,7 @@ export function DebtManager() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card title="Debts Overview">
+      <Card title="Debts overview">
         <div className="grid grid-cols-2 gap-2 text-center">
           <div>
             <div className="text-lg font-bold text-red-500">
@@ -242,7 +242,7 @@ export function DebtManager() {
         )}
       </Card>
 
-      <Card title="Add Debt" delay={0.05}>
+      <Card title="Add debt" delay={0.05}>
         <AddDebtForm />
       </Card>
 

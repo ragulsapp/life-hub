@@ -22,13 +22,13 @@ export function HabitHistoryRow({
           aria-pressed={cell.completed}
           className="flex min-h-11 flex-col items-center justify-center gap-1"
         >
-          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+          <span className="text-caption font-medium text-slate-500 dark:text-slate-400">
             {cell.weekday}
           </span>
           <motion.span
             whileTap={{ scale: 0.8 }}
             animate={{ scale: cell.completed ? 1 : 0.92 }}
-            className={`flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-bold transition-colors ${
+            className={`flex h-6 w-6 items-center justify-center rounded-lg text-caption font-bold transition-colors ${
               cell.completed
                 ? "bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-sm"
                 : "bg-slate-100 text-transparent dark:bg-slate-700/60"

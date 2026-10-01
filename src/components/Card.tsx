@@ -27,8 +27,16 @@ export function Card({
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent dark:via-white/20"
       />
+      {/* This was a 10px all-caps tracked micro-label, and so was every
+          other section marker in the app — roughly forty of them. When one
+          typographic device marks everything, it marks nothing: a card you
+          should read and a card you can ignore shouted equally loudly, and
+          the label often out-shouted the content under it.
+
+          A heading now looks like a heading. Hierarchy comes from weight
+          and colour against the body text, not from shouting. */}
       {title && (
-        <h2 className="mb-3.5 text-[10px] font-semibold uppercase tracking-[0.19em] text-slate-400 dark:text-slate-500">
+        <h2 className="mb-3 text-heading text-slate-900 dark:text-white">
           {title}
         </h2>
       )}

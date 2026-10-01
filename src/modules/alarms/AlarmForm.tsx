@@ -17,7 +17,7 @@ const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 
 /** One definition, so every section heading in this form matches. */
 const sectionLabel =
-  "mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500";
+  "mb-2 text-caption font-semibold text-slate-500 dark:text-slate-400";
 
 export function AlarmForm() {
   const [time, setTime] = useState("07:00");
@@ -80,7 +80,7 @@ export function AlarmForm() {
               onClick={() => toggleDay(i)}
               aria-pressed={days.includes(i)}
               aria-label={DAY_NAMES[i]}
-              className={`h-11 w-11 rounded-full text-[13px] font-semibold transition-colors ${
+              className={`h-11 w-11 rounded-full text-label font-semibold transition-colors ${
                 days.includes(i)
                   ? "bg-cyan-500 text-white"
                   : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-white/10"
@@ -90,7 +90,7 @@ export function AlarmForm() {
             </button>
           ))}
         </div>
-        <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+        <p className="mt-2 text-caption text-slate-500 dark:text-slate-400">
           {days.length === 0
             ? "One-off — rings once, today."
             : `Every ${days.map((d) => DAY_NAMES[d]).join(", ")}.`}
@@ -125,7 +125,7 @@ export function AlarmForm() {
               >
                 {lbl}
               </div>
-              <div className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+              <div className="mt-0.5 text-caption text-slate-500 dark:text-slate-400">
                 {desc}
               </div>
             </button>

@@ -101,7 +101,7 @@ function HabitCard({
               <div
                 className={`font-semibold ${
                   completed
-                    ? "text-slate-400 line-through dark:text-slate-500"
+                    ? "text-slate-500 line-through dark:text-slate-400"
                     : "text-slate-900 dark:text-white"
                 }`}
               >
@@ -144,7 +144,7 @@ function HabitCard({
                 </span>
               </motion.button>
             ) : (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-400 dark:bg-slate-700/50">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-caption font-medium text-slate-500 dark:bg-slate-700/50 dark:text-slate-400">
                 Rest day
               </span>
             )}
@@ -207,7 +207,7 @@ function HabitCard({
           <div className="mt-2 flex items-center justify-between">
             <button
               onClick={() => setShowHeatmap((v) => !v)}
-              className="-ml-2 inline-flex h-11 items-center rounded-xl px-2 text-[11px] font-medium text-cyan-500 transition-colors hover:bg-cyan-500/10 dark:text-cyan-400"
+              className="-ml-2 inline-flex h-11 items-center rounded-xl px-2 text-caption font-medium text-cyan-500 transition-colors hover:bg-cyan-500/10 dark:text-cyan-400"
             >
               {showHeatmap ? "Show week" : "Show 12-week heatmap"}
             </button>
@@ -232,10 +232,10 @@ function HabitCard({
                     lastReminderDate: reminderCreationGuard(time),
                   });
                 }}
-                className={`flex h-11 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition-colors ${
+                className={`flex h-11 items-center gap-1.5 rounded-full px-3 text-caption font-semibold transition-colors ${
                   habit.reminderEnabled
                     ? "bg-cyan-500/12 text-cyan-600 dark:text-cyan-300"
-                    : "text-slate-400 hover:bg-slate-500/10 hover:text-cyan-500 dark:hover:text-cyan-300"
+                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-500/10 hover:text-cyan-500 dark:hover:text-cyan-300"
                 }`}
               >
                 <BellIcon on={habit.reminderEnabled} />
@@ -318,7 +318,7 @@ export function HabitsView() {
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+        <span className="text-caption font-semibold text-slate-500 dark:text-slate-400">
           {totalDue > 0 ? "Today" : ""}
         </span>
         {totalDue > 0 && (

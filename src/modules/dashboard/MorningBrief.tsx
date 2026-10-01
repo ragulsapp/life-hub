@@ -71,7 +71,7 @@ export function MorningBrief({ onDismiss }: { onDismiss: () => void }) {
       >
         <div className="flex flex-col gap-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-title text-slate-900 dark:text-white">
               {greeting(now)}
             </h1>
             <p className="mt-2 text-sm italic text-slate-500 dark:text-slate-400">
@@ -81,8 +81,8 @@ export function MorningBrief({ onDismiss }: { onDismiss: () => void }) {
 
           <div className="flex flex-col gap-4">
             <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-800/60">
-              <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                Today's Mission
+              <div className="text-caption font-semibold text-slate-500 dark:text-slate-400">
+                Today's mission
               </div>
               <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
                 {missionTotal === 0
@@ -92,8 +92,8 @@ export function MorningBrief({ onDismiss }: { onDismiss: () => void }) {
             </div>
 
             <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-800/60">
-              <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                Today's Goal
+              <div className="text-caption font-semibold text-slate-500 dark:text-slate-400">
+                Today's goal
               </div>
               <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
                 {todayGoal ? (
@@ -112,8 +112,8 @@ export function MorningBrief({ onDismiss }: { onDismiss: () => void }) {
 
             {safe && (
               <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-800/60">
-                <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                  Safe Spending Today
+                <div className="text-caption font-semibold text-slate-500 dark:text-slate-400">
+                  Safe to spend today
                 </div>
                 <p
                   className={`mt-1 text-sm font-semibold ${
@@ -126,8 +126,8 @@ export function MorningBrief({ onDismiss }: { onDismiss: () => void }) {
             )}
 
             <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-800/60">
-              <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
-                One Priority
+              <div className="text-caption font-semibold text-slate-500 dark:text-slate-400">
+                One priority
               </div>
               <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
                 {recommendation.message}

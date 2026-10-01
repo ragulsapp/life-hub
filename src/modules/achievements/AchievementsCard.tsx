@@ -103,7 +103,7 @@ export function AchievementsCard() {
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {a.title}
                   </span>
-                  <span className="flex-shrink-0 text-[11px] tabular-nums text-slate-400">
+                  <span className="flex-shrink-0 text-caption tabular-nums text-slate-500 dark:text-slate-400">
                     {earnedOn(a.key) ?? "—"}
                   </span>
                 </motion.div>
@@ -117,7 +117,7 @@ export function AchievementsCard() {
                 <span className="text-slate-600 dark:text-slate-300">
                   {a.icon} {a.title}
                 </span>
-                <span className="text-slate-400">
+                <span className="text-slate-500 dark:text-slate-400">
                   {Math.floor(a.progress).toLocaleString()} /{" "}
                   {a.target.toLocaleString()}
                 </span>

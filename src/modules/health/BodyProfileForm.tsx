@@ -113,7 +113,7 @@ export function BodyProfileForm({
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
         <label className="flex min-w-0 flex-col gap-1">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+          <span className="text-caption font-semibold text-slate-500 dark:text-slate-400">
             Birth year
           </span>
           <input
@@ -126,7 +126,7 @@ export function BodyProfileForm({
           />
         </label>
         <label className="flex min-w-0 flex-col gap-1">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+          <span className="text-caption font-semibold text-slate-500 dark:text-slate-400">
             Height (cm)
           </span>
           <input
@@ -141,7 +141,7 @@ export function BodyProfileForm({
       </div>
 
       <label className="flex min-w-0 flex-col gap-1">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+        <span className="text-caption font-semibold text-slate-500 dark:text-slate-400">
           Birth month — optional
         </span>
         <select
@@ -156,13 +156,13 @@ export function BodyProfileForm({
             </option>
           ))}
         </select>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-slate-500 dark:text-slate-400">
           Still no full birthdate — just enough to get your age right.
         </span>
       </label>
 
       <div>
-        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+        <div className="mb-1.5 text-caption font-semibold text-slate-500 dark:text-slate-400">
           Sex — only affects the energy estimate
         </div>
         <Pills
@@ -174,7 +174,7 @@ export function BodyProfileForm({
       </div>
 
       <div>
-        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+        <div className="mb-1.5 text-caption font-semibold text-slate-500 dark:text-slate-400">
           Typical activity
         </div>
         <Pills
@@ -186,7 +186,7 @@ export function BodyProfileForm({
       </div>
 
       <div>
-        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+        <div className="mb-1.5 text-caption font-semibold text-slate-500 dark:text-slate-400">
           Healthy-range reference
         </div>
         <Pills
@@ -197,7 +197,7 @@ export function BodyProfileForm({
             v === "standard" ? "Standard (WHO)" : "Asia-Pacific"
           }
         />
-        <p className="mt-1.5 text-xs text-slate-400">
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
           Asia-Pacific uses the lower WHO/ICMR cutoffs. Pick whichever your
           doctor uses — it only changes the range shown, nothing else.
         </p>
@@ -207,7 +207,7 @@ export function BodyProfileForm({
         Save
       </Button>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
         These are general reference figures, not medical advice. For anything
         that matters — including pregnancy or a medical condition — talk to a
         professional. Stays on this device.

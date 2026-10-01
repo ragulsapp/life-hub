@@ -129,10 +129,10 @@ export function PlanTomorrowPanel({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-title text-slate-900 dark:text-white">
               Plan Tomorrow
             </h1>
-            <p className="text-xs text-slate-400">{tomorrow}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{tomorrow}</p>
           </div>
           <CloseButton onClose={onClose} label="Close" />
         </div>
@@ -161,7 +161,7 @@ export function PlanTomorrowPanel({ onClose }: { onClose: () => void }) {
           ))}
         </Reorder.Group>
         {tasks.length === 0 && (
-          <p className="text-center text-sm text-slate-400">
+          <p className="text-center text-sm text-slate-500 dark:text-slate-400">
             Nothing planned yet — add tomorrow's first task above.
           </p>
         )}

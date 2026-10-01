@@ -100,10 +100,10 @@ export function SpendingHistory({
                   />
                 </div>
                 <span
-                  className={`text-[9px] ${
+                  className={`text-caption ${
                     isSel
                       ? "font-semibold text-cyan-600 dark:text-cyan-300"
-                      : "text-slate-400"
+                      : "text-slate-500 dark:text-slate-400"
                   }`}
                 >
                   {monthLabel(m.key).split(" ")[0]}
@@ -112,7 +112,7 @@ export function SpendingHistory({
             );
           })}
         </div>
-        <div className="mt-2 flex justify-center gap-4 text-[10px] text-slate-400">
+        <div className="mt-2 flex justify-center gap-4 text-caption text-slate-500 dark:text-slate-400">
           <span className="flex items-center gap-1">
             <i className="h-2 w-2 rounded-sm bg-emerald-400/70" /> In
           </span>
@@ -125,7 +125,7 @@ export function SpendingHistory({
       {/* This month vs last, by category */}
       {deltas.length > 0 && (
         <div className="flex flex-col gap-1.5 border-t border-slate-200/70 pt-3 dark:border-slate-600/40">
-          <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+          <div className="text-caption font-semibold text-slate-500 dark:text-slate-400">
             vs {monthLabel(previousMonthKey(monthKey))}
           </div>
           {deltas.map((d) => {
@@ -144,7 +144,7 @@ export function SpendingHistory({
                 <span
                   className={`w-16 text-right text-xs tabular-nums ${
                     isNew || flat
-                      ? "text-slate-400"
+                      ? "text-slate-500 dark:text-slate-400"
                       : up
                         ? "text-rose-500"
                         : "text-emerald-500"

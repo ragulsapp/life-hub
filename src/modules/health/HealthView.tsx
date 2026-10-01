@@ -69,7 +69,7 @@ export function HealthView() {
 
       {/* --- Your Body: "am I okay?" --- */}
       {hasProfile && !editingProfile ? (
-        <Card title="Your Body">
+        <Card title="Your body">
           <BodyBasics profile={profile!} metrics={metrics} />
           <button
             onClick={() => setEditingProfile(true)}
@@ -93,7 +93,7 @@ export function HealthView() {
           {editingProfile && (
             <button
               onClick={() => setEditingProfile(false)}
-              className="mt-3 text-xs font-semibold text-slate-400 hover:underline"
+              className="mt-3 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:underline"
             >
               Cancel
             </button>
@@ -102,7 +102,7 @@ export function HealthView() {
       )}
 
       {/* --- Today: "what should I do?" --- */}
-      <Card title="Water Today" delay={0.02}>
+      <Card title="Water today" delay={0.02}>
         <WaterTracker
           metrics={metrics}
           targetMl={waterTarget}
@@ -131,12 +131,12 @@ export function HealthView() {
         )}
       </Card>
 
-      <Card title="Log Today" delay={0.05}>
+      <Card title="Log today" delay={0.05}>
         <HealthEntryForm metrics={metrics} />
       </Card>
 
       {/* --- Trends: "am I improving?" --- */}
-      <Card title="Weight Trend" delay={0.07}>
+      <Card title="Weight trend" delay={0.07}>
         <AreaChart
           values={weightSeries.map((d) => d.value)}
           labels={weightSeries.map((d) => shortDate(d.date))}
@@ -152,7 +152,7 @@ export function HealthView() {
       </Card>
 
       {waterSeries.length > 1 && (
-        <Card title="Water Trend — This Week" delay={0.08}>
+        <Card title="Water this week" delay={0.08}>
           <AreaChart
             values={waterSeries.map((d) => Math.round(d.value))}
             labels={waterSeries.map((d) => shortDate(d.date))}
@@ -163,7 +163,7 @@ export function HealthView() {
       )}
 
       {sleepSeries.length > 1 && (
-        <Card title="Sleep Trend" delay={0.09}>
+        <Card title="Sleep trend" delay={0.09}>
           <AreaChart
             values={sleepSeries.map((d) => d.value)}
             labels={sleepSeries.map((d) => shortDate(d.date))}
@@ -173,7 +173,7 @@ export function HealthView() {
         </Card>
       )}
 
-      <Card title="Energy Trend" delay={0.1}>
+      <Card title="Energy trend" delay={0.1}>
         <AreaChart
           values={energySeries.map((d) => d.value)}
           labels={energySeries.map((d) => shortDate(d.date))}
@@ -206,7 +206,7 @@ export function HealthView() {
             </div>
             <button
               onClick={() => setFastingEnabled(false)}
-              className="self-start text-xs font-semibold text-slate-400 hover:underline"
+              className="self-start text-xs font-semibold text-slate-500 dark:text-slate-400 hover:underline"
             >
               Turn off fasting tracking
             </button>

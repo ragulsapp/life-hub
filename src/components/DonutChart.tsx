@@ -91,7 +91,7 @@ export function DonutChart({
             </span>
           )}
           {centerLabel && (
-            <span className="text-[10px] uppercase tracking-wide text-slate-400">
+            <span className="text-caption uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {centerLabel}
             </span>
           )}
@@ -116,7 +116,7 @@ export function DonutChart({
             </div>
           ))}
         {total === 0 && (
-          <span className="text-sm text-slate-400">No spending yet.</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">No spending yet.</span>
         )}
       </div>
     </div>

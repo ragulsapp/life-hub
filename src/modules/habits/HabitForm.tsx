@@ -95,7 +95,7 @@ export function HabitForm({ onSaved }: { onSaved?: () => void } = {}) {
           className="flex flex-col gap-3 overflow-hidden"
         >
           <div>
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <div className="mb-1 text-caption font-semibold text-slate-500 dark:text-slate-400">
               Icon
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -116,7 +116,7 @@ export function HabitForm({ onSaved }: { onSaved?: () => void } = {}) {
           </div>
 
           <div>
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <div className="mb-1 text-caption font-semibold text-slate-500 dark:text-slate-400">
               Color
             </div>
             <div className="flex flex-wrap gap-2">
@@ -134,7 +134,7 @@ export function HabitForm({ onSaved }: { onSaved?: () => void } = {}) {
           </div>
 
           <div>
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <div className="mb-1 text-caption font-semibold text-slate-500 dark:text-slate-400">
               Identity — who this makes you
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -151,7 +151,7 @@ export function HabitForm({ onSaved }: { onSaved?: () => void } = {}) {
           </div>
 
           <div>
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <div className="mb-1 text-caption font-semibold text-slate-500 dark:text-slate-400">
               Schedule
             </div>
             <div className="mb-2 flex gap-2">
@@ -185,7 +185,7 @@ export function HabitForm({ onSaved }: { onSaved?: () => void } = {}) {
                     className={`h-8 w-8 rounded-full text-xs font-bold transition-colors ${
                       days.includes(i)
                         ? "bg-cyan-500 text-white"
-                        : "bg-slate-100 text-slate-400 dark:bg-slate-700/50"
+                        : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
                     }`}
                   >
                     {w}

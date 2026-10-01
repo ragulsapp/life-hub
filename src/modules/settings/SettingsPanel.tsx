@@ -55,7 +55,7 @@ function Row({
 }) {
   const inner = (
     <>
-      <span className="flex w-6 flex-shrink-0 justify-center text-slate-400 dark:text-slate-500">
+      <span className="flex w-6 flex-shrink-0 justify-center text-slate-500 dark:text-slate-400">
         {icon}
       </span>
       <span className="min-w-0 flex-1 text-left">
@@ -69,7 +69,7 @@ function Row({
           {label}
         </span>
         {hint && (
-          <span className="block text-xs text-slate-400">{hint}</span>
+          <span className="block text-xs text-slate-500 dark:text-slate-400">{hint}</span>
         )}
       </span>
       {trailing}
@@ -97,7 +97,7 @@ function Section({
 }) {
   return (
     <div>
-      <div className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+      <div className="mb-1.5 px-3 text-caption font-semibold text-slate-500 dark:text-slate-400">
         {title}
       </div>
       <div className="glass rounded-3xl border border-white/60 bg-white/80 p-1.5 shadow-e2 dark:border-white/5 dark:bg-slate-800/60 dark:shadow-e2-dark">
@@ -180,7 +180,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         }}
       >
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-title text-slate-900 dark:text-white">
             Settings
           </h1>
           <CloseButton onClose={onClose} label="Close settings" />
@@ -306,7 +306,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           />
         </Section>
 
-        <p className="px-3 text-center text-xs text-slate-400">
+        <p className="px-3 text-center text-xs text-slate-500 dark:text-slate-400">
           Everything stays on this device. Nothing is uploaded.
         </p>
       </div>

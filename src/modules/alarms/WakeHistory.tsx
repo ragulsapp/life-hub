@@ -64,7 +64,7 @@ export function WakeHistory({ logs }: { logs: WakeLog[] }) {
           );
         })}
       </div>
-      <div className="flex justify-between text-[11px] text-slate-400">
+      <div className="flex justify-between text-caption text-slate-500 dark:text-slate-400">
         <span>30 days ago</span>
         <span>
           {logged} logged · avg {avgLate} min after

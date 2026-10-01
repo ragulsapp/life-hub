@@ -141,7 +141,7 @@ function RecurringRow({ r }: { r: RecurringTransaction }) {
               updateRecurringTransaction(r.id, { active: !r.active })
             }
             aria-label={`${r.active ? "Pause" : "Resume"} ${r.category}`}
-            className="text-xs font-semibold text-slate-400 hover:text-cyan-500"
+            className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-cyan-500"
           >
             {r.active ? "Pause" : "Resume"}
           </button>
@@ -167,7 +167,7 @@ export function RecurringManager() {
   return (
     <div className="flex flex-col gap-4">
       {pending.length > 0 && (
-        <Card title="Pending This Month">
+        <Card title="Pending this month">
           <ul className="flex flex-col gap-2">
             {pending.map((r) => (
               <li
@@ -194,11 +194,11 @@ export function RecurringManager() {
         </Card>
       )}
 
-      <Card title="Add Recurring" delay={0.05}>
+      <Card title="Add recurring" delay={0.05}>
         <AddRecurringForm />
       </Card>
 
-      <Card title="Recurring Transactions" delay={0.08}>
+      <Card title="Recurring transactions" delay={0.08}>
         <ul className="flex flex-col gap-2">
           <AnimatePresence initial={false}>
             {all.map((r) => (

@@ -71,7 +71,7 @@ export function FinanceView() {
 
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+      <h1 className="text-title text-slate-900 dark:text-white">
         Money
       </h1>
 
@@ -87,7 +87,7 @@ export function FinanceView() {
       ) : (
         <>
         {safe && (
-          <Card title="Safe to Spend">
+          <Card title="Safe to spend">
             <div className="flex items-baseline justify-between">
               <div>
                 <div
@@ -114,7 +114,7 @@ export function FinanceView() {
           </Card>
         )}
   
-        <Card title="This Month">
+        <Card title="This month">
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>
               <div className="text-lg font-bold text-emerald-500">
@@ -155,7 +155,7 @@ export function FinanceView() {
           </div>
         </Card>
   
-        <Card title="Spending Breakdown" delay={0.05}>
+        <Card title="Spending breakdown" delay={0.05}>
           <DonutChart
             slices={donutSlices}
             centerValue={`₹${totalExpense.toLocaleString()}`}
@@ -163,7 +163,7 @@ export function FinanceView() {
           />
         </Card>
   
-        <Card title="Spending History" delay={0.06}>
+        <Card title="Spending history" delay={0.06}>
           <SpendingHistory
             transactions={transactions}
             monthKey={thisMonth}

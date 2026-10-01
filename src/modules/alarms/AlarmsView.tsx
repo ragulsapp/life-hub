@@ -71,7 +71,7 @@ export function AlarmsView() {
 
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+      <h1 className="text-title text-slate-900 dark:text-white">
         Alarms &amp; Tasks
       </h1>
 
@@ -91,13 +91,13 @@ export function AlarmsView() {
       </div>
 
       {wakeLogs.length > 0 && (
-        <Card title="Wake-Up Streak">
+        <Card title="Wake-up streak">
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400/20 to-orange-500/20">
               <span className="text-xl font-extrabold text-amber-500">
                 {streak}
               </span>
-              <span className="text-[9px] font-medium text-amber-600/70 dark:text-amber-400/70">
+              <span className="text-caption font-medium text-amber-600/70 dark:text-amber-400/70">
                 {streak === 1 ? "DAY" : "DAYS"}
               </span>
             </div>
@@ -127,7 +127,7 @@ export function AlarmsView() {
         </Card>
       )}
 
-      <Card title="New Alarm">
+      <Card title="New alarm">
         <AlarmForm />
       </Card>
 
@@ -148,15 +148,15 @@ export function AlarmsView() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div
-                      className={`text-[34px] font-semibold leading-none tracking-tight tabular-nums ${
+                      className={`text-display font-semibold leading-none tracking-tight tabular-nums ${
                         a.enabled
                           ? "text-slate-900 dark:text-white"
-                          : "text-slate-400 dark:text-slate-500"
+                          : "text-slate-500 dark:text-slate-400"
                       }`}
                     >
                       {a.time}
                     </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-slate-500 dark:text-slate-400">
                       {a.label && (
                         <span className="font-medium text-slate-700 dark:text-slate-200">
                           {a.label}
@@ -166,7 +166,7 @@ export function AlarmsView() {
                         <CalendarIcon size={12} />
                         {repeatLabel(a.days)}
                       </span>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium dark:bg-white/5">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-caption font-medium dark:bg-white/5">
                         {a.mission === "math" ? "Math" : "Memory"} ·{" "}
                         {["Easy", "Medium", "Hard"][a.difficulty - 1]}
                       </span>
@@ -200,7 +200,7 @@ export function AlarmsView() {
                 <div className="mt-3 flex gap-2 border-t border-slate-200/70 pt-3 dark:border-white/5">
                   <button
                     onClick={() => ringNow(a)}
-                    className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                    className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-caption font-semibold text-slate-600 transition-colors hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                   >
                     <BellIcon size={13} on />
                     Preview
@@ -208,7 +208,7 @@ export function AlarmsView() {
                   <button
                     onClick={() => remove(a.id)}
                     aria-label={`Delete ${a.time} alarm`}
-                    className="h-11 rounded-xl px-4 text-[12px] font-semibold text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
+                    className="h-11 rounded-xl px-4 text-caption font-semibold text-slate-500 dark:text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
                   >
                     Delete
                   </button>
@@ -224,7 +224,7 @@ export function AlarmsView() {
         )}
       </div>
 
-      <Card title="Plan Tomorrow" delay={0.04}>
+      <Card title="Plan tomorrow" delay={0.04}>
         <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
           Lay out tomorrow's tasks tonight — also opens automatically from the
           Night Reminder notification.

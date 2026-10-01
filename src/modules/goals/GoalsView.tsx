@@ -91,7 +91,7 @@ export function GoalsView() {
                   <span className="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">
                     {g.title}
                   </span>
-                  <span className="flex-shrink-0 text-[11px] tabular-nums text-slate-400">
+                  <span className="flex-shrink-0 text-caption tabular-nums text-slate-500 dark:text-slate-400">
                     {/* Goals from before timestamps existed show "—" rather
                         than an invented date. */}
                     {g.completedAt
@@ -111,7 +111,7 @@ export function GoalsView() {
 
       {groups.map(({ term, goals: groupGoals }) => (
         <div key={String(term)} className="flex flex-col gap-2">
-          <div className="px-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+          <div className="px-1 text-caption font-semibold text-slate-500 dark:text-slate-400">
             {TERM_GROUP_LABEL[String(term)]}
           </div>
           <AnimatePresence initial={false}>
@@ -182,7 +182,7 @@ function GoalCard({
 
         {g.status === "active" && (g.linkedHabits?.length ?? 0) > 0 && (
           <div className="mt-3 border-t border-slate-200/70 pt-2 dark:border-slate-600/40">
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <div className="mb-1 text-caption font-semibold text-slate-500 dark:text-slate-400">
               Today's step
             </div>
             <div className="flex flex-wrap gap-1.5">

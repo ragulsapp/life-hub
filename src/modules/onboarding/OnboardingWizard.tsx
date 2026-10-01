@@ -171,7 +171,7 @@ export function OnboardingWizard() {
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1">
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              <span className="text-caption font-semibold text-slate-500 dark:text-slate-400">
                 Birth year
               </span>
               <input
@@ -184,7 +184,7 @@ export function OnboardingWizard() {
               />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              <span className="text-caption font-semibold text-slate-500 dark:text-slate-400">
                 Height (cm)
               </span>
               <input
@@ -198,7 +198,7 @@ export function OnboardingWizard() {
             </label>
           </div>
           <label className="flex flex-col gap-1">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <span className="text-caption font-semibold text-slate-500 dark:text-slate-400">
               Birth month — optional
             </span>
             <select
@@ -215,7 +215,7 @@ export function OnboardingWizard() {
             </select>
           </label>
           <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <div className="mb-1.5 text-caption font-semibold text-slate-500 dark:text-slate-400">
               Sex — only affects one energy estimate
             </div>
             <div className="flex flex-wrap gap-2">
@@ -241,7 +241,7 @@ export function OnboardingWizard() {
               ))}
             </div>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             You can skip this entirely and fill it in later — or never. Like
             everything else, it stays on this device.
           </p>
@@ -254,7 +254,7 @@ export function OnboardingWizard() {
       body: (
         <div className="flex flex-col gap-4">
           <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <div className="mb-1.5 text-caption font-semibold text-slate-500 dark:text-slate-400">
               Income
             </div>
             <Chips
@@ -264,7 +264,7 @@ export function OnboardingWizard() {
             />
           </div>
           <div>
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            <div className="mb-1.5 text-caption font-semibold text-slate-500 dark:text-slate-400">
               Expenses
             </div>
             <Chips
@@ -311,7 +311,7 @@ export function OnboardingWizard() {
               {notifStatus === "asking" ? "Asking…" : "Enable notifications"}
             </Button>
           )}
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Reminders only fire for things you schedule yourself — nothing is
             sent automatically.
           </p>
@@ -334,10 +334,10 @@ export function OnboardingWizard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.18 }}
         >
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-cyan-500 dark:text-cyan-300">
+          <div className="mb-1 text-caption font-semibold text-cyan-500 dark:text-cyan-300">
             Step {step + 1} of {steps.length}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-title text-slate-900 dark:text-white">
             {current.title}
           </h1>
           <p className="mb-6 mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -358,7 +358,7 @@ export function OnboardingWizard() {
         <button
           onClick={() => (step === 0 ? finish(true) : setStep((s) => s - 1))}
           disabled={saving}
-          className="py-2 text-sm font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          className="py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
         >
           {step === 0 ? "Skip — start blank" : "Back"}
         </button>

@@ -20,7 +20,7 @@ const variantClasses: Record<Variant, string> = {
   "toggle-on":
     "bg-emerald-500 text-white shadow-e1 hover:bg-emerald-600 active:translate-y-px",
   "toggle-off":
-    "bg-slate-100 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500",
+    "bg-slate-100 text-slate-500 dark:bg-slate-700/60 dark:text-slate-400",
 };
 
 export function Button({

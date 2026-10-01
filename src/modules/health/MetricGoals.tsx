@@ -126,7 +126,7 @@ export function MetricGoals({ metrics }: { metrics: HealthMetric[] }) {
                     transition={{ duration: 0.5 }}
                   />
                 </div>
-                <div className="mt-0.5 text-xs text-slate-400">
+                <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                   {Math.round(prog.pct)}% to goal
                 </div>
               </>

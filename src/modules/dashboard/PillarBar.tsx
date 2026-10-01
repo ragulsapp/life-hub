@@ -61,7 +61,7 @@ export function PillarBar({
                 </span>
               )}
             </span>
-            <span className="text-[8.5px] font-bold uppercase tracking-[0.11em] text-slate-400 dark:text-slate-500">
+            <span className="text-caption font-semibold text-slate-500 dark:text-slate-400">
               {meta.label}
             </span>
           </button>

@@ -26,7 +26,7 @@ export function EmptyState({
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
         {title}
       </span>
-      <span className="max-w-[26ch] text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+      <span className="max-w-[26ch] text-xs leading-relaxed text-slate-500 dark:text-slate-400">
         {hint}
       </span>
     </div>

@@ -149,14 +149,14 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
         className="flex items-start justify-between gap-3"
       >
         <div className="min-w-0">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.19em] text-slate-400 dark:text-slate-500">
+          <p className="mb-1 text-caption font-semibold text-slate-500 dark:text-slate-400">
             {now.toLocaleDateString(undefined, {
               weekday: "long",
               day: "numeric",
               month: "long",
             })}
           </p>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-title text-slate-900 dark:text-white">
             {greeting(now)}
           </h1>
         </div>
@@ -168,7 +168,7 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
             whileTap={{ scale: 0.9 }}
             onClick={openSearch}
             aria-label="Search"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
           >
             <SearchIcon size={19} />
           </motion.button>
@@ -176,7 +176,7 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
             whileTap={{ scale: 0.9 }}
             onClick={openSettings}
             aria-label="Settings"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
           >
             <SettingsIcon size={19} />
           </motion.button>
@@ -204,7 +204,7 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
         “{quote}”
       </p>
 
-      <Card title="Today's Mission" delay={0.02}>
+      <Card title="Today's mission" delay={0.02}>
         {mission.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Nothing scheduled today. Add a habit to build momentum.
@@ -243,13 +243,13 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
                     >
                       {m.done && <CheckIcon size={13} />}
                     </span>
-                    <span className="flex-shrink-0 text-slate-400 dark:text-slate-500">
+                    <span className="flex-shrink-0 text-slate-500 dark:text-slate-400">
                       {m.icon}
                     </span>
                     <span
                       className={
                         m.done
-                          ? "text-slate-400 line-through dark:text-slate-500"
+                          ? "text-slate-500 line-through dark:text-slate-400"
                           : "text-slate-900 dark:text-white"
                       }
                     >
@@ -263,7 +263,7 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
         )}
       </Card>
 
-      <Card title="Today's Goal" delay={0.03}>
+      <Card title="Today's goal" delay={0.03}>
         {todayGoal ? (
           <p className="flex items-start gap-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
             <TargetIcon
@@ -280,7 +280,7 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
       </Card>
 
       {safe && (
-        <Card title="Safe Spending Today" delay={0.04}>
+        <Card title="Safe to spend today" delay={0.04}>
           <div className="flex items-baseline justify-between">
             <div
               className={`text-2xl font-extrabold tracking-tight ${
@@ -296,7 +296,7 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
         </Card>
       )}
 
-      <Card title="One Priority Recommendation" delay={0.05}>
+      <Card title="Start here" delay={0.05}>
         <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
           {recommendation.message}
         </p>
@@ -329,7 +329,7 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
                 className={`relative overflow-hidden rounded-3xl p-5 text-center transition-colors ${
                   done
                     ? "text-slate-900 shadow-lg"
-                    : "glass border border-white/60 bg-white/70 text-slate-400 dark:border-white/5 dark:bg-slate-800/60 dark:text-slate-500"
+                    : "glass border border-white/60 bg-white/70 text-slate-500 dark:border-white/5 dark:bg-slate-800/60 dark:text-slate-400"
                 }`}
                 style={done ? { backgroundColor: h.color } : undefined}
               >
@@ -351,7 +351,7 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
         </div>
       )}
 
-      <Card title="Quick Brain Dump" delay={0.09}>
+      <Card title="Brain dump" delay={0.09}>
         <textarea
           value={brainDump}
           onChange={(e) => setBrainDump(e.target.value)}
@@ -391,7 +391,7 @@ export function DashboardView({ onOpenAlarms }: { onOpenAlarms: () => void }) {
         onClick={onOpenAlarms}
         className="glass flex min-h-11 items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3 text-left transition-colors hover:bg-white dark:border-white/10 dark:bg-slate-800/60 dark:hover:bg-slate-800"
       >
-        <AlarmIcon className="h-5 w-5 flex-shrink-0 text-slate-400 dark:text-slate-500" />
+        <AlarmIcon className="h-5 w-5 flex-shrink-0 text-slate-500 dark:text-slate-400" />
         <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">
           Alarms &amp; wake-up mission
         </span>
