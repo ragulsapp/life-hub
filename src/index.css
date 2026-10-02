@@ -3,29 +3,47 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /**
- * Inter, self-hosted. This is an offline app — nothing may load from a CDN.
- * One variable latin woff2 (~48 KB) covering weights 400-700; the static
- * four-file alternative is ~72 KB and worse.
+ * Plus Jakarta Sans, self-hosted. This is an offline app — nothing may load
+ * from a CDN, so the faces are bundled and served from our own origin.
+ * Two variable woff2 subsets (~49 KB total) covering weights 200-800.
  *
  * font-display: block, NOT swap. The file sits on local disk inside the APK
- * so it resolves in milliseconds; `swap` would show a visible Roboto->Inter
+ * so it resolves in milliseconds; `swap` would show a visible system-font
  * jump on every cold start. `block` trades an imperceptible pause for zero
  * layout shift.
  *
- * unicode-range includes U+20B9 (₹) — without it the rupee in amounts like
- * "₹100,000" falls back to another face mid-string.
- *
- * SIL Open Font License 1.1 — see Inter-LICENSE.txt alongside the file.
+ * SIL Open Font License 1.1 — see PlusJakartaSans-LICENSE.txt alongside the
+ * files.
  */
 @font-face {
-  font-family: "Inter";
+  font-family: "Plus Jakarta Sans";
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 200 800;
   font-display: block;
-  src: url("./assets/fonts/inter-latin-var.woff2") format("woff2");
+  src: url("./assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2")
+    format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
-    U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20B9, U+2074,
-    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+    U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/**
+ * latin-ext is NOT optional here: the rupee sign (U+20B9) lives in this
+ * subset, not in latin. Shipping only latin left every ₹ figure in the app
+ * rendering in the system font — a visible mismatch on the one character
+ * that appears on nearly every money screen.
+ */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: block;
+  src: url("./assets/fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2")
+    format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
 }
 
 /**
@@ -40,7 +58,7 @@
  */
 @theme {
   /* Setting --font-sans alone re-fonts the app: Preflight applies it to html. */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, sans-serif;
 
   /**
@@ -109,29 +127,46 @@
     0 1px 3px rgb(0 0 0 / 0.3), 0 24px 56px -18px rgb(0 0 0 / 0.65);
 
   /**
-   * Accent — the Aura ramp. Occupies the cyan-* namespace deliberately: in
-   * Tailwind v4 the theme namespace IS the class generator, so redefining it
-   * retunes all ~70 existing cyan-* usages from this one place. Renaming the
-   * namespace instead would mean touching every call site for no visual gain.
+   * Accent — the ACTION colour.
+   *
+   * Occupies the cyan-* namespace deliberately: in Tailwind v4 the theme
+   * namespace IS the class generator, so redefining it retunes all ~130
+   * existing cyan-* usages from this one place.
+   *
+   * It is teal rather than violet now, and the reason is discipline rather
+   * than fashion. One colour was doing every job — brand, buttons, links,
+   * the nav dot, icons and every selected state — so nothing it touched read
+   * as more important than anything else. Violet is the BRAND (the orb, the
+   * wordmark); teal means "you can do something here". Separating the two is
+   * what lets either one mean anything.
    *
    * Anchored on MEASURED contrast, because the accent plays two roles that
    * pull in opposite directions:
-   *   - 500 is a FILL behind white text  -> 5.8:1 with white (AA)
-   *     and it is also accent text on white -> 5.8:1 (AA)
-   *   - 300 is accent TEXT on dark surfaces -> 7.4:1 on #0a0810 (AAA)
-   * One step cannot satisfy both, which is why the ramp is split this way
-   * rather than picking a single "brand violet" and using it everywhere.
+   *   - 500 is a FILL behind white text  -> 4.99:1 with white (AA)
+   *     and it is also accent text on the light page -> 4.58:1 (AA)
+   *   - 300 is accent TEXT on dark surfaces -> 8.0:1 on #0a0810,
+   *     7.45:1 on the card. (The violet it replaces measured 7.42, so the
+   *     perceived weight of accent text in dark mode is unchanged.)
    */
-  --color-cyan-50: #f2effe;
-  --color-cyan-100: #e2dafc;
-  --color-cyan-200: #c8bafa;
-  --color-cyan-300: #a98bff;
-  --color-cyan-400: #8b6bea;
-  --color-cyan-500: #5b4be8;
-  --color-cyan-600: #4a3bd0;
-  --color-cyan-700: #3d30ac;
-  --color-cyan-800: #332a8c;
-  --color-cyan-900: #2b2470;
+  --color-cyan-50: #effbf9;
+  --color-cyan-100: #d6f5f0;
+  --color-cyan-200: #a7e9e0;
+  --color-cyan-300: #14b8a6;
+  --color-cyan-400: #12a394;
+  --color-cyan-500: #107d74;
+  --color-cyan-600: #0d6a62;
+  --color-cyan-700: #0b5750;
+  --color-cyan-800: #094740;
+  --color-cyan-900: #073a35;
+
+  /**
+   * Brand — the Aura violet. Used ONLY where the app is identifying itself:
+   * the orb and the wordmark. The orb carries its own hardcoded palette in
+   * AuraOrb.tsx, so these exist for everything around it.
+   */
+  --color-brand-400: #8b6bea;
+  --color-brand-500: #5b4be8;
+  --color-brand-600: #4a3bd0;
 
   /**
    * Neutrals. The dark SURFACES carry the identity — near-black with a violet

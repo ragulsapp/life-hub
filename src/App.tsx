@@ -165,7 +165,7 @@ function App() {
               under the status bar. They now live in Settings, reachable from
               the Dashboard, which fixes reachability structurally rather than
               relying on the inset being reported correctly. */}
-          <span className="bg-gradient-to-r from-cyan-500 to-violet-500 bg-clip-text font-extrabold tracking-tight text-transparent">
+          <span className="bg-gradient-to-r from-brand-500 to-brand-400 bg-clip-text font-extrabold tracking-tight text-transparent">
             Life Mentor
           </span>
         </header>
