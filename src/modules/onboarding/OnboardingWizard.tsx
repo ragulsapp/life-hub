@@ -109,7 +109,7 @@ export function OnboardingWizard() {
           await createHabitFromTemplate(
             {
               name,
-              icon: tpl?.icon ?? "🎯",
+              icon: tpl?.icon ?? "target",
               color: tpl?.color ?? HABIT_COLORS[i % HABIT_COLORS.length],
               identity: tpl?.identity,
             },
@@ -131,7 +131,7 @@ export function OnboardingWizard() {
   };
 
   const habitIcon = (name: string) =>
-    STARTER_TEMPLATES.habits.find((h) => h.name === name)?.icon ?? "🎯";
+    STARTER_TEMPLATES.habits.find((h) => h.name === name)?.icon ?? "target";
 
   const steps = [
     {

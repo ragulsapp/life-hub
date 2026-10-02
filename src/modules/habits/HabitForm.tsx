@@ -11,6 +11,7 @@ import { inputClass } from "../../components/inputStyles";
 import { toast } from "../../lib/toast";
 import { createHabitFromTemplate } from "./habitActions";
 import { Chip } from "../../components/Chip";
+import { AppIcon } from "../../lib/appIcons";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"]; // index 0=Sun
 
@@ -103,13 +104,15 @@ export function HabitForm({ onSaved }: { onSaved?: () => void } = {}) {
                 <button
                   key={ic}
                   onClick={() => setIcon(ic)}
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg transition-transform ${
+                  aria-label={`Use the ${ic} icon`}
+                  aria-pressed={icon === ic}
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
                     icon === ic
-                      ? "scale-110 bg-slate-200 dark:bg-slate-600"
-                      : "bg-slate-100 dark:bg-slate-700/50"
+                      ? "bg-cyan-500 text-white"
+                      : "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"
                   }`}
                 >
-                  {ic}
+                  <AppIcon name={ic} size={18} />
                 </button>
               ))}
             </div>
@@ -144,7 +147,8 @@ export function HabitForm({ onSaved }: { onSaved?: () => void } = {}) {
                   selected={identity === id.name}
                   onClick={() => setIdentity(id.name)}
                 >
-                  {id.icon} {id.name}
+                  <AppIcon name={id.icon} size={14} />
+                  {id.name}
                 </Chip>
               ))}
             </div>

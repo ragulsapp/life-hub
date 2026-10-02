@@ -5,6 +5,7 @@ import { db } from "../../db/db";
 import { Card } from "../../components/Card";
 import { toast } from "../../lib/toast";
 import { evaluateAchievements, isUnlocked } from "./achievementRules";
+import { AppIcon } from "../../lib/appIcons";
 
 export function AchievementsCard() {
   const logs = useLiveQuery(() => db.habitLogs.toArray(), []) ?? [];
@@ -41,7 +42,7 @@ export function AchievementsCard() {
             key: a.key,
             unlockedAt: Date.now(),
           } as never);
-          toast(`${a.icon} Achievement unlocked — ${a.title}`);
+          toast(`Achievement unlocked — ${a.title}`);
         } catch {
           // &key unique index rejects duplicates; a race is harmless.
         }
@@ -97,8 +98,8 @@ export function AchievementsCard() {
                   title={a.requirement}
                   className="flex items-center gap-2.5"
                 >
-                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-400/15 text-sm">
-                    {a.icon}
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-400/15 text-amber-600 dark:text-amber-400">
+                    <AppIcon name={a.icon} size={15} />
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {a.title}
@@ -115,7 +116,8 @@ export function AchievementsCard() {
             <div key={a.key}>
               <div className="mb-1 flex justify-between text-xs">
                 <span className="text-slate-600 dark:text-slate-300">
-                  {a.icon} {a.title}
+                  <AppIcon name={a.icon} size={13} className="mr-1 inline-block align-[-2px]" />
+                  {a.title}
                 </span>
                 <span className="text-slate-500 dark:text-slate-400">
                   {Math.floor(a.progress).toLocaleString()} /{" "}

@@ -27,6 +27,7 @@ import {
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { deleteHabit, setHabitDone, togglePinned } from "./habitActions";
 import { EmptyState } from "../../components/EmptyState";
+import { AppIcon } from "../../lib/appIcons";
 import {
   calcBestStreak,
   calcCompletionRate,
@@ -113,7 +114,7 @@ function HabitCard({
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-lg"
               style={{ backgroundColor: habit.color + "22" }}
             >
-              {habit.icon}
+              <AppIcon name={habit.icon} size={18} />
             </span>
             <span className="min-w-0 flex-1">
               <span

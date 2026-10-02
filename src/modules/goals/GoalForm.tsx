@@ -5,6 +5,7 @@ import { db, type GoalTerm } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import { Chip, Segmented } from "../../components/Chip";
+import { AppIcon } from "../../lib/appIcons";
 
 const TERM_LABEL: Record<GoalTerm, string> = {
   long: "Long-term",
@@ -75,7 +76,8 @@ export function GoalForm({ onSaved }: { onSaved?: () => void } = {}) {
                 selected={linked.includes(h.name)}
                 onClick={() => toggleHabit(h.name)}
               >
-                {h.icon} {h.name}
+                <AppIcon name={h.icon} size={14} />
+                {h.name}
               </Chip>
             ))}
           </div>

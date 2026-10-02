@@ -4,6 +4,7 @@ import { db, PRACTICES } from "../../db/db";
 import { toast } from "../../lib/toast";
 import { createHabitFromTemplate } from "../habits/habitActions";
 import { CheckIcon } from "../../components/Icons";
+import { AppIcon } from "../../lib/appIcons";
 
 /**
  * A shelf of practices to pick from — the app suggests, the user chooses.
@@ -42,10 +43,10 @@ export function PracticesShelf() {
             className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 dark:bg-slate-700/40"
           >
             <span
-              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-lg"
-              style={{ backgroundColor: p.color + "22" }}
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
+              style={{ backgroundColor: p.color + "22", color: p.color }}
             >
-              {p.icon}
+              <AppIcon name={p.icon} size={18} />
             </span>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold text-slate-900 dark:text-white">

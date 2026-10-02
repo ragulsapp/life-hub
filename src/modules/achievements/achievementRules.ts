@@ -51,7 +51,7 @@ export function evaluateAchievements(
     out.push({
       key: `streak-${tier}`,
       title: `${tier}-Day Streak`,
-      icon: "🔥",
+      icon: "streak",
       requirement: `Keep any habit going ${tier} days straight`,
       progress: Math.min(bestStreak, tier),
       target: tier,
@@ -64,7 +64,7 @@ export function evaluateAchievements(
     out.push({
       key: `completions-${tier}`,
       title: `${tier} Completions`,
-      icon: "✅",
+      icon: "done",
       requirement: `Complete ${tier} habits in total`,
       progress: Math.min(completions, tier),
       target: tier,
@@ -83,7 +83,7 @@ export function evaluateAchievements(
     out.push({
       key: `saved-${tier}`,
       title: `₹${tier.toLocaleString()} Saved`,
-      icon: "💰",
+      icon: "money",
       requirement: `Net savings reach ₹${tier.toLocaleString()}`,
       progress: Math.min(saved, tier),
       target: tier,
@@ -97,7 +97,7 @@ export function evaluateAchievements(
     out.push({
       key: `wake-${tier}`,
       title: `${tier}-Morning Streak`,
-      icon: "🌅",
+      icon: "sunrise",
       requirement: `Beat the wake-up mission ${tier} days straight`,
       progress: Math.min(bestWake, tier),
       target: tier,
@@ -109,7 +109,7 @@ export function evaluateAchievements(
     out.push({
       key: `goals-${tier}`,
       title: tier === 1 ? "First Goal Done" : `${tier} Goals Completed`,
-      icon: "🏆",
+      icon: "trophy",
       requirement: `Complete ${tier} goal${tier > 1 ? "s" : ""}`,
       progress: Math.min(completedGoals, tier),
       target: tier,
@@ -126,7 +126,7 @@ export function evaluateAchievements(
     out.push({
       key: `workouts-${tier}`,
       title: `${tier} Workouts`,
-      icon: "💪",
+      icon: "dumbbell",
       requirement: `Complete ${tier} Athlete-identity habits`,
       progress: Math.min(workouts, tier),
       target: tier,
@@ -140,7 +140,7 @@ export function evaluateAchievements(
     out.push({
       key: "first-month",
       title: "First Month Completed",
-      icon: "📅",
+      icon: "calendar",
       requirement: `Use Life Mentor for ${FIRST_MONTH_DAYS} days`,
       progress: Math.min(Math.max(daysSince, 0), FIRST_MONTH_DAYS),
       target: FIRST_MONTH_DAYS,

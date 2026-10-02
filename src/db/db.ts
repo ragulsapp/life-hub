@@ -74,35 +74,35 @@ export const PRACTICES: {
 }[] = [
   {
     name: "Exercise",
-    icon: "💪",
+    icon: "dumbbell",
     color: "#fb7185",
     identity: "Athlete",
     blurb: "Any movement that raises your heart rate",
   },
   {
     name: "Yoga",
-    icon: "🧘",
+    icon: "meditate",
     color: "#a78bfa",
     identity: "Healthy Person",
     blurb: "Flexibility, balance and breath",
   },
   {
     name: "Meditation",
-    icon: "🕉️",
+    icon: "calm",
     color: "#60a5fa",
     identity: "Healthy Person",
     blurb: "A few quiet minutes for your mind",
   },
   {
     name: "Home-cooked Meals",
-    icon: "🥗",
+    icon: "cook",
     color: "#34d399",
     identity: "Healthy Person",
     blurb: "Eat what you prepared yourself",
   },
   {
     name: "No Sugar",
-    icon: "🚫",
+    icon: "avoid",
     color: "#f59e0b",
     identity: "Healthy Person",
     blurb: "Skip added sugar for the day",
@@ -425,18 +425,18 @@ export const PILLAR_META: Record<Pillar, { label: string; color: string }> = {
 
 /** Identity a habit builds. Users pick one; it determines pillar scoring. */
 export const IDENTITIES: { name: string; icon: string; pillar: Pillar }[] = [
-  { name: "Healthy Person", icon: "🥗", pillar: "health" },
-  { name: "Runner", icon: "🏃", pillar: "health" },
-  { name: "Athlete", icon: "💪", pillar: "health" },
-  { name: "Reader", icon: "📚", pillar: "knowledge" },
-  { name: "Learner", icon: "🧠", pillar: "knowledge" },
-  { name: "Creator", icon: "✍️", pillar: "knowledge" },
-  { name: "Investor", icon: "📈", pillar: "wealth" },
-  { name: "Saver", icon: "🏦", pillar: "wealth" },
-  { name: "Minimalist", icon: "🍃", pillar: "wealth" },
-  { name: "Entrepreneur", icon: "🚀", pillar: "productivity" },
-  { name: "Deep Worker", icon: "🎯", pillar: "productivity" },
-  { name: "Early Riser", icon: "🌅", pillar: "productivity" },
+  { name: "Healthy Person", icon: "eat", pillar: "health" },
+  { name: "Runner", icon: "run", pillar: "health" },
+  { name: "Athlete", icon: "dumbbell", pillar: "health" },
+  { name: "Reader", icon: "book", pillar: "knowledge" },
+  { name: "Learner", icon: "brain", pillar: "knowledge" },
+  { name: "Creator", icon: "write", pillar: "knowledge" },
+  { name: "Investor", icon: "invest", pillar: "wealth" },
+  { name: "Saver", icon: "save", pillar: "wealth" },
+  { name: "Minimalist", icon: "minimal", pillar: "wealth" },
+  { name: "Entrepreneur", icon: "launch", pillar: "productivity" },
+  { name: "Deep Worker", icon: "target", pillar: "productivity" },
+  { name: "Early Riser", icon: "sunrise", pillar: "productivity" },
 ];
 
 export function pillarForIdentity(identity?: string): Pillar {
@@ -456,20 +456,13 @@ export const HABIT_COLORS = [
   "#4ade80",
 ];
 
-export const HABIT_ICONS = [
-  "🎯",
-  "🧩",
-  "💪",
-  "📚",
-  "🧘",
-  "💧",
-  "🏃",
-  "🥗",
-  "🌅",
-  "🛌",
-  "✍️",
-  "🧠",
-];
+/**
+ * Icon NAMES, not glyphs. What a name looks like is decided in
+ * lib/appIcons.tsx; the database stores only the choice. Rows written
+ * before this change still hold emoji and resolve through a legacy table
+ * there, so no migration rewrites the user's habits.
+ */
+export { HABIT_ICON_NAMES as HABIT_ICONS } from "../lib/appIcons";
 
 /**
  * Generic suggestions offered as opt-in checkboxes during onboarding.
@@ -482,12 +475,12 @@ export const HABIT_ICONS = [
  */
 export const STARTER_TEMPLATES = {
   habits: [
-    { name: "Exercise", icon: "💪", color: "#fb7185", identity: "Athlete" },
-    { name: "Read", icon: "📚", color: "#a78bfa", identity: "Reader" },
-    { name: "Meditate", icon: "🧘", color: "#34d399", identity: "Healthy Person" },
-    { name: "Walk", icon: "🏃", color: "#4ade80", identity: "Runner" },
-    { name: "Deep Work", icon: "🎯", color: "#60a5fa", identity: "Deep Worker" },
-    { name: "Journal", icon: "✍️", color: "#f59e0b", identity: "Creator" },
+    { name: "Exercise", icon: "dumbbell", color: "#fb7185", identity: "Athlete" },
+    { name: "Read", icon: "book", color: "#a78bfa", identity: "Reader" },
+    { name: "Meditate", icon: "meditate", color: "#34d399", identity: "Healthy Person" },
+    { name: "Walk", icon: "run", color: "#4ade80", identity: "Runner" },
+    { name: "Deep Work", icon: "target", color: "#60a5fa", identity: "Deep Worker" },
+    { name: "Journal", icon: "write", color: "#f59e0b", identity: "Creator" },
   ],
   incomeCategories: ["Salary", "Freelance Income", "Business", "Investments"],
   expenseCategories: [
@@ -653,7 +646,7 @@ export async function backfillHabits(): Promise<void> {
     await db.habits.add({
       name,
       color: HABIT_COLORS[colorIdx % HABIT_COLORS.length],
-      icon: "🎯",
+      icon: "target",
       schedule: { type: "daily" },
       archived: false,
       pinned: false,

@@ -19,6 +19,7 @@ import { BackupNudge } from "./BackupNudge";
 import { PillarBar } from "./PillarBar";
 import { AchievementsCard } from "../achievements/AchievementsCard";
 import { WeeklyReviewCard } from "./WeeklyReviewCard";
+import { AppIcon } from "../../lib/appIcons";
 import {
   CheckIcon,
   CheckSquareIcon,
@@ -94,7 +95,7 @@ export function DashboardView() {
     .map((h) => ({
       key: `h${h.id}`,
       label: h.name,
-      icon: <span className="text-base">{h.icon}</span>,
+      icon: <AppIcon name={h.icon} size={16} />,
       done: doneToday.has(h.name),
       toggle: () => setHabitDone(h.name, today, !doneToday.has(h.name)),
     }));
