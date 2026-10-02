@@ -317,3 +317,11 @@ export function ChevronRightIcon({ className = "", size = 14 }: IconProps) {
     </svg>
   );
 }
+
+export function ChevronDownIcon({ className = "", size = 14 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="m5 8 5 5 5-5" />
+    </svg>
+  );
+}

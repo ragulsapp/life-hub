@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-02
 **Repo:** `ragulsapp/life-hub` · **Path:** `C:\Users\Ragulkumar\OneDrive\Desktop\claude-projects\life-hub`
-**Branch:** `main` · **Tree is clean as of this file.** Last commit: `e21063f`
+**Branch:** `main` · **Tree is clean as of this file.** Last commit: `e1c2795` + Phase 5
 
 This file is the handoff. A session picking this up cold should read all of it
 before touching code — especially **Working rules** and **Environment gotchas**,
@@ -87,7 +87,7 @@ Health** (it logs in place, there is nothing to "add").
 
 ---
 
-### ✅ Phase 4 — Home becomes a product (commit pending at time of writing)
+### ✅ Phase 4 — Home becomes a product (commit `e1c2795`)
 
 Today was fourteen blocks of equal weight. It is now seven, with a hierarchy:
 **orb → mission → money → schedule → analysis.**
@@ -131,22 +131,41 @@ Consolidating them is right but it would move a textarea into a sheet, and the
 draft-persistence that fixed the owner's reported "notes auto-delete" bug lives
 on that textarea. Worth doing in Phase 5 with care, not as a drive-by.
 
-### ⬜ Phase 5 — Density and progressive disclosure  ← **DO THIS NEXT**
+### ✅ Phase 5 — Density and progressive disclosure
 
-One habit card currently holds **ten controls**: name, schedule, streak, best,
-30-day rate, done-circle, pin, delete, week strip, heatmap toggle, reminder
-bell, time field.
+The habit card carried **nine controls and four statistics**: schedule, streak,
+best, 30-day rate, a done circle, pin, delete, a seven-day strip, a heatmap
+toggle, a reminder toggle and a time field. Four habits made a wall of chrome
+with no way to see the list.
 
-It should show **name, today's action, streak**. Everything else goes behind a
-tap — expand in place, or push a habit detail screen.
+Collapsed it now shows **icon, name, streak, and the done circle** — on any
+given morning the only questions are "which habit" and "did I do it".
+Everything else is one tap away.
 
-Files: `src/modules/habits/HabitsView.tsx` (the `HabitRow` component),
-`HabitHistoryRow.tsx`.
+- **86px collapsed, 316px expanded** — 3.7x less per habit, nothing removed.
+  With two habits the whole screen now carries 6 controls instead of ~20.
+- **A real duplication is gone**: tapping the habit name toggled done *exactly
+  as the circle beside it did*. The row body opens the card now and the circle
+  marks it done, which is what gave the disclosure somewhere to live.
+- **Delete moved inside.** It used to sit one thumb-width from the done circle
+  you tap every morning.
+- Pin reads as what it now does ("Show first today" / "First in today's
+  mission") rather than the old "Pin to Dashboard", which stopped being true in
+  Phase 4.
 
-Same treatment, lower priority: the alarm card and the Health tab, which opens
-with a "Set up your body basics" form that belongs in onboarding.
+Verified at 375px in both themes: 0 contrast failures, nothing under 44px, no
+horizontal overflow, 258/258 tests.
 
-### ⬜ Phase 6 — Motion that communicates
+**Still open for a later pass** (unchanged from Phase 4): "Brain dump" on Today
+overlaps the `+` quick-capture Note. Consolidating is right, but the draft
+persistence on that textarea is what fixed the reported "notes auto-delete"
+bug, so it must be done with a test that switches tabs and confirms the text
+survives — not as a drive-by.
+
+Same treatment is still worth applying to the alarm card and to Health, which
+opens with a "Set up your body basics" form that belongs in onboarding.
+
+### ⬜ Phase 6 — Motion that communicates  ← **NEXT, but not for an unattended run**
 
 Today motion is decorative fade-and-slide. Wanted: shared-element transitions
 between list and detail, spring curves instead of linear durations, real press
@@ -354,23 +373,10 @@ PWA: https://ragulsapp.github.io/life-hub/ (deploys from `main` via
 
 ## If you are an unattended scheduled run
 
-Do **Phase 5 only**. Then stop and write your results back into this file.
+**There is nothing left here that is safe to do unattended.** Phases 1-5 are
+shipped. Phase 6 (motion) cannot be verified in the browser pane — Framer
+Motion is frozen there — and needs on-device judgement. Phase 7
+(widgets, backup, pricing, store listing) is product work for the owner.
 
-- The **₹99 / market section above is research for the owner, not work for you.**
-  Do not act on it. Phase 7 is explicitly not for an unattended run.
-- The Alarms tab change (`e21063f`) is **already done** — five tabs ship today.
-  Do not revisit it.
-- Work in small commits, pushing each.
-- Meet the full definition of done above before each commit, including
-  `grep -rn 'TEMP-VERIFY' src` coming back empty.
-- Do **not** start Phase 6.
-- Do **not** touch the Dexie schema, the alarm scheduler, or anything under
-  `src/lib/` handling notifications — load-bearing and recently fixed.
-- Do **not** add a network call of any kind.
-- If a judgement call is genuinely ambiguous (e.g. whether to cut the quote from
-  Home), pick the option that removes the most without losing information,
-  record the choice in this file, and keep going. Do not block — the owner is
-  asleep.
-
-Finish by updating the Phase 5 entry above with what shipped and what you
-measured, then commit and push this file too.
+If you were scheduled anyway: do not invent work. Read this file, confirm the
+tree is clean and `npx vitest run` still passes 258/258, report that, and stop.

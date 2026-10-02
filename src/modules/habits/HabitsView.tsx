@@ -8,6 +8,7 @@ import { TimeField } from "../../components/DateTimeField";
 import {
   BellIcon,
   CheckIcon,
+  ChevronDownIcon,
   FlameIcon,
   PinIcon,
   TargetIcon,
@@ -50,6 +51,17 @@ function HabitCard({
 }) {
   const today = todayStr();
   const [showHeatmap, setShowHeatmap] = useState(false);
+  /**
+   * Collapsed by default.
+   *
+   * This card carried nine controls and four statistics — schedule, streak,
+   * best, 30-day rate, a done circle, pin, delete, a seven-day strip, a
+   * heatmap toggle, a reminder toggle and a time field. Four habits made a
+   * wall of chrome with no way to see the list. On any given morning the
+   * only questions are "which habit" and "did I do it"; everything else is
+   * something you look up occasionally.
+   */
+  const [open, setOpen] = useState(false);
 
   const todayLog = allLogs.find(
     (l) => l.date === today && l.habitName === habit.name,
@@ -86,92 +98,84 @@ function HabitCard({
       transition={{ delay: index * 0.03 }}
     >
       <Card className={dueToday ? "" : "opacity-70"}>
-        <div className="flex items-start justify-between">
+        {/* The row body opens the card; the circle marks it done. These used
+            to be two controls for the same action — tapping the name toggled
+            done exactly as the circle did — so opening the card had nowhere
+            to live and everything was forced to stay on screen at once. */}
+        <div className="flex items-center justify-between gap-2">
           <button
-            onClick={dueToday ? toggleToday : undefined}
-            className="flex min-h-11 flex-1 items-start gap-3 text-left"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label={`${open ? "Hide" : "Show"} details for "${habit.name}"`}
+            className="flex min-h-11 flex-1 items-center gap-3 text-left"
           >
             <span
-              className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-lg"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-lg"
               style={{ backgroundColor: habit.color + "22" }}
             >
               {habit.icon}
             </span>
-            <div className="min-w-0">
-              <div
-                className={`font-semibold ${
+            <span className="min-w-0 flex-1">
+              <span
+                className={`block truncate font-semibold ${
                   completed
                     ? "text-slate-500 line-through dark:text-slate-400"
                     : "text-slate-900 dark:text-white"
                 }`}
               >
                 {habit.name}
-              </div>
-              <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-                <span>{scheduleLabel(habit.schedule)}</span>
+              </span>
+              {/* Streak is the only statistic that changes the day. Best,
+                  completion rate and the schedule are reference, and live
+                  inside. */}
+              <span className="mt-0.5 flex items-center gap-3 text-caption text-slate-500 dark:text-slate-400">
                 <span className="inline-flex items-center gap-1">
                   <FlameIcon size={12} />
                   {streak}
                 </span>
-                <span className="inline-flex items-center gap-1">
-                  <TrophyIcon size={12} />
-                  {best}
-                </span>
-                <span>{rate}%/30d</span>
-              </div>
-            </div>
+                {!dueToday && <span>Rest day</span>}
+              </span>
+            </span>
+            <ChevronDownIcon
+              size={15}
+              className={`flex-shrink-0 text-slate-500 transition-transform dark:text-slate-400 ${
+                open ? "rotate-180" : ""
+              }`}
+            />
           </button>
 
-          <div className="ml-2 flex flex-col items-end gap-1">
-            {dueToday ? (
-              <motion.button
-                onClick={toggleToday}
-                aria-label={`Mark "${habit.name}" ${completed ? "not done" : "done"} today`}
-                aria-pressed={completed}
-                whileTap={{ scale: 0.85 }}
-                animate={{ scale: completed ? 1.05 : 1 }}
-                className="flex h-11 w-11 items-center justify-center"
-              >
-                <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors"
-                  style={{
-                    borderColor: completed ? habit.color : undefined,
-                    backgroundColor: completed ? habit.color : undefined,
-                    color: completed ? "#0f172a" : undefined,
-                  }}
-                >
-                  {completed && <CheckIcon size={15} />}
-                </span>
-              </motion.button>
-            ) : (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-caption font-medium text-slate-500 dark:bg-slate-700/50 dark:text-slate-400">
-                Rest day
-              </span>
-            )}
-            <button
-              onClick={() => togglePinned(habit)}
-              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors hover:bg-cyan-500/10 ${
-                habit.pinned
-                  ? "text-cyan-500 dark:text-cyan-300"
-                  : "text-slate-300 hover:text-cyan-500 dark:text-slate-600"
-              }`}
-              title={
-                habit.pinned
-                  ? "Stop showing first in today's mission"
-                  : "Show first in today's mission"
-              }
-              aria-label={`${
-                habit.pinned ? "Stop showing" : "Show"
-              } "${habit.name}" first in today's mission`}
-              aria-pressed={!!habit.pinned}
+          {dueToday && (
+            <motion.button
+              onClick={toggleToday}
+              aria-label={`Mark "${habit.name}" ${completed ? "not done" : "done"} today`}
+              aria-pressed={completed}
+              whileTap={{ scale: 0.85 }}
+              animate={{ scale: completed ? 1.05 : 1 }}
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center"
             >
-              <PinIcon size={15} on={!!habit.pinned} />
-            </button>
-            <DeleteButton
-              onDelete={removeHabit}
-              label={`Delete habit "${habit.name}"`}
-            />
-          </div>
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors"
+                style={{
+                  borderColor: completed ? habit.color : undefined,
+                  backgroundColor: completed ? habit.color : undefined,
+                  color: completed ? "#0f172a" : undefined,
+                }}
+              >
+                {completed && <CheckIcon size={15} />}
+              </span>
+            </motion.button>
+          )}
+        </div>
+
+        {open && (
+        <>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-200/70 pt-3 text-caption text-slate-500 dark:border-slate-600/40 dark:text-slate-400">
+          <span>{scheduleLabel(habit.schedule)}</span>
+          <span className="inline-flex items-center gap-1">
+            <TrophyIcon size={12} />
+            Best {best}
+          </span>
+          <span>{rate}% over 30 days</span>
         </div>
 
         {weeklyTarget > 0 && (
@@ -273,6 +277,30 @@ function HabitCard({
             </div>
           )}
         </div>
+
+        {/* Pin and delete were permanently on the collapsed row, where
+            delete sat one thumb-width from the done circle you tap every
+            morning. Both are rare and now live behind the disclosure. */}
+        <div className="mt-3 flex items-center justify-between border-t border-slate-200/70 pt-3 dark:border-slate-600/40">
+          <button
+            onClick={() => togglePinned(habit)}
+            className={`-ml-2 inline-flex h-11 items-center gap-1.5 rounded-xl px-2 text-caption font-medium transition-colors hover:bg-cyan-500/10 ${
+              habit.pinned
+                ? "text-cyan-600 dark:text-cyan-300"
+                : "text-slate-500 hover:text-cyan-500 dark:text-slate-400"
+            }`}
+            aria-pressed={!!habit.pinned}
+          >
+            <PinIcon size={14} on={!!habit.pinned} />
+            {habit.pinned ? "First in today's mission" : "Show first today"}
+          </button>
+          <DeleteButton
+            onDelete={removeHabit}
+            label={`Delete habit "${habit.name}"`}
+          />
+        </div>
+        </>
+        )}
       </Card>
     </motion.div>
   );
