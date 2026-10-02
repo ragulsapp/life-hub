@@ -16,8 +16,10 @@ import { useScheduler } from "../../lib/scheduler";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { EmptyState } from "../../components/EmptyState";
 import {
+  cancelAlarm,
   notificationPermission,
   requestNotificationPermission,
+  scheduleAlarm,
 } from "../../lib/notify";
 import {
   calcBestWakeStreak,
@@ -60,14 +62,22 @@ export function AlarmsView() {
     setPerm(await requestNotificationPermission());
   };
 
-  const toggle = (a: Alarm) =>
-    db.alarms.update(a.id, {
-      enabled: !a.enabled,
+  const toggle = async (a: Alarm) => {
+    const enabled = !a.enabled;
+    await db.alarms.update(a.id, {
+      enabled,
       // Re-enabling an alarm whose time passed today arms it for the next
       // occurrence rather than ringing immediately.
       lastFiredDate: a.enabled ? a.lastFiredDate : reminderCreationGuard(a.time),
     });
-  const remove = (id: number) => db.alarms.delete(id);
+    // The OS schedule has to follow the switch, or a disabled alarm keeps
+    // firing and an enabled one stays silent until the next app launch.
+    await scheduleAlarm({ ...a, enabled });
+  };
+  const remove = async (id: number) => {
+    await cancelAlarm(id);
+    await db.alarms.delete(id);
+  };
 
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">

@@ -200,6 +200,76 @@ export async function scheduleDailyReminder(
   });
 }
 
+/**
+ * Put an alarm on the OS schedule.
+ *
+ * Alarms had **no native schedule at all**. Habits, tasks, notes and the
+ * nightly reminder each got one; alarms were left to the in-app 15-second
+ * poll, which only runs while the app is open. So an alarm set for 6am did
+ * nothing whatsoever unless the app happened to be in the foreground at 6am —
+ * which, for an alarm, is the one situation that never applies. It was the
+ * only feature in the app whose entire job required the app to be closed.
+ *
+ * Android schedules repeats per weekday, so a multi-day alarm becomes several
+ * notifications sharing one id block. Every slot is cancelled before writing,
+ * so unticking a day really removes it.
+ *
+ * Note what this is NOT: a notification is not the full-screen mission-locked
+ * ring. If the app is open the in-app alarm still takes over. This is the
+ * floor — the thing that wakes you when the app is closed — not a replacement
+ * for that.
+ */
+export async function scheduleAlarm(alarm: {
+  id: number;
+  label: string;
+  time: string;
+  days: number[];
+  enabled: boolean;
+  builtInSound?: SoundId;
+  soundId?: number;
+}): Promise<void> {
+  if (!isNative) return;
+  await ensureChannels();
+  await cancelAlarm(alarm.id);
+  if (!alarm.enabled) return;
+
+  const [hour, minute] = alarm.time.split(":").map(Number);
+  // An uploaded clip cannot be a channel sound — a channel can only play a
+  // bundled raw resource — so a custom tone falls back to the chosen built-in
+  // for the OS notification. The in-app ring still uses the real clip.
+  const channel = channelId(alarm.builtInSound ?? reminderSound);
+  // Empty days means every day, which Android expresses as a plain daily
+  // repeat rather than seven weekly ones.
+  const slots =
+    alarm.days.length === 0
+      ? [{ slot: 7, on: { hour, minute } }]
+      : alarm.days.map((d) => ({
+          slot: d,
+          // Capacitor weekdays are 1=Sunday..7=Saturday; ours are 0=Sunday.
+          on: { weekday: d + 1, hour, minute },
+        }));
+
+  await LocalNotifications.schedule({
+    notifications: slots.map(({ slot, on }) => ({
+      id: alarmNotifId(alarm.id, slot),
+      title: alarm.label || "Alarm",
+      body: `${alarm.time} — open to dismiss`,
+      channelId: channel,
+      schedule: { on, allowWhileIdle: true },
+    })),
+  });
+}
+
+/** Clear every weekday slot an alarm might occupy. */
+export async function cancelAlarm(alarmId: number): Promise<void> {
+  if (!isNative) return;
+  await LocalNotifications.cancel({
+    notifications: Array.from({ length: 8 }, (_, slot) => ({
+      id: alarmNotifId(alarmId, slot),
+    })),
+  });
+}
+
 export async function cancelReminder(id: number): Promise<void> {
   if (!isNative) return;
   await LocalNotifications.cancel({ notifications: [{ id }] });
@@ -264,6 +334,10 @@ export async function reminderDiagnostics(): Promise<ReminderDiagnostics> {
 export const habitNotifId = (habitId: number) => 100_000 + habitId;
 export const taskNotifId = (taskId: number) => 200_000 + taskId;
 export const noteNotifId = (noteId: number) => 300_000 + noteId;
+/** Alarms need one id per weekday slot (0-6, plus 7 for a plain daily repeat),
+ *  so each alarm reserves a block of eight rather than a single id. */
+export const alarmNotifId = (alarmId: number, slot: number) =>
+  400_000 + alarmId * 8 + slot;
 
 /** Fixed id for the singleton nightly reminder — well clear of the row-id
  *  ranges above. */

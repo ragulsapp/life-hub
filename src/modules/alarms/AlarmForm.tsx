@@ -7,7 +7,10 @@ import {
 } from "../../db/db";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
-import { requestNotificationPermission } from "../../lib/notify";
+import {
+  requestNotificationPermission,
+  scheduleAlarm,
+} from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { SoundPicker, type SoundSelection } from "./SoundPicker";
 import { TimeField } from "../../components/DateTimeField";
@@ -37,7 +40,7 @@ export function AlarmForm({ onSaved }: { onSaved?: () => void } = {}) {
   const add = async () => {
     if (!time) return;
     await requestNotificationPermission();
-    await db.alarms.add({
+    const newId = await db.alarms.add({
       label: label.trim(),
       time,
       days,
@@ -51,6 +54,17 @@ export function AlarmForm({ onSaved }: { onSaved?: () => void } = {}) {
       lastFiredDate: reminderCreationGuard(time),
       createdAt: Date.now(),
     } as never);
+    // Put it on the OS schedule immediately. Without this the alarm exists
+    // only in the database and in a poll that stops the moment the app does.
+    await scheduleAlarm({
+      id: newId as unknown as number,
+      label: label.trim(),
+      time,
+      days,
+      enabled: true,
+      soundId: sound.soundId,
+      builtInSound: sound.builtInSound,
+    });
     setLabel("");
     setTime("07:00");
     setDays([]);

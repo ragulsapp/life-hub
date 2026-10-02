@@ -1,6 +1,7 @@
 import { db, type SoundId } from "../db/db";
 import {
   cancelReminder,
+  scheduleAlarm,
   ensureChannels,
   habitNotifId,
   isNative,
@@ -24,12 +25,20 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
   if (sound) setReminderSound(sound);
   await ensureChannels();
 
-  const [habits, tasks, notes, settings] = await Promise.all([
+  const [habits, tasks, notes, alarms, settings] = await Promise.all([
     db.habits.toArray(),
     db.tasks.toArray(),
     db.notes.toArray(),
+    db.alarms.toArray(),
     db.appSettings.get(1),
   ]);
+
+  // Alarms were missing from this resync because they had no native schedule
+  // at all — they relied on the in-app poll, which cannot run when the app is
+  // closed, which is exactly when an alarm has to work.
+  for (const a of alarms) {
+    await scheduleAlarm(a);
+  }
 
   for (const h of habits) {
     if (h.reminderEnabled && h.reminderTime && !h.archived) {
