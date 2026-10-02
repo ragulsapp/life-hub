@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { TimeField } from "../../components/DateTimeField";
 import { motion } from "framer-motion";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -17,12 +17,17 @@ import { setFastingEnabled } from "../health/healthActions";
 import { resyncNativeReminders } from "../../lib/reminderSync";
 import { CloseButton } from "../../components/IconButton";
 import {
+  BellIcon,
   DownloadIcon,
   MoonIcon,
   SunIcon,
   SunriseIcon,
   UploadIcon,
 } from "../../components/Icons";
+import {
+  reminderDiagnostics,
+  type ReminderDiagnostics,
+} from "../../lib/notify";
 
 /**
  * Everything that used to live in the header, plus body basics.
@@ -111,6 +116,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const settings = useLiveQuery(() => db.appSettings.get(1), []);
   const [darkMode, toggleDark] = useDarkMode();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [diag, setDiag] = useState<ReminderDiagnostics | null>(null);
   // undefined (pre-existing installs) and `true` both mean on — see db.ts.
   const nightOn = settings?.nightReminderEnabled !== false;
 
@@ -286,6 +292,47 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
               </span>
             }
           />
+        </Section>
+
+        {/*
+          A reminder that does not arrive fails silently in three different
+          ways — permission refused, channel missing so Android drops the
+          post, or nothing scheduled at all — and none of them show up
+          anywhere on the phone. This asks the OS what it is actually holding
+          and prints the answer, so the failure can be named rather than
+          guessed at from "it didn't go off".
+        */}
+        <Section title="Reminders">
+          <Row
+            icon={<BellIcon size={16} on />}
+            label="Check reminder delivery"
+            hint="Asks Android what it has actually scheduled"
+            onClick={async () => {
+              setDiag(await reminderDiagnostics());
+            }}
+          />
+          {diag && (
+            <div className="px-3 pb-3 text-caption text-slate-600 dark:text-slate-300">
+              <p>Build: {diag.native ? "native app" : "browser"}</p>
+              <p>Permission: {diag.permission}</p>
+              <p>
+                Channels:{" "}
+                {diag.channels.length === 0
+                  ? "none created"
+                  : diag.channels
+                      .map((c) => `${c.id} ${c.ok ? "ok" : `FAILED ${c.error}`}`)
+                      .join(", ")}
+              </p>
+              <p>
+                Scheduled: {diag.pendingError ?? `${diag.pending.length} queued`}
+              </p>
+              {diag.pending.map((p) => (
+                <p key={p.id} className="pl-2">
+                  #{p.id} {p.at} — {p.title}
+                </p>
+              ))}
+            </div>
+          )}
         </Section>
 
         <Section title="Your data">

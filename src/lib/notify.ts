@@ -43,6 +43,19 @@ const channelId = (sound: SoundId) => `reminders-${sound}-${CHANNEL_VERSION}`;
 let channelsReady: Promise<void> | null = null;
 
 /**
+ * What happened the last time channels were created.
+ *
+ * This used to be thrown away into console.error, which on a phone is nowhere
+ * at all. It matters because a notification posted to a channel that does not
+ * exist is **dropped by Android without a trace** — no error, no entry in the
+ * shade. If channel creation fails, every reminder silently stops working and
+ * nothing anywhere says so. Keeping the result lets the app answer the only
+ * question that matters when a reminder does not arrive: did it ever get set
+ * up, and is the OS actually holding a schedule for it.
+ */
+const channelResults: { id: string; ok: boolean; error?: string }[] = [];
+
+/**
  * Create one channel per built-in tone, at IMPORTANCE_HIGH (5) so reminders
  * make a sound and show a heads-up banner rather than landing silently in the
  * shade. Idempotent and safe to call on every launch.
@@ -51,6 +64,7 @@ export function ensureChannels(): Promise<void> {
   if (!isNative) return Promise.resolve();
   if (channelsReady) return channelsReady;
   channelsReady = (async () => {
+    channelResults.length = 0;
     for (const s of BUILT_IN_SOUNDS) {
       try {
         await LocalNotifications.createChannel({
@@ -62,8 +76,14 @@ export function ensureChannels(): Promise<void> {
           vibration: true,
           visibility: 1,
         });
+        channelResults.push({ id: channelId(s.id), ok: true });
       } catch (err) {
         console.error("channel create failed", s.id, err);
+        channelResults.push({
+          id: channelId(s.id),
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
   })();
@@ -183,6 +203,61 @@ export async function scheduleDailyReminder(
 export async function cancelReminder(id: number): Promise<void> {
   if (!isNative) return;
   await LocalNotifications.cancel({ notifications: [{ id }] });
+}
+
+export interface ReminderDiagnostics {
+  native: boolean;
+  permission: "granted" | "denied" | "default";
+  channels: { id: string; ok: boolean; error?: string }[];
+  /** What the OS says it is actually holding. The ground truth. */
+  pending: { id: number; title: string; at: string }[];
+  pendingError?: string;
+}
+
+/**
+ * Report what the OS actually has, rather than what the app believes.
+ *
+ * A reminder that does not arrive has several possible causes that look
+ * identical from the outside: permission never granted, the channel missing
+ * so Android drops the post, or nothing scheduled in the first place. Every
+ * one of them is silent. This reads each back so the failure can be named
+ * instead of guessed at.
+ */
+export async function reminderDiagnostics(): Promise<ReminderDiagnostics> {
+  const base = {
+    native: isNative,
+    permission: await notificationPermission(),
+    channels: [...channelResults],
+  };
+  if (!isNative) return { ...base, pending: [] };
+
+  await ensureChannels();
+  try {
+    const { notifications } = await LocalNotifications.getPending();
+    return {
+      ...base,
+      channels: [...channelResults],
+      pending: notifications.map((n) => {
+        const on = n.schedule?.on;
+        return {
+          id: n.id,
+          title: n.title ?? "(no title)",
+          at: on
+            ? `${String(on.hour ?? 0).padStart(2, "0")}:${String(
+                on.minute ?? 0,
+              ).padStart(2, "0")} daily`
+            : "once",
+        };
+      }),
+    };
+  } catch (err) {
+    return {
+      ...base,
+      channels: [...channelResults],
+      pending: [],
+      pendingError: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 // Stable, collision-free notification ids per record type + row id.
