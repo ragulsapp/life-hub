@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-02
 **Repo:** `ragulsapp/life-hub` · **Path:** `C:\Users\Ragulkumar\OneDrive\Desktop\claude-projects\life-hub`
-**Branch:** `main` · **Tree is clean as of this file.** Last commit: `e1c2795` + Phase 5
+**Branch:** `main` · **Tree is clean as of this file.** Last commit: `3841ee5`
 
 This file is the handoff. A session picking this up cold should read all of it
 before touching code — especially **Working rules** and **Environment gotchas**,
@@ -131,7 +131,7 @@ Consolidating them is right but it would move a textarea into a sheet, and the
 draft-persistence that fixed the owner's reported "notes auto-delete" bug lives
 on that textarea. Worth doing in Phase 5 with care, not as a drive-by.
 
-### ✅ Phase 5 — Density and progressive disclosure
+### ✅ Phase 5 — Density and progressive disclosure (commit `36323f9`)
 
 The habit card carried **nine controls and four statistics**: schedule, streak,
 best, 30-day rate, a done circle, pin, delete, a seven-day strip, a heatmap
@@ -164,6 +164,75 @@ survives — not as a drive-by.
 
 Same treatment is still worth applying to the alarm card and to Health, which
 opens with a "Set up your body basics" form that belongs in onboarding.
+
+### ✅ Phase 5b — Visual identity (commits `8de4185`, `24bc8e8`, `3903940`, `3841ee5`)
+
+Phase 5 ended and the owner said: **"but in design looks doesnt change ?"**
+
+They were right, and the gap was in this plan, not in the execution. I had made
+"type scale" a phase and never made "visual identity" one — so four phases of
+structural work shipped against the *same palette, the same typeface and the
+same card surface*. `git diff` on `index.css` and `Card.tsx` across the whole
+overhaul came back nearly empty. Structure you can feel is not design you can
+see. **Any future plan for this app must name the visual layer as its own
+phase.**
+
+What changed, all research-backed rather than taste-led:
+
+- **Typeface — Plus Jakarta Sans** (`@fontsource-variable`), self-hosted, two
+  `@font-face` rules. The second one is not optional: **₹ (U+20B9) lives in the
+  `latin-ext` subset, not `latin`** — ship only `latin` and every rupee amount
+  in the app silently falls back to a different font.
+- **One colour stopped doing every job.** Violet was brand, action, selection,
+  focus and success all at once, so nothing it marked meant anything. Now:
+  **violet `--color-brand-400/500/600` is identity**, **teal
+  `--color-cyan-500: #107d74` (light) / `#14b8a6` (dark) is action**. The light
+  teal is darkened specifically to clear 4.5:1 on white.
+- **The last emoji went** — habit, identity and achievement icons moved to
+  Lucide via `src/lib/appIcons.tsx`. The important part is *what is stored*: the
+  database used to hold the glyph (`"💪"`), which bakes a rendering decision
+  into user data. It now holds a **name** (`"dumbbell"`), and `LEGACY_EMOJI`
+  resolves old rows — **no destructive migration of the owner's own data to fix
+  a presentation problem.**
+- **Four pillars** (`PillarBar.tsx`): the four glow dots were fixed at 9x9
+  *whatever the score was* — a pillar at 95 and one at 5 drew the identical
+  mark. It looked like data and carried none. Track height is the value now, so
+  four pillars compare at a glance, and an empty track tells the truth on a
+  fresh install.
+- **The orb** (`AuraOrb.tsx`) was rebuilt to an owner-supplied reference as a
+  **geodesic lattice**: 56 nodes on a fibonacci sphere, each linked to its 5
+  nearest neighbours, perspective-projected each frame so node radius and
+  brightness follow depth. Node hues are the four pillar colours plus brand
+  violet — the lattice is made of the things the score is made of.
+
+**The hard part of the orb was the readout, and it is worth not re-learning.**
+A see-through lattice means the number sits over moving artwork. Two fixes:
+
+1. A real bug the measuring found — the node **specular highlight ignored the
+   `clear` safe-zone factor**, so a near-opaque white dot could pass directly
+   behind the number at **1.00:1**. Every mark drawn must be multiplied by
+   `clear`, not just the obvious ones.
+2. Glow from nodes *outside* the zone still bled in. Solved with an **elliptical
+   page-colour scrim** (`RX = R * 0.86`, `RY = R * 0.64`) painted last, sized to
+   cover the label too — a circular version left the 9px label at 2.38:1.
+
+Final, measured against the glyphs' real ink box: number **12.79:1** dark /
+**16.23:1** light; label **9.50:1** dark / **4.70:1** light. Full page audit in
+both themes: 0 contrast failures, nothing under 44px, no horizontal overflow,
+258/258 tests.
+
+**A measurement trap, twice paid for:** text contrast over imagery must be
+sampled from the glyph **ink box** (`measureText().actualBoundingBoxAscent /
+Descent / Left / Right`), never the span's padded `getBoundingClientRect()`.
+That difference alone moved one reading from 1.48 to 5.94 — the artwork was
+fine and the measurement was not. Three wrong figures were reported to the
+owner before this was understood.
+
+**Also re-learned:** the inverted muted-text idiom `text-slate-400
+dark:text-slate-500` got reintroduced in the new pillar placeholder and the
+audit caught it at 2.96:1. The correct idiom is `text-slate-500
+dark:text-slate-400`. Phase 3 removed it from 197 places; it comes back by
+muscle memory, so audit after every visual change.
 
 ### ⬜ Phase 6 — Motion that communicates  ← **NEXT, but not for an unattended run**
 
