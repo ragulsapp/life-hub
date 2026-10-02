@@ -1,50 +1,50 @@
 import { useEffect, useRef } from "react";
 
 /**
- * The Aura orb — a real 3D sphere on a canvas, not a styled div.
+ * The Aura orb — a geodesic lattice on a canvas, not a styled div.
  *
- * Points are distributed on an actual sphere and perspective-projected every
- * frame, so depth drives each point's size and brightness and the thing
- * genuinely turns. Three tilted orbital rings are drawn in two passes (behind
- * the sphere dim, in front bright) so they visibly pass around it.
+ * Nodes are distributed on an actual sphere, joined to their nearest
+ * neighbours by struts, and perspective-projected every frame, so depth drives
+ * each node's size and brightness and the thing genuinely turns. You see
+ * through it: the far half of the lattice is visible behind the near half,
+ * which is what makes it read as a structure rather than a ball.
  *
- * This is the surface the assistant will eventually live on: the render already
- * takes a `focus` colour and a spin impulse, which is the same mechanism a
- * listening/thinking/speaking state would drive. Keeping it one canvas means
- * that lands without redesigning the screen around it.
+ * It replaced a solid shaded sphere with a particle skin. That version had two
+ * problems this one does not. The ball was opaque, so its own detail sat on a
+ * flat surface and washed out in light mode; and the readout sat ON the ball,
+ * which meant the body gradient had to be tuned around the text's contrast.
+ * The number now sits against the page, where it has roughly 16:1 in either
+ * theme and the artwork is free to be whatever it wants.
  *
- * Canvas is deliberately much larger than the sphere — see SIZE below.
+ * This is the surface the assistant will eventually live on: the render
+ * already takes a `focus` colour and a spin impulse, which is the same
+ * mechanism a listening/thinking/speaking state would drive.
  */
-
-const PALETTE = ["#4FD8E8", "#7C5CFC", "#C53C98", "#F0A93B"];
 
 /**
- * Sized off the widest PROJECTED orbit, not the sphere radius.
- *
- * Perspective pushes the outer ring to ~115px from centre even though the
- * sphere itself only reaches ~78px. A canvas sized to the sphere clips the
- * rings' outer arc against the bitmap edge — the artwork is simply not there
- * to draw. 280 leaves ~25px of clearance including the travelling sparks.
+ * Node colours, and they are not arbitrary: these are the four pillar hues
+ * plus the brand violet. The lattice is literally made of the things the
+ * score is made of, which is also why tapping a pillar can tint the whole orb.
  */
+const PALETTE = ["#7C5CFC", "#4FD8E8", "#3fd9a4", "#ff8a73", "#a98bff"];
+
 const SIZE = 280;
-const R = 72;
+/** Bigger than the old sphere: with no outer orbits to clear, the lattice
+ *  itself can fill the box, so the orb has more presence at the same size. */
+const R = 104;
 const CX = SIZE / 2;
 const CY = SIZE / 2;
 const TILT = -0.42;
 /** Distance of the virtual camera; smaller = stronger perspective. */
 const CAM = 2.6;
+const NODES = 56;
+/** Struts per node. 5 gives the triangulated look without turning to mesh. */
+const LINKS = 5;
 
 interface P3 {
   x: number;
   y: number;
   z: number;
-}
-interface Ring {
-  pts: P3[];
-  colour: string;
-  weight: number;
-  phase: number;
-  speed: number;
 }
 
 /** Even point distribution via the golden-angle spiral. */
@@ -65,34 +65,49 @@ function spherePoints(n: number): (P3 & { colour: string })[] {
   return out;
 }
 
-function makeRing(
-  tiltX: number,
-  tiltZ: number,
-  radius: number,
-  count: number,
-  colour: string,
-  weight: number,
-): Ring {
-  const pts: P3[] = [];
-  for (let i = 0; i < count; i++) {
-    const a = (i / count) * Math.PI * 2;
-    const x = Math.cos(a) * radius;
-    const z = Math.sin(a) * radius;
-    // rotate the flat circle out of the XZ plane so the rings cross
-    const y2 = -z * Math.sin(tiltX);
-    const z2 = z * Math.cos(tiltX);
-    pts.push({
-      x: x * Math.cos(tiltZ) - y2 * Math.sin(tiltZ),
-      y: x * Math.sin(tiltZ) + y2 * Math.cos(tiltZ),
-      z: z2,
-    });
+/**
+ * Join each node to its nearest neighbours.
+ *
+ * Nearest-k rather than an angular cutoff: the golden-angle spiral does not
+ * space points perfectly evenly, so a fixed cutoff leaves some nodes isolated
+ * and others over-connected. k guarantees every node is part of the structure
+ * whatever the count.
+ */
+function buildEdges(pts: P3[], k: number): [number, number][] {
+  const seen = new Set<string>();
+  const edges: [number, number][] = [];
+  for (let i = 0; i < pts.length; i++) {
+    const near = pts
+      .map((q, j) => ({
+        j,
+        d: pts[i].x * q.x + pts[i].y * q.y + pts[i].z * q.z,
+      }))
+      .filter((e) => e.j !== i)
+      .sort((a, b) => b.d - a.d)
+      .slice(0, k);
+    for (const { j } of near) {
+      const key = i < j ? `${i}-${j}` : `${j}-${i}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      edges.push([i, j]);
+    }
   }
-  return { pts, colour, weight, phase: Math.random() * Math.PI * 2, speed: 0.6 + Math.random() * 0.9 };
+  return edges;
 }
 
 function rgba(hex: string, a: number): string {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+/** The same hue pushed toward black — light mode needs marks DARKER than the
+ *  page, which is the inverse of the dark theme's glow, not a dimmer copy. */
+function shade(hex: string, amount: number, a: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const k = 1 - amount;
+  return `rgba(${Math.round(((n >> 16) & 255) * k)},${Math.round(
+    ((n >> 8) & 255) * k,
+  )},${Math.round((n & 255) * k)},${a})`;
 }
 
 export function AuraOrb({
@@ -126,16 +141,12 @@ export function AuraOrb({
     canvas.height = SIZE * dpr;
     ctx.scale(dpr, dpr);
 
-    const points = spherePoints(150);
-    const rings = [
-      makeRing(1.15, 0.25, 1.26, 120, "#7C5CFC", 1.4),
-      makeRing(-0.75, -0.5, 1.36, 120, "#4FD8E8", 1.1),
-      makeRing(0.35, 1.1, 1.12, 120, "#C53C98", 0.9),
-    ];
+    const nodes = spherePoints(NODES);
+    const edges = buildEdges(nodes, LINKS);
 
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const reduced =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     let angle = 0;
-    let tick = 0;
     let raf = 0;
 
     const project = (p: P3) => {
@@ -152,7 +163,23 @@ export function AuraOrb({
         sx: CX + x * R * persp * CAM,
         sy: CY + y * R * persp * CAM,
         depth,
+        scale: persp * CAM,
       };
+    };
+
+    /**
+     * How much of a mark survives near the middle.
+     *
+     * The lattice is see-through, so without this the far half's struts run
+     * straight across the readout. Rather than put a plate behind the number —
+     * which read as a disc stuck on the artwork last time it was tried — the
+     * structure itself thins toward the centre. It looks like depth of field
+     * and costs nothing, because the detail that makes a sphere read as round
+     * lives at the rim.
+     */
+    const clearOfReadout = (sx: number, sy: number) => {
+      const d = Math.hypot(sx - CX, sy - CY) / R;
+      return Math.min(1, Math.max(0, (d - 0.3) / 0.28));
     };
 
     // Paints exactly one frame and schedules nothing. Keeping "render" and
@@ -160,7 +187,6 @@ export function AuraOrb({
     // safely — calling a self-scheduling draw() from there would start a
     // second concurrent rAF loop and double the spin speed.
     const renderFrame = () => {
-      tick += 1;
       angle += 0.0035 + boostRef.current;
       boostRef.current *= 0.94;
 
@@ -170,150 +196,132 @@ export function AuraOrb({
       const dark = document.documentElement.classList.contains("dark");
 
       ctx.clearRect(0, 0, SIZE, SIZE);
-      // Additive blending is what makes the orb read as a LIT object, but it
-      // only works against darkness — on white every channel saturates and the
-      // whole thing washes out. So the light theme draws a solid, shaded ball
-      // normally instead. Same geometry, same rings, different material.
+      // Additive blending is what makes the lattice read as lit, but it only
+      // works against darkness — on white every channel saturates. The light
+      // theme draws the same geometry as dark ink instead.
       ctx.globalCompositeOperation = dark ? "lighter" : "source-over";
 
-      if (dark) {
-        // glowing core: bright centre falling off to nothing at the rim
-        const core = ctx.createRadialGradient(
-          CX - R * 0.3, CY - R * 0.34, R * 0.06,
-          CX, CY, R * 1.02,
-        );
-        core.addColorStop(0, "rgba(150,130,255,0.55)");
-        core.addColorStop(0.34, "rgba(76,60,180,0.30)");
-        core.addColorStop(0.72, "rgba(30,18,70,0.22)");
-        core.addColorStop(1, "rgba(8,4,20,0)");
-        ctx.fillStyle = core;
-        ctx.beginPath();
-        ctx.arc(CX, CY, R * 1.05, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        // solid ball, lit from the upper left, with a hard edge at the rim so
-        // it reads as an object sitting on the page rather than a smudge
-        const body = ctx.createRadialGradient(
-          CX - R * 0.35, CY - R * 0.4, R * 0.05,
-          CX, CY, R,
-        );
-        // Kept pale on purpose. The readout sits at the sphere's geometric
-        // centre, which — because the gradient origin is offset to the lit
-        // upper-left — lands around stop 0.53, not 0. A mid-violet there gave
-        // the dark text only 3.07:1. These stops put the centre in the pale
-        // lavenders so the number clears AA comfortably, and the saturated
-        // rim plus the rings still carry the Aura colour.
-        body.addColorStop(0, "#ffffff");
-        body.addColorStop(0.32, "#ede9fe");
-        body.addColorStop(0.66, "#c9bbfb");
-        body.addColorStop(1, "#9d86f0");
-        ctx.fillStyle = body;
-        ctx.beginPath();
-        ctx.arc(CX, CY, R, 0, Math.PI * 2);
-        ctx.fill();
+      const pr = nodes.map(project);
 
-        // terminator: shading on the far side gives it volume
-        const shade = ctx.createRadialGradient(
-          CX + R * 0.36, CY + R * 0.42, R * 0.05,
-          CX + R * 0.1, CY + R * 0.14, R * 1.05,
-        );
-        shade.addColorStop(0, "rgba(46,28,120,0.20)");
-        shade.addColorStop(0.55, "rgba(46,28,120,0.06)");
-        shade.addColorStop(1, "rgba(46,28,120,0)");
-        ctx.save();
+      // Struts first so nodes sit on top of their own connections.
+      ctx.lineCap = "round";
+      for (const [a, b] of edges) {
+        const pa = pr[a];
+        const pb = pr[b];
+        const d = (pa.depth + pb.depth) / 2;
+        const t = (d + 1) / 2; // 0 back .. 1 front
+        const clear =
+          clearOfReadout((pa.sx + pb.sx) / 2, (pa.sy + pb.sy) / 2);
+        const alpha = (dark ? 0.05 + t * 0.3 : 0.06 + t * 0.26) * clear;
+        if (alpha <= 0.004) continue;
+        const colour = focusRef.current || nodes[a].colour;
+        ctx.strokeStyle = dark
+          ? rgba(colour, alpha)
+          : shade(colour, 0.55, alpha);
+        ctx.lineWidth = 0.45 + t * 0.85;
         ctx.beginPath();
-        ctx.arc(CX, CY, R, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.fillStyle = shade;
-        ctx.fillRect(0, 0, SIZE, SIZE);
-        ctx.restore();
+        ctx.moveTo(pa.sx, pa.sy);
+        ctx.lineTo(pb.sx, pb.sy);
+        ctx.stroke();
       }
 
-      for (const ring of rings) {
-        const colour = focusRef.current || ring.colour;
-        // pass 0 = the half behind the sphere (dim), pass 1 = in front (bright)
-        for (let pass = 0; pass < 2; pass++) {
-          ctx.beginPath();
-          let started = false;
-          for (const pt of ring.pts) {
-            const pr = project(pt);
-            const inFront = pr.depth > 0;
-            if ((pass === 0 && inFront) || (pass === 1 && !inFront)) {
-              started = false;
-              continue;
-            }
-            if (!started) {
-              ctx.moveTo(pr.sx, pr.sy);
-              started = true;
-            } else {
-              ctx.lineTo(pr.sx, pr.sy);
-            }
-          }
-          // On white, additive alphas this low vanish; solid strokes need to
-          // be more opaque to hold their own against the page.
-          ctx.strokeStyle = rgba(
-            colour,
-            dark ? (pass === 0 ? 0.14 : 0.55) : pass === 0 ? 0.3 : 0.85,
-          );
-          ctx.lineWidth = ring.weight * (pass === 0 ? 0.8 : 1);
-          ctx.stroke();
-        }
+      // Nodes back-to-front so the near ones genuinely occlude the far ones.
+      const order = pr
+        .map((p, i) => ({ i, depth: p.depth }))
+        .sort((a, b) => a.depth - b.depth);
 
-        // a spark travelling the orbit — reads as motion even at a glance
-        const idx = Math.floor(
-          (((tick * ring.speed * 0.006 + ring.phase) % 1) + 1) % 1 * ring.pts.length,
-        );
-        const sp = project(ring.pts[idx]);
-        if (sp.depth > -0.2) {
-          const g = ctx.createRadialGradient(sp.sx, sp.sy, 0, sp.sx, sp.sy, 7);
-          g.addColorStop(0, rgba(colour, 0.95));
-          g.addColorStop(1, rgba(colour, 0));
-          ctx.fillStyle = g;
+      for (const { i } of order) {
+        const p = pr[i];
+        const t = (p.depth + 1) / 2;
+        const clear = clearOfReadout(p.sx, p.sy);
+        const alpha = (dark ? 0.12 + t * t * 0.8 : 0.18 + t * t * 0.62) * clear;
+        if (alpha <= 0.004) continue;
+        const colour = focusRef.current || nodes[i].colour;
+        // Radius follows perspective, so the near face carries bigger balls —
+        // the single strongest depth cue in the whole render.
+        const radius = (1.5 + t * 2.9) * p.scale * 0.72;
+
+        if (dark) {
+          const glow = ctx.createRadialGradient(
+            p.sx, p.sy, 0,
+            p.sx, p.sy, radius * 2.0,
+          );
+          glow.addColorStop(0, rgba(colour, alpha * 0.5));
+          glow.addColorStop(1, rgba(colour, 0));
+          ctx.fillStyle = glow;
           ctx.beginPath();
-          ctx.arc(sp.sx, sp.sy, 7, 0, Math.PI * 2);
+          ctx.arc(p.sx, p.sy, radius * 2.0, 0, Math.PI * 2);
           ctx.fill();
         }
-      }
 
-      for (const p of points) {
-        const pr = project(p);
-        const d = (pr.depth + 1) / 2; // 0 back .. 1 front
-        // Dark: points ARE the light, so the back half fades to nothing.
-        // Light: they sit on an already-solid ball, so they stay legible but
-        // never fully opaque, otherwise the sphere turns into confetti.
-        ctx.fillStyle = rgba(
-          focusRef.current || p.colour,
-          dark ? 0.06 + d * d * 0.72 : 0.1 + d * d * 0.5,
-        );
+        ctx.fillStyle = dark
+          ? rgba(colour, alpha)
+          : shade(colour, 0.32, alpha);
         ctx.beginPath();
-        ctx.arc(pr.sx, pr.sy, 0.5 + d * 1.7, 0, Math.PI * 2);
+        ctx.arc(p.sx, p.sy, radius, 0, Math.PI * 2);
         ctx.fill();
+
+        // A highlight on the near face only — what turns a filled circle into
+        // a ball. Skipped on the far half, where it would read as noise.
+        if (t > 0.55) {
+          ctx.globalCompositeOperation = "source-over";
+          // `clear` applies here too. Without it the specular — which is very
+          // nearly opaque white at the near pole — ignored the readout safe
+          // zone and could land directly behind the number, measured at
+          // 1.00:1 against white text. Every mark the lattice draws has to
+          // respect the same zone, not just the ones that were obvious.
+          ctx.fillStyle = `rgba(255,255,255,${
+            (t - 0.55) * (dark ? 0.9 : 0.55) * clear
+          })`;
+          ctx.beginPath();
+          ctx.arc(
+            p.sx - radius * 0.3,
+            p.sy - radius * 0.34,
+            radius * 0.34,
+            0,
+            Math.PI * 2,
+          );
+          ctx.fill();
+          ctx.globalCompositeOperation = dark ? "lighter" : "source-over";
+        }
       }
 
-      // specular — the highlight is what makes it read as a lit object
+      /**
+       * Readout scrim.
+       *
+       * The lattice is see-through, so whatever is behind the number is
+       * whatever happens to be rotating past — and in dark mode an additive
+       * node glow drifting through measured 1.57:1 against white text.
+       * Thinning the structure alone could not fix it without hollowing out
+       * the middle of the sphere.
+       *
+       * This is a radial wash of the PAGE's own colour, so it has no edge and
+       * reads as depth of field rather than a plate. An earlier attempt at a
+       * plate failed because it was a DARK disc drawn on the light theme,
+       * where it showed up as a black ring; painting the page colour in each
+       * theme is the version of that idea that actually works.
+       */
       ctx.globalCompositeOperation = "source-over";
+      const pageRGB = dark ? "13,10,24" : "246,244,252";
+      // Elliptical, not circular: the readout is a wide, short block, and a
+      // circle big enough to cover it also washes out the sphere's whole
+      // interior. The ellipse hugs the text band — number AND label; sizing
+      // it to the number alone left the 9px label at 2.38:1 with the lattice
+      // running behind it.
+      const RX = R * 0.86;
+      const RY = R * 0.64;
       ctx.save();
-      if (!dark) {
-        // Clip to the sphere: unclipped, a white highlight bleeds past the rim
-        // and haloes onto the page, which is what made the old version look
-        // like a smudge rather than an object.
-        ctx.beginPath();
-        ctx.arc(CX, CY, R, 0, Math.PI * 2);
-        ctx.clip();
-      }
-      const spec = ctx.createRadialGradient(
-        CX - R * 0.34, CY - R * 0.4, 0,
-        CX - R * 0.34, CY - R * 0.4, dark ? R * 0.85 : R * 0.6,
-      );
-      spec.addColorStop(0, `rgba(255,255,255,${dark ? 0.3 : 0.72})`);
-      spec.addColorStop(0.35, `rgba(255,255,255,${dark ? 0.05 : 0.16})`);
-      spec.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = spec;
+      ctx.translate(CX, CY);
+      ctx.scale(1, RY / RX);
+      const scrim = ctx.createRadialGradient(0, 0, 0, 0, 0, RX);
+      scrim.addColorStop(0, `rgba(${pageRGB},0.95)`);
+      scrim.addColorStop(0.72, `rgba(${pageRGB},0.9)`);
+      scrim.addColorStop(1, `rgba(${pageRGB},0)`);
+      ctx.fillStyle = scrim;
       ctx.beginPath();
-      ctx.arc(CX, CY, R * 1.1, 0, Math.PI * 2);
+      ctx.arc(0, 0, RX, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
-
     };
 
     const loop = () => {
@@ -371,20 +379,16 @@ export function AuraOrb({
         boostRef.current = 0.075;
       }}
     >
-      {/*
-        Ambient bloom only. An earlier attempt gave the orb its own dark disc
-        so the additive render would work on the light theme — but on white
-        that disc read as a black ring around the orb, which is worse than the
-        problem it solved. The renderer adapts to the theme instead.
-      */}
+      {/* Ambient bloom. Subtle on light, where there is no longer a solid body
+          to sit behind — it only has to suggest the lattice is lit. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute rounded-full opacity-60 dark:opacity-100"
+        className="pointer-events-none absolute rounded-full opacity-40 dark:opacity-100"
         style={{
-          inset: "14%",
+          inset: "16%",
           background:
-            "radial-gradient(circle, rgba(124,92,252,.30) 0%, rgba(197,60,152,.13) 45%, transparent 68%)",
-          filter: "blur(18px)",
+            "radial-gradient(circle, rgba(124,92,252,.26) 0%, rgba(79,216,232,.10) 48%, transparent 70%)",
+          filter: "blur(20px)",
         }}
       />
       <canvas
@@ -393,24 +397,30 @@ export function AuraOrb({
         height={SIZE}
         className="absolute inset-0 h-full w-full"
         role="img"
-        aria-label={score === null ? `${label}: not enough data yet` : `${label}: ${score} out of 100`}
+        aria-label={
+          score === null
+            ? `${label}: not enough data yet`
+            : `${label}: ${score} out of 100`
+        }
       />
       {/*
-        The readout sits ON the sphere, so its colour follows the sphere's
-        material, not the page: white against the dark theme's glowing core,
-        near-black against the light theme's pale violet body. White on the
-        light ball measures ~2.6:1 — the reason this needed changing.
+        The readout sits in the middle of the lattice, against the page rather
+        than against a painted body — so it is simply the page's own text
+        colour, and measures ~16:1 in both themes instead of needing a
+        gradient tuned around it.
       */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
         <span
-          style={{ fontSize: "calc(var(--orb) * 0.164)" }}
-          className="font-semibold leading-none tracking-[-0.045em] tabular-nums text-[#1a1030] drop-shadow-[0_1px_10px_rgba(255,255,255,0.45)] dark:text-white dark:drop-shadow-[0_2px_26px_rgba(8,4,20,0.75)]"
+          style={{ fontSize: "calc(var(--orb) * 0.2)" }}
+          className="font-semibold leading-none tracking-[-0.045em] tabular-nums text-slate-900 dark:text-white"
         >
           {score === null ? "—" : score}
         </span>
         <span
-          style={{ fontSize: "calc(var(--orb) * 0.032)" }}
-          className="mt-[7px] font-bold uppercase tracking-[0.24em] text-[#1a1030]/75 drop-shadow-[0_1px_8px_rgba(255,255,255,0.4)] dark:text-white/80 dark:drop-shadow-[0_1px_10px_rgba(8,4,20,0.8)]"
+          /* Floored. Proportional alone put this at 6.7px once the orb became
+             viewport-relative, which is too small to read at any distance. */
+          style={{ fontSize: "max(9px, calc(var(--orb) * 0.044))" }}
+          className="mt-[7px] font-bold uppercase tracking-[0.24em] text-slate-500 dark:text-white/70"
         >
           {label}
         </span>

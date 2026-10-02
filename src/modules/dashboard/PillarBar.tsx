@@ -85,7 +85,7 @@ export function PillarBar({
 
             <span className="flex items-baseline gap-0.5 text-base font-semibold tabular-nums text-slate-800 dark:text-white">
               {s.score === null ? (
-                <span className="text-slate-400 dark:text-slate-500">—</span>
+                <span className="text-slate-500 dark:text-slate-400">—</span>
               ) : (
                 s.score
               )}
