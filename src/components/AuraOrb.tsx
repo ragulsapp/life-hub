@@ -349,7 +349,24 @@ export function AuraOrb({
   return (
     <div
       className={`relative select-none ${className}`}
-      style={{ width: SIZE, height: SIZE }}
+      /*
+        The canvas is always drawn at SIZE and stretched to fill this box, so
+        shrinking the box costs nothing in the drawing maths and gains
+        sharpness — a 280px render shown at 200px is supersampled.
+
+        It is viewport-relative because on a 667px phone (iPhone SE, still
+        common) a fixed 280px orb took 42% of the screen and pushed every
+        single mission row below the fold: you had to scroll to see one thing
+        you were meant to do today. The hero may dominate the screen; it may
+        not displace the plan.
+      */
+      style={
+        {
+          "--orb": `min(${SIZE}px, 30vh)`,
+          width: "var(--orb)",
+          height: "var(--orb)",
+        } as React.CSSProperties
+      }
       onClick={() => {
         boostRef.current = 0.075;
       }}
@@ -386,12 +403,14 @@ export function AuraOrb({
       */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="text-[46px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-[#1a1030] drop-shadow-[0_1px_10px_rgba(255,255,255,0.45)] dark:text-white dark:drop-shadow-[0_2px_26px_rgba(8,4,20,0.75)]"
+          style={{ fontSize: "calc(var(--orb) * 0.164)" }}
+          className="font-semibold leading-none tracking-[-0.045em] tabular-nums text-[#1a1030] drop-shadow-[0_1px_10px_rgba(255,255,255,0.45)] dark:text-white dark:drop-shadow-[0_2px_26px_rgba(8,4,20,0.75)]"
         >
           {score === null ? "—" : score}
         </span>
         <span
-          className="mt-[7px] text-[9px] font-bold uppercase tracking-[0.24em] text-[#1a1030]/75 drop-shadow-[0_1px_8px_rgba(255,255,255,0.4)] dark:text-white/80 dark:drop-shadow-[0_1px_10px_rgba(8,4,20,0.8)]"
+          style={{ fontSize: "calc(var(--orb) * 0.032)" }}
+          className="mt-[7px] font-bold uppercase tracking-[0.24em] text-[#1a1030]/75 drop-shadow-[0_1px_8px_rgba(255,255,255,0.4)] dark:text-white/80 dark:drop-shadow-[0_1px_10px_rgba(8,4,20,0.8)]"
         >
           {label}
         </span>

@@ -156,11 +156,13 @@ function HabitCard({
                   : "text-slate-300 hover:text-cyan-500 dark:text-slate-600"
               }`}
               title={
-                habit.pinned ? "Unpin from Dashboard" : "Pin to Dashboard"
+                habit.pinned
+                  ? "Stop showing first in today's mission"
+                  : "Show first in today's mission"
               }
-              aria-label={`${habit.pinned ? "Unpin" : "Pin"} "${habit.name}" ${
-                habit.pinned ? "from" : "to"
-              } Dashboard`}
+              aria-label={`${
+                habit.pinned ? "Stop showing" : "Show"
+              } "${habit.name}" first in today's mission`}
               aria-pressed={!!habit.pinned}
             >
               <PinIcon size={15} on={!!habit.pinned} />

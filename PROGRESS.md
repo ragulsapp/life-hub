@@ -1,6 +1,6 @@
 # Life Mentor — UI/UX overhaul: plan and progress
 
-**Last updated:** 2026-10-02 (late)
+**Last updated:** 2026-10-02
 **Repo:** `ragulsapp/life-hub` · **Path:** `C:\Users\Ragulkumar\OneDrive\Desktop\claude-projects\life-hub`
 **Branch:** `main` · **Tree is clean as of this file.** Last commit: `e21063f`
 
@@ -87,37 +87,51 @@ Health** (it logs in place, there is nothing to "add").
 
 ---
 
-### ⬜ Phase 4 — Home becomes a product, not a dashboard  ← **DO THIS NEXT**
+### ✅ Phase 4 — Home becomes a product (commit pending at time of writing)
 
-Today is eight stacked cards of equal weight: mission, goal, recommendation,
-quote, pillars, reminders, week, achievements, plus a backup nudge. Nothing
-tells you where to look.
+Today was fourteen blocks of equal weight. It is now seven, with a hierarchy:
+**orb → mission → money → schedule → analysis.**
 
-Goal: **answer one question immediately, let the rest earn its place by
-scrolling.**
+What changed, and why:
 
-Concrete steps:
+- **Three cards became one.** "Today's goal" (the outcome you chose), "Start
+  here" (the outcome we suggest) and "Today's mission" (the checklist) were
+  three boxes holding three halves of one thought. Goal is now a line at the
+  top of the mission card, the recommendation a line at the bottom, and it is
+  hidden once the mission is complete.
+- **The pinned-habit tiles are gone.** They showed the *same habits* already
+  listed in Today's mission a few hundred pixels above — two controls for one
+  action on one screen. Pinning now means "first in today's mission", which
+  keeps the feature meaningful; its labels were updated to say so.
+- **The quote is cut.** It had no job, and the coach line under the orb already
+  speaks for the app.
+- **The backup nudge is demoted and quietened.** Amber-alert styling made a
+  routine reminder the loudest thing on the home screen. It stays visible —
+  it is a real risk with no cloud — but as a quiet row near the bottom. Alert
+  colour is now reserved for things that are actually wrong.
+- **The orb is viewport-relative:** `min(280px, 30vh)`.
 
-1. **Decide the one thing.** "Today's mission" is the answer to *what do I do
-   now*. It should sit directly under the orb, above everything else.
-2. **Demote the backup nudge.** It is an amber alert banner — system-interrupt
-   styling for a routine reminder — and it currently out-shouts the mission.
-   Make it a quiet row, or move it to You. It should never be the loudest thing
-   on a screen.
-3. **The quote has no job.** Either cut it or fold it into the coach line.
-4. **Collapse the middle.** "Start here" (recommendation), "Today's goal" and
-   "Four pillars" are three cards saying overlapping things. Consider: goal and
-   recommendation merge into the mission card's header; pillars move to You.
-5. **The orb earns its space only if it encodes something.** It currently shows
-   a balance score. If it stays this size, the number must be legible and
-   explained; otherwise shrink it and give the room to the mission.
-6. Achievements and Your week are retrospective — they belong at the bottom, or
-   on You.
+**The measurement that forced the orb change.** On a 375×667 phone (iPhone SE,
+still common) the fixed 280px orb took **42%** of the screen and **zero** mission
+rows were visible above the nav — you had to scroll to see a single thing you
+were meant to do. Now 30% and **2 rows + the goal line** are visible. On 375×812
+it went 280→244px with **4 rows** visible. The canvas still renders at 280 and is
+downsampled, so it is slightly sharper, not blurrier.
 
-Files: `src/modules/dashboard/DashboardView.tsx` (the composition),
-`BackupNudge.tsx`, `WeeklyReviewCard.tsx`, `PillarBar.tsx`, `TodayAgenda.tsx`.
+Verified: 0 contrast failures and nothing under 44px in **both themes** at 375px,
+no horizontal overflow, 258/258 tests.
 
-### ⬜ Phase 5 — Density and progressive disclosure
+**Deviation from the original plan, recorded deliberately:** the plan said move
+"Four pillars" to You. It stayed on Today, demoted below the schedule instead.
+Tapping a pillar focuses the orb, and that coupling is what makes it worth
+tapping — detached from the orb it is just four numbers.
+
+**Not done, deliberately:** "Brain dump" overlaps the `+` quick-capture Note.
+Consolidating them is right but it would move a textarea into a sheet, and the
+draft-persistence that fixed the owner's reported "notes auto-delete" bug lives
+on that textarea. Worth doing in Phase 5 with care, not as a drive-by.
+
+### ⬜ Phase 5 — Density and progressive disclosure  ← **DO THIS NEXT**
 
 One habit card currently holds **ten controls**: name, schedule, streak, best,
 30-day rate, done-circle, pin, delete, week strip, heatmap toggle, reminder
@@ -340,7 +354,7 @@ PWA: https://ragulsapp.github.io/life-hub/ (deploys from `main` via
 
 ## If you are an unattended scheduled run
 
-Do **Phase 4 only**. Then stop and write your results back into this file.
+Do **Phase 5 only**. Then stop and write your results back into this file.
 
 - The **₹99 / market section above is research for the owner, not work for you.**
   Do not act on it. Phase 7 is explicitly not for an unattended run.
@@ -349,7 +363,7 @@ Do **Phase 4 only**. Then stop and write your results back into this file.
 - Work in small commits, pushing each.
 - Meet the full definition of done above before each commit, including
   `grep -rn 'TEMP-VERIFY' src` coming back empty.
-- Do **not** start Phase 5 or Phase 6.
+- Do **not** start Phase 6.
 - Do **not** touch the Dexie schema, the alarm scheduler, or anything under
   `src/lib/` handling notifications — load-bearing and recently fixed.
 - Do **not** add a network call of any kind.
@@ -358,5 +372,5 @@ Do **Phase 4 only**. Then stop and write your results back into this file.
   record the choice in this file, and keep going. Do not block — the owner is
   asleep.
 
-Finish by updating the Phase 4 entry above with what shipped and what you
+Finish by updating the Phase 5 entry above with what shipped and what you
 measured, then commit and push this file too.

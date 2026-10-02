@@ -11,7 +11,6 @@ import { getRecommendation } from "../../lib/recommendations";
 import { dailyCoachMessage, greeting } from "../../lib/coachMessages";
 import { useSettingsUi } from "../../lib/settingsUi";
 import { useDraft } from "../../lib/useDraft";
-import { quoteForDay } from "../../lib/quotes";
 import { calcSafeToSpendToday, currentMonthKey } from "../finance/financeSummary";
 import { isDueOn } from "../habits/habitStreaks";
 import { setHabitDone } from "../habits/habitActions";
@@ -89,6 +88,9 @@ export function DashboardView() {
   );
   const missionHabits = habits
     .filter((h) => !h.archived && isDueOn(h.schedule, now))
+    // Pinned first — that is what pinning means now that the duplicate tile
+    // grid below is gone.
+    .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
     .map((h) => ({
       key: `h${h.id}`,
       label: h.name,
@@ -118,9 +120,7 @@ export function DashboardView() {
     : null;
   const orbScore = focused ? focused.score : balance;
 
-  const pinned = habits.filter((h) => h.pinned && !h.archived).slice(0, 2);
   const todayGoal = goals.find((g) => g.term === "today" && g.status === "active");
-  const quote = quoteForDay(now);
   const safe = calcSafeToSpendToday(transactions, budgets, monthKey, now);
 
   const saveBrainDump = async () => {
@@ -196,13 +196,22 @@ export function DashboardView() {
         </p>
       </div>
 
-      <BackupNudge />
-
-      <p className="px-1 text-sm italic text-slate-500 dark:text-slate-400">
-        “{quote}”
-      </p>
-
+      {/* The one card that answers "what do I do now".
+          It absorbed two neighbours that were doing the same job in their own
+          boxes: "Today's goal" (the outcome you chose) and "Start here" (the
+          outcome we suggest). Three cards saying three halves of one thought
+          is why nothing on this screen used to look more important than
+          anything else. */}
       <Card title="Today's mission" delay={0.02}>
+        {todayGoal && (
+          <p className="mb-3 flex items-start gap-1.5 border-b border-slate-200/70 pb-3 text-sm font-medium text-slate-800 dark:border-white/5 dark:text-slate-100">
+            <TargetIcon
+              size={15}
+              className="mt-0.5 flex-shrink-0 text-cyan-500 dark:text-cyan-300"
+            />
+            {todayGoal.title}
+          </p>
+        )}
         {mission.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Nothing scheduled today. Add a habit to build momentum.
@@ -259,20 +268,9 @@ export function DashboardView() {
             </ul>
           </>
         )}
-      </Card>
-
-      <Card title="Today's goal" delay={0.03}>
-        {todayGoal ? (
-          <p className="flex items-start gap-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
-            <TargetIcon
-              size={15}
-              className="mt-0.5 flex-shrink-0 text-cyan-500 dark:text-cyan-300"
-            />
-            {todayGoal.title}
-          </p>
-        ) : (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Set today's goal.
+        {!missionComplete && recommendation.message && (
+          <p className="mt-3 border-t border-slate-200/70 pt-3 text-sm text-slate-500 dark:border-white/5 dark:text-slate-400">
+            {recommendation.message}
           </p>
         )}
       </Card>
@@ -294,14 +292,13 @@ export function DashboardView() {
         </Card>
       )}
 
-      <Card title="Start here" delay={0.05}>
-        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-          {recommendation.message}
-        </p>
-      </Card>
+      <TodayAgenda />
 
       {/* The overall number moved to the orb, so this card is now the
-          breakdown behind it — tapping a pillar focuses the orb on it. */}
+          breakdown behind it — tapping a pillar focuses the orb on it.
+          It stays on Today rather than moving to You, which the plan
+          suggested, because that orb coupling is the thing that makes it
+          worth tapping; detached from the orb it is just four numbers. */}
       <Card title="Four pillars" delay={0.06}>
         <PillarBar
           scores={pillars}
@@ -314,40 +311,11 @@ export function DashboardView() {
         />
       </Card>
 
-      {pinned.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          {pinned.map((h) => {
-            const done = doneToday.has(h.name);
-            return (
-              <motion.button
-                key={h.id}
-                onClick={() => setHabitDone(h.name, today, !done)}
-                aria-pressed={done}
-                whileTap={{ scale: 0.94 }}
-                className={`relative overflow-hidden rounded-3xl p-5 text-center transition-colors ${
-                  done
-                    ? "text-slate-900 shadow-lg"
-                    : "glass border border-white/60 bg-white/70 text-slate-500 dark:border-white/5 dark:bg-slate-800/60 dark:text-slate-400"
-                }`}
-                style={done ? { backgroundColor: h.color } : undefined}
-              >
-                <div className="text-2xl">{h.icon}</div>
-                <div className="mt-1 text-base font-bold">{h.name}</div>
-                <div className="text-xs font-medium opacity-80">
-                  {done ? (
-                    <span className="inline-flex items-center gap-1">
-                      <CheckIcon size={11} />
-                      Done today
-                    </span>
-                  ) : (
-                    "Tap to log"
-                  )}
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
-      )}
+      {/* The pinned-habit tiles used to sit here, and they showed the SAME
+          habits already listed in Today's mission a few hundred pixels above
+          — two controls for one action on one screen. Pinning now means
+          "first in today's mission" instead, which keeps the feature useful
+          and removes the duplicate. */}
 
       <Card title="Brain dump" delay={0.09}>
         <textarea
@@ -381,7 +349,10 @@ export function DashboardView() {
         </div>
       </Card>
 
-      <TodayAgenda />
+      {/* Demoted from the top of the page. It is a real risk on an app with
+          no cloud, but it was an amber alert banner — system-interrupt
+          styling for a routine reminder — and it out-shouted the mission. */}
+      <BackupNudge />
 
       <WeeklyReviewCard
         habits={habits}

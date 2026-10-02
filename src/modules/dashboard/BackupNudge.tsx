@@ -31,18 +31,23 @@ export function BackupNudge() {
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
-      <span>
+    /* Amber-alert styling made a routine reminder the loudest thing on the
+       home screen — it out-shouted the day's actual plan. It is a real risk
+       on an app with no cloud, so it stays visible, but as a quiet row that
+       states the fact and offers the fix. Alert colour is reserved for
+       things that are actually wrong. */
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/70 px-3 py-2 dark:border-white/5">
+      <span className="text-label text-slate-500 dark:text-slate-400">
         {last
-          ? `Last backup was ${staleDays} days ago.`
-          : "You haven't backed up your data yet."}
+          ? `Last backup: ${staleDays} days ago.`
+          : "No backup yet — your data lives only on this device."}
       </span>
       <button
         onClick={doExport}
-        className="inline-flex h-11 flex-shrink-0 items-center gap-1.5 rounded-xl bg-amber-400 px-3.5 font-semibold text-slate-900"
+        className="inline-flex h-11 flex-shrink-0 items-center gap-1.5 rounded-xl px-3 text-label font-semibold text-cyan-600 transition-colors hover:bg-cyan-500/10 dark:text-cyan-300"
       >
         <DownloadIcon size={14} />
-        Export now
+        Back up
       </button>
     </div>
   );
