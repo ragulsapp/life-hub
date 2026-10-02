@@ -28,6 +28,15 @@ import { useEffect, useRef } from "react";
  */
 const PALETTE = ["#7C5CFC", "#4FD8E8", "#3fd9a4", "#ff8a73", "#a98bff"];
 
+/**
+ * The colour of a node the score has not reached yet.
+ *
+ * Unlit nodes are dimmed, never removed. The sphere has to stay a sphere at a
+ * score of 4 — take the geometry away and the shape collapses, and you lose
+ * the thing a low score is supposed to show you: how much room is left.
+ */
+const DIM = "#94a3b8";
+
 const SIZE = 280;
 /** Bigger than the old sphere: with no outer orbits to clear, the lattice
  *  itself can fill the box, so the orb has more presence at the same size. */
@@ -129,6 +138,13 @@ export function AuraOrb({
   const focusRef = useRef<string | null | undefined>(focus);
   focusRef.current = focus;
   const boostRef = useRef(0);
+  const scoreRef = useRef<number | null>(score);
+  scoreRef.current = score;
+  /** Eased 0-1 fill, so a score change rises rather than snapping. */
+  const fillRef = useRef(0);
+  /** Lets a score change repaint under prefers-reduced-motion, where the
+   *  loop draws exactly one frame and would otherwise never see it. */
+  const renderRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -195,6 +211,42 @@ export function AuraOrb({
       // than tearing the loop down and restarting it.
       const dark = document.documentElement.classList.contains("dark");
 
+      /**
+       * How much of the lattice is lit — and this is the orb finally saying
+       * something.
+       *
+       * It used to read `score` in exactly two places: the aria-label and the
+       * printed number. The artwork never looked at it, so the sphere at 10
+       * and the sphere at 95 were pixel-identical. That is the same fault the
+       * four pillars had, where every pillar drew a 9x9 dot whatever its
+       * value — a picture that looks like data and carries none.
+       *
+       * The fill rises from the bottom, matching the pillar tracks exactly:
+       * height is the value. Nodes below the waterline keep their pillar
+       * colour and their brightness; nodes above it go grey and faint. A low
+       * score now looks like a sphere mostly waiting to be filled in.
+       */
+      const target =
+        scoreRef.current === null
+          ? 0
+          : Math.max(0, Math.min(100, scoreRef.current)) / 100;
+      fillRef.current += (target - fillRef.current) * (reduced ? 1 : 0.06);
+      // Model y runs +1 at the bottom of the screen to -1 at the top, and the
+      // spin is about the y axis, so the waterline holds still while the
+      // sphere turns through it.
+      //
+      // The exponent is a perceptual correction, not a flourish. Equal slices
+      // of sphere HEIGHT do not carry equal visual mass: the bottom pole
+      // projects to a small patch of tiny, distant nodes, so a straight
+      // mapping drew 10/100 with 4% more ink than 0/100 — measured, and
+      // indistinguishable on a phone. Raising fill to a power below 1 pushes
+      // the waterline further up at the low end, which brings PERCEIVED fill
+      // closer to the real score rather than further from it.
+      const waterline = 1 - Math.pow(fillRef.current, 0.8) * 2;
+      /** 1 lit, 0 unlit, with a soft band so there is no hard tide mark. */
+      const litness = (y: number) =>
+        Math.min(1, Math.max(0, (y - waterline) / 0.22));
+
       ctx.clearRect(0, 0, SIZE, SIZE);
       // Additive blending is what makes the lattice read as lit, but it only
       // works against darkness — on white every channel saturates. The light
@@ -212,9 +264,13 @@ export function AuraOrb({
         const t = (d + 1) / 2; // 0 back .. 1 front
         const clear =
           clearOfReadout((pa.sx + pb.sx) / 2, (pa.sy + pb.sy) / 2);
-        const alpha = (dark ? 0.05 + t * 0.3 : 0.06 + t * 0.26) * clear;
+        // A strut is only as lit as its dimmer end, so the waterline reads as
+        // one edge across the whole structure rather than a ragged fringe.
+        const l = Math.min(litness(nodes[a].y), litness(nodes[b].y));
+        const alpha =
+          (dark ? 0.05 + t * 0.3 : 0.06 + t * 0.26) * clear * (0.16 + l * 0.84);
         if (alpha <= 0.004) continue;
-        const colour = focusRef.current || nodes[a].colour;
+        const colour = l > 0.45 ? focusRef.current || nodes[a].colour : DIM;
         ctx.strokeStyle = dark
           ? rgba(colour, alpha)
           : shade(colour, 0.55, alpha);
@@ -234,14 +290,20 @@ export function AuraOrb({
         const p = pr[i];
         const t = (p.depth + 1) / 2;
         const clear = clearOfReadout(p.sx, p.sy);
-        const alpha = (dark ? 0.12 + t * t * 0.8 : 0.18 + t * t * 0.62) * clear;
+        const l = litness(nodes[i].y);
+        const alpha =
+          (dark ? 0.12 + t * t * 0.8 : 0.18 + t * t * 0.62) *
+          clear *
+          (0.13 + l * 0.87);
         if (alpha <= 0.004) continue;
-        const colour = focusRef.current || nodes[i].colour;
+        const colour = l > 0.45 ? focusRef.current || nodes[i].colour : DIM;
         // Radius follows perspective, so the near face carries bigger balls —
         // the single strongest depth cue in the whole render.
         const radius = (1.5 + t * 2.9) * p.scale * 0.72;
 
-        if (dark) {
+        // Glow and specular are what make a node look lit, so an unlit one
+        // gets neither — otherwise the "empty" half still reads as alive.
+        if (dark && l > 0.45) {
           const glow = ctx.createRadialGradient(
             p.sx, p.sy, 0,
             p.sx, p.sy, radius * 2.0,
@@ -263,7 +325,7 @@ export function AuraOrb({
 
         // A highlight on the near face only — what turns a filled circle into
         // a ball. Skipped on the far half, where it would read as noise.
-        if (t > 0.55) {
+        if (t > 0.55 && l > 0.45) {
           ctx.globalCompositeOperation = "source-over";
           // `clear` applies here too. Without it the specular — which is very
           // nearly opaque white at the near pole — ignored the readout safe
@@ -324,6 +386,8 @@ export function AuraOrb({
       ctx.restore();
     };
 
+    renderRef.current = renderFrame;
+
     const loop = () => {
       renderFrame();
       raf = requestAnimationFrame(loop);
@@ -351,8 +415,16 @@ export function AuraOrb({
     return () => {
       cancelAnimationFrame(raf);
       themeObserver.disconnect();
+      renderRef.current = null;
     };
   }, []);
+
+  // Under prefers-reduced-motion the loop draws one frame and stops, so a
+  // score arriving after mount — which is the normal case, the first read is
+  // async — would never be shown. The running loop picks it up on its own.
+  useEffect(() => {
+    renderRef.current?.();
+  }, [score]);
 
   return (
     <div

@@ -1,3 +1,6 @@
+import { Capacitor } from "@capacitor/core";
+import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import { db } from "../db/db";
 import { localDateStr } from "./dates";
 
@@ -181,20 +184,70 @@ export async function restoreBackupPayload(payload: BackupPayload): Promise<void
   );
 }
 
-export async function exportBackup(): Promise<void> {
-  const payload = await buildBackupPayload();
+/** Whether the backup left the app, and by which route. */
+export type ExportResult = "shared" | "downloaded" | "cancelled";
 
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
+/**
+ * Hands the user a copy of everything they own.
+ *
+ * This is the single most important function in the app. The whole promise is
+ * that life data never leaves the device, which also means **there is no copy
+ * of it anywhere else** — one wiped app and years of habits are gone. Export
+ * is the only thing standing between the user and that, so it has to actually
+ * work and it has to never claim it worked when it didn't.
+ *
+ * It used to be an `<a download>` click, which on the Android build wrote
+ * nothing at all: a Capacitor WebView has no download handler, so a blob-URL
+ * anchor click is silently discarded. The old code then resolved anyway and
+ * the UI said "Backup downloaded." It had been reporting success for a file
+ * that was never created.
+ *
+ * Native now writes the file for real and opens the system share sheet, so
+ * the user picks where it lands — Drive, Files, mail, WhatsApp — and sees it
+ * arrive. The browser keeps the anchor, which does work there.
+ */
+export async function exportBackup(): Promise<ExportResult> {
+  const payload = await buildBackupPayload();
+  const json = JSON.stringify(payload, null, 2);
   // Filename only — import validates the payload's shape, never its name, so
   // backups exported under the old name still restore fine.
-  a.download = `life-mentor-backup-${localDateStr()}.json`;
+  const name = `life-mentor-backup-${localDateStr()}.json`;
+
+  if (Capacitor.isNativePlatform()) {
+    // Cache, not Documents: the file is a hand-off to the share sheet, and
+    // the copy that matters is wherever the user sends it. Leaving backups
+    // accumulating in app storage would also put them inside the very thing
+    // an uninstall deletes, which is the case this exists to survive.
+    const { uri } = await Filesystem.writeFile({
+      path: name,
+      data: json,
+      directory: Directory.Cache,
+      encoding: Encoding.UTF8,
+    });
+
+    try {
+      await Share.share({ title: name, files: [uri] });
+    } catch {
+      // Dismissing the sheet rejects. That is a cancel, not a failure — and
+      // crucially not a backup either, so `lastBackupAt` must not move. A
+      // date that says "backed up today" when the user backed out is worse
+      // than no date at all.
+      return "cancelled";
+    }
+
+    await db.appSettings.update(1, { lastBackupAt: Date.now() });
+    return "shared";
+  }
+
+  const url = URL.createObjectURL(
+    new Blob([json], { type: "application/json" }),
+  );
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
   a.click();
   URL.revokeObjectURL(url);
 
   await db.appSettings.update(1, { lastBackupAt: Date.now() });
+  return "downloaded";
 }

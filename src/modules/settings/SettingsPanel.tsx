@@ -130,8 +130,13 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
 
   const handleExport = async () => {
     try {
-      await exportBackup();
-      toast("Backup downloaded.");
+      const result = await exportBackup();
+      // Each route gets its own words, because "downloaded" was wrong on the
+      // native build and told the user to go looking in a Downloads folder
+      // for a file that had never been written.
+      if (result === "cancelled") toast("Backup not saved.");
+      else if (result === "shared") toast("Backup saved.");
+      else toast("Backup downloaded.");
     } catch (err) {
       console.error(err);
       toast("Export failed.", "error");

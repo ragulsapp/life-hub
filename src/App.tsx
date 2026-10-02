@@ -172,7 +172,17 @@ function App() {
 
         <main
           className="flex-1 overflow-y-auto"
-          style={{ paddingBottom: "calc(var(--sab) + 4.5rem)" }}
+          /*
+            The bottom padding has to clear whatever floats over this scroller,
+            and that is not just the nav bar. The create button sits at
+            bottom-24 and is 14 units tall, so it occupies up to 9.5rem from
+            the bottom — 4.5rem of padding left it resting on the last row of
+            the list, covering a control you have to tap. Padded for the nav
+            alone when there is no button to clear.
+          */
+          style={{
+            paddingBottom: `calc(var(--sab) + ${create ? "10.5rem" : "4.5rem"})`,
+          }}
         >
           <AnimatePresence mode="wait">
             <motion.div
