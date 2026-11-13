@@ -1,8 +1,8 @@
 # Life Mentor — UI/UX overhaul: plan and progress
 
-**Last updated:** 2026-10-02
+**Last updated:** 2026-11-14
 **Repo:** `ragulsapp/life-hub` · **Path:** `C:\Users\Ragulkumar\OneDrive\Desktop\claude-projects\life-hub`
-**Branch:** `main` · **Tree is clean as of this file.** Last commit: `3841ee5`
+**Branch:** `main` · **Tree is clean as of this file.** Last code commit: `dafe3f8`
 
 This file is the handoff. A session picking this up cold should read all of it
 before touching code — especially **Working rules** and **Environment gotchas**,
@@ -234,6 +234,100 @@ audit caught it at 2.96:1. The correct idiom is `text-slate-500
 dark:text-slate-400`. Phase 3 removed it from 197 places; it comes back by
 muscle memory, so audit after every visual change.
 
+### ✅ Overnight run 2026-11-14 — reliability, honesty, and data-present audits
+
+Owner-approved unattended run, scoped to this app only, safety first. Every
+item is its own commit with tests; **nothing below is verified on the phone.**
+
+**Reminders and alerts — the class of bug the owner actually hit**
+
+- **One failed reminder silently cancelled every later one** (`3911d49`). The
+  launch resync was one chain of awaits: alarms, habits, tasks, notes, nightly.
+  Any throw aborted the rest — exactly the shape of "habit reminders fire,
+  note reminders don't". Each now fails alone; failures are recorded and shown
+  in Settings → Reminders → "Check reminder delivery". **This may or may not be
+  the note bug — there is still no device data.**
+- **A finished task kept reminding forever** (`906026f`). Both done-paths
+  (Today's mission, task list) skipped the OS. One `setTaskDone` now, and the
+  resync **clears anything Android holds in the app's id ranges that the data
+  no longer wants**, so orphans on existing phones heal at next launch. Ids are
+  marked wanted before scheduling, and a failed DB read throws before cleanup,
+  so it cannot wipe live reminders.
+- **Restore left Android's queue untouched** (`9979e2b`): old reminders kept
+  firing under ids now pointing at different rows. Restore now resyncs.
+- **Every toggle and delete called Android before saving** (`41318be`). An OS
+  failure meant the switch silently stayed off, and a note, habit, task or
+  alarm could not be deleted at all. All seven call sites save first and go
+  through `syncReminder` (`src/lib/reminderActions.ts`), which cannot throw
+  (`6b659b9` closed a hole in that), says when the phone refuses, and warns
+  when notifications are blocked.
+- **Fasting "target reached"** (`865f843`) and **payment due** (`7230007`) only
+  fired with the app open — the fault alarms had. Both have OS schedules now.
+  Payments get one alert at 09:00 on the next due day, rescheduled by every
+  recurring action; on the phone the poll stays quiet only on the due day, so
+  an already-overdue item still gets one nudge.
+- Id ranges: habit 100k, task 200k, note 300k, alarm 400k (8 per alarm),
+  fast 600k, payment 700k, nightly 900001. `tests/notifIds.test.ts` guards them.
+
+**Honesty and leftovers**
+
+- Last two emoji gone (`9f2ff63`). The alarm banner states what a closed app can
+  and cannot do (`a2b43df`).
+- **The orb at a low score drew the same as no score** (`08dff40`). Measured,
+  then corrected only below a knee at 25: a score of 10 now draws 10.8% of the
+  visual range (was 2.4%); 35 and above unchanged.
+- **Every export caller reads the result** (`f25c59f`, `dcc6e87`). The
+  home-screen nudge said "Backup downloaded" even when the share sheet was
+  dismissed; the crash screen reported nothing. One `exportOutcomeMessage()`
+  words it for every caller.
+
+**Screens**
+
+- Health opens on data, not a form (`7ded608`): "Water today" moved from 1042px
+  to 350px on a fresh install.
+- Money shows "nothing yet" instead of nine ₹0 values (`7c3938f`), only when a
+  table is genuinely empty *and loaded*, so it never flashes for real users.
+- **Data-present touch audit** (`2aa2e2c`, `7c8d50c`). Every earlier audit ran
+  on a fresh install and never saw controls that need data to render. Seeding a
+  full profile found seven under 44px (16–28px). New shared `TextButton`
+  (`src/components/TextButton.tsx`): use it for any text-only action.
+- **Backup fidelity is proven** (`297efdf`): one row in every table, through a
+  real JSON round trip, onto an empty database, compared field by field. A guard
+  fails if a table is ever added to the app but not the backup — proven by
+  mutation (dropping `wakeLogs` made both tests fail by name).
+
+**Deliberately not done — read before resuming**
+
+- **Brain dump → quick capture merge: deferred for an owner decision.** Quick
+  capture keeps its text in plain `useState` and ✕ wipes it. Merging safely
+  means deciding whether a half-written note survives ✕ — a daily-use choice on
+  the exact path that already lost the owner's notes once. Safe order once
+  decided: (1) `useDraft` in QuickCapture, with a test that text survives
+  closing; (2) on first launch afterwards, save any leftover brain-dump draft
+  (`lm-draft:brainDump` in localStorage) into Notes automatically; (3) only then
+  remove the card.
+- **Alarm card density: not needed.** Measured 3 controls per alarm, 193px. The
+  plan had assumed otherwise without measuring.
+- **Spending-history month bars are undersized.** They double as month pickers:
+  34px wide at 320px, and **23.5px in the 12-month view** — under WCAG's 24px
+  floor. Twelve 44px columns cannot fit one row, so the fix is an interaction
+  choice: scroll the chart, or ‹ › month arrows with display-only bars.
+- **Uploaded alarm sounds are not in backups** — deliberate (JSON flattens a
+  Blob to `{}`), documented in `backup.ts`, and pinned by a test that restore
+  leaves them alone. A restored alarm with a missing clip falls back to its
+  built-in tone.
+- Store listing and pricing are drafted in `docs/` for the owner. Nothing is
+  submitted or built; `docs/STORE_LISTING.md` lists five submission blockers.
+
+**Needs the phone, in this order**
+
+1. Settings → Reminders → "Check reminder delivery". Send the **Scheduled** list
+   and any **Failed at last launch** lines — still the only way to name the
+   note-reminder fault.
+2. Close the app fully and let a note reminder, a habit reminder and an alarm a
+   few minutes out fire.
+3. Export a backup and confirm the file arrives where you sent it.
+
 ### ⬜ Phase 6 — Motion that communicates  ← **NEXT, but not for an unattended run**
 
 Today motion is decorative fade-and-slide. Wanted: shared-element transitions
@@ -356,9 +450,11 @@ These come from the owner and from what has gone wrong already.
 
 ### Definition of done for a phase
 
-1. `npx tsc --noEmit -p tsconfig.app.json` clean
+1. `npx tsc --noEmit -p tsconfig.app.json` clean — **with `-p`**. Plain
+   `npx tsc --noEmit` checks nothing here (the root tsconfig only holds
+   project references) and passes vacuously.
 2. `npm run build` succeeds
-3. `npx vitest run` — **258/258 passing** (current baseline)
+3. `npx vitest run` — **297/297 passing** (baseline as of 2026-11-14)
 4. Verified in the browser pane at **375px and 320px**: no interactive element
    under 44px, no horizontal overflow, 0 contrast failures in both themes
 5. No `TEMP-VERIFY` left anywhere: `grep -rn 'TEMP-VERIFY' src` → empty
@@ -415,6 +511,22 @@ alias — every frosted surface silently renders unblurred.
 
 ---
 
+### Measuring in the browser pane — learned 2026-11-14
+
+- **A hidden pane runs no animation frames.** `requestAnimationFrame` never
+  fires, so anything that eases in (the orb's fill, `AnimatedNumber` count-ups)
+  is frozen partway, and a naive sample is meaningless — one baseline read 35
+  as 10.8% for exactly this reason and was discarded. For the orb, flip the
+  `dark` class on `<html>` 200 times: each flip paints one frame through its
+  `MutationObserver`, converging the fill through the real render path.
+- **Seeding with raw IndexedDB bypasses Dexie's live queries.** Screens do not
+  update until a reload. Seed, then `location.reload()`.
+- **Audit with data present, not only on a fresh install.** Controls that only
+  render once data exists (Reports' period picker, debt and recurring actions)
+  were invisible to every earlier touch audit.
+- Pane screenshots can lag the DOM. When they disagree, the DOM and the
+  database are authoritative.
+
 ## What is NOT in scope
 
 - **Emoji in stored data stay.** Habit icons the user picks and achievement
@@ -430,22 +542,30 @@ alias — every frosted surface silently renders unblurred.
 
 ## Open item for the owner
 
-**The iPhone still needs one forced update.** The install predates the
-update-delivery fix and cannot pull itself forward: delete the home-screen icon
-and re-add from Safari once. After that updates arrive on their own. Until then,
-everything above is browser-verified only — not confirmed on device.
+**The owner uses Android, running the APK — not an iPhone.** An earlier version
+of this section said to delete the home-screen icon and re-add it from Safari.
+That was wrong for this device, and deleting a home-screen app can delete its
+data. Do not give that instruction.
 
-PWA: https://ragulsapp.github.io/life-hub/ (deploys from `main` via
-`.github/workflows/pages.yml`).
+**To update:** open this link on the phone and install over the existing app.
+It says "Update", and data is kept, because every build is signed with the same
+committed debug key (`android/app/debug.keystore`, commit `33cf0af`):
+
+    https://github.com/ragulsapp/life-hub/releases/download/android-latest/life-hub-debug.apk
+
+CI rebuilds it on every push to `main` (`.github/workflows/android-build.yml`).
+Until the owner installs and checks it, everything above is browser-verified
+only.
+
+The web version also deploys from `main`: https://ragulsapp.github.io/life-hub/
 
 ---
 
 ## If you are an unattended scheduled run
 
-**There is nothing left here that is safe to do unattended.** Phases 1-5 are
-shipped. Phase 6 (motion) cannot be verified in the browser pane — Framer
-Motion is frozen there — and needs on-device judgement. Phase 7
-(widgets, backup, pricing, store listing) is product work for the owner.
+The 2026-11-14 run took everything that could be verified without the phone.
+What is left needs the device (reminder diagnosis, motion) or an owner decision
+(Brain dump merge, month-bar interaction, pricing, store submission).
 
 If you were scheduled anyway: do not invent work. Read this file, confirm the
-tree is clean and `npx vitest run` still passes 258/258, report that, and stop.
+tree is clean and `npx vitest run` passes 297/297, report that, and stop.
