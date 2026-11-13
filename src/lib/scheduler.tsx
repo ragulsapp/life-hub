@@ -90,7 +90,7 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
           if (state === "missed") {
             await db.alarms.update(a.id, firedPatch(a, today));
             await showLocalNotification(
-              "Missed alarm ⏰",
+              "Missed alarm",
               `${a.time} · ${a.label || "Alarm"} was over an hour ago.`,
             );
           }

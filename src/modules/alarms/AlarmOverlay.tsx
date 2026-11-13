@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { AlarmClock } from "lucide-react";
 import { db, soundUrl } from "../../db/db";
 import { useScheduler } from "../../lib/scheduler";
 import { startAlarmSound, stopAlarmSound, vibrate } from "../../lib/alarmSound";
@@ -114,12 +115,16 @@ export function AlarmOverlay() {
             <MorningBriefing minutesLate={minutesLate} onDone={dismiss} />
           ) : (
             <>
+          {/* A stroke icon, not the ⏰ emoji: emoji render in the host
+              font's full-colour artwork at whatever size it decides, which
+              is the mismatch the rest of the app was cleaned of. */}
           <motion.div
             animate={{ scale: [1, 1.06, 1] }}
             transition={{ repeat: Infinity, duration: 1.4 }}
-            className="text-5xl"
+            className="text-white"
+            aria-hidden
           >
-            ⏰
+            <AlarmClock size={56} strokeWidth={1.5} />
           </motion.div>
           <LiveClock />
           <div className="text-center text-lg font-semibold text-white/80">
