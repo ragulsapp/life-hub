@@ -67,37 +67,47 @@ export function HealthView() {
   return (
     <div className="flex flex-col gap-4 p-4 pb-24">
 
-      {/* --- Your Body: "am I okay?" --- */}
+      {/* --- Your Body: "am I okay?" ---
+          Without a profile this used to open the screen with the whole form:
+          a wall of fields before a single piece of the user's own data. Now
+          it is a two-line prompt, and the form appears only when asked for.
+          The links below were bare text-xs with no height — under the 44px
+          touch minimum every other control in the app meets. */}
       {hasProfile && !editingProfile ? (
         <Card title="Your body">
           <BodyBasics profile={profile!} metrics={metrics} />
           <button
             onClick={() => setEditingProfile(true)}
-            className="mt-3 text-xs font-semibold text-cyan-500 dark:text-cyan-300 hover:underline"
+            className="-ml-3 mt-1 inline-flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-cyan-500 transition-colors hover:bg-cyan-500/10 dark:text-cyan-300"
           >
             Edit your details
           </button>
         </Card>
+      ) : !hasProfile && !editingProfile ? (
+        <Card title="Personal targets">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Add your height and birth year for water and sleep targets that
+            fit you, instead of generic ones.
+          </p>
+          <button
+            onClick={() => setEditingProfile(true)}
+            className="-ml-3 mt-1 inline-flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-cyan-500 transition-colors hover:bg-cyan-500/10 dark:text-cyan-300"
+          >
+            Set up
+          </button>
+        </Card>
       ) : (
         <Card title={hasProfile ? "Your details" : "Set up your body basics"}>
-          {!hasProfile && (
-            <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-              Add your height and birth year and the app can work out targets
-              that actually fit you — instead of showing generic numbers.
-            </p>
-          )}
           <BodyProfileForm
             profile={profile}
             onDone={() => setEditingProfile(false)}
           />
-          {editingProfile && (
-            <button
-              onClick={() => setEditingProfile(false)}
-              className="mt-3 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:underline"
-            >
-              Cancel
-            </button>
-          )}
+          <button
+            onClick={() => setEditingProfile(false)}
+            className="-ml-3 mt-1 inline-flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-500/10 dark:text-slate-400"
+          >
+            Cancel
+          </button>
         </Card>
       )}
 
