@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TextButton } from "../../components/TextButton";
 import { motion } from "framer-motion";
 import type { Transaction } from "../../db/db";
 import { monthLabel } from "../../lib/dates";
@@ -162,12 +163,12 @@ export function SpendingHistory({
         </div>
       )}
 
-      <button
+      <TextButton
         onClick={() => setExpanded((v) => !v)}
-        className="self-start text-xs font-semibold text-cyan-500 hover:underline dark:text-cyan-300"
+        className="-ml-3 self-start"
       >
         {expanded ? "Show 6 months" : "Show 12 months"}
-      </button>
+      </TextButton>
     </div>
   );
 }

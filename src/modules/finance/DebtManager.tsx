@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { db, type Debt, type DebtType } from "../../db/db";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
+import { TextButton } from "../../components/TextButton";
 import { AnimatedNumber } from "../../components/AnimatedNumber";
 import { inputClass } from "../../components/inputStyles";
 import { localDateStr } from "../../lib/dates";
@@ -190,15 +191,15 @@ function DebtRow({ debt }: { debt: Debt }) {
               </button>
             </div>
           ) : (
-            <button
+            <TextButton
               onClick={() => {
                 setPaying(true);
                 setPayAmount(String(remaining));
               }}
-              className="text-xs font-semibold text-cyan-500 dark:text-cyan-300"
+              className="-ml-3"
             >
               Record payment
-            </button>
+            </TextButton>
           )}
         </div>
       )}

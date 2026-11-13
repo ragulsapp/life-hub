@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TextButton } from "../../components/TextButton";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { db, type FinanceCategoryKind, type RecurringTransaction } from "../../db/db";
@@ -136,25 +137,22 @@ function RecurringRow({ r }: { r: RecurringTransaction }) {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
+          <TextButton
+            tone="muted"
             onClick={() =>
               updateRecurringTransaction(r.id, { active: !r.active })
             }
             aria-label={`${r.active ? "Pause" : "Resume"} ${r.category}`}
-            className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-cyan-500"
           >
             {r.active ? "Pause" : "Resume"}
-          </button>
+          </TextButton>
           <DeleteButton onDelete={() => deleteRecurringTransaction(r.id)} label={`Delete ${r.category}`} />
         </div>
       </div>
       {pending && (
-        <button
-          onClick={confirm}
-          className="mt-2 text-xs font-semibold text-cyan-500 dark:text-cyan-300"
-        >
+        <TextButton onClick={confirm} className="-ml-3 mt-1">
           Confirm this month's {r.category}
-        </button>
+        </TextButton>
       )}
     </motion.li>
   );
@@ -182,12 +180,14 @@ export function RecurringManager() {
                     {r.type === "income" ? "+" : "-"}₹{r.amount.toLocaleString()}
                   </div>
                 </div>
-                <button
+                {/* The shared Button, not a hand-sized copy: the copy was
+                    28px tall. */}
+                <Button
                   onClick={() => confirmRecurringTransaction(r.id)}
-                  className="rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-white"
+                  className="text-sm"
                 >
                   Confirm
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

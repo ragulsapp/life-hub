@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TextButton } from "../../components/TextButton";
 import { TimeField } from "../../components/DateTimeField";
 import { useLiveQuery } from "dexie-react-hooks";
 import { AnimatePresence, motion } from "framer-motion";
@@ -107,12 +108,15 @@ export function NotesView() {
                     {n.title}
                   </div>
                   <div className="flex gap-2 text-xs">
-                    <button
+                    {/* Was 33px wide: "Pin" is a short word, and the padding
+                        alone could not make up the 44px. */}
+                    <TextButton
+                      tone="muted"
                       onClick={() => togglePin(n.id, n.pinned)}
-                      className="inline-flex h-11 items-center rounded-xl px-2 text-slate-500 dark:text-slate-400 transition-colors hover:bg-cyan-500/10 hover:text-cyan-500 dark:hover:text-cyan-300"
+                      className="text-xs"
                     >
                       {n.pinned ? "Unpin" : "Pin"}
-                    </button>
+                    </TextButton>
                     <DeleteButton onDelete={() => remove(n.id)} label={`Delete note "${n.title}"`} />
                   </div>
                 </div>

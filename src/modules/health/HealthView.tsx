@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TextButton } from "../../components/TextButton";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../db/db";
 import { Card } from "../../components/Card";
@@ -76,12 +77,12 @@ export function HealthView() {
       {hasProfile && !editingProfile ? (
         <Card title="Your body">
           <BodyBasics profile={profile!} metrics={metrics} />
-          <button
+          <TextButton
             onClick={() => setEditingProfile(true)}
-            className="-ml-3 mt-1 inline-flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-cyan-500 transition-colors hover:bg-cyan-500/10 dark:text-cyan-300"
+            className="-ml-3 mt-1"
           >
             Edit your details
-          </button>
+          </TextButton>
         </Card>
       ) : !hasProfile && !editingProfile ? (
         <Card title="Personal targets">
@@ -89,12 +90,12 @@ export function HealthView() {
             Add your height and birth year for water and sleep targets that
             fit you, instead of generic ones.
           </p>
-          <button
+          <TextButton
             onClick={() => setEditingProfile(true)}
-            className="-ml-3 mt-1 inline-flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-cyan-500 transition-colors hover:bg-cyan-500/10 dark:text-cyan-300"
+            className="-ml-3 mt-1"
           >
             Set up
-          </button>
+          </TextButton>
         </Card>
       ) : (
         <Card title={hasProfile ? "Your details" : "Set up your body basics"}>
@@ -102,12 +103,13 @@ export function HealthView() {
             profile={profile}
             onDone={() => setEditingProfile(false)}
           />
-          <button
+          <TextButton
+            tone="muted"
             onClick={() => setEditingProfile(false)}
-            className="-ml-3 mt-1 inline-flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-500/10 dark:text-slate-400"
+            className="-ml-3 mt-1"
           >
             Cancel
-          </button>
+          </TextButton>
         </Card>
       )}
 
