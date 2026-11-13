@@ -1,9 +1,11 @@
 import { Component, type ReactNode } from "react";
-import { exportBackup } from "../lib/backup";
+import { exportBackup, exportOutcomeMessage } from "../lib/backup";
 import { AlertIcon } from "./Icons";
 
 interface State {
   error: Error | null;
+  /** What the last export attempt actually did, shown inline. */
+  exportStatus?: string;
 }
 
 /**
@@ -36,9 +38,31 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
         <pre className="max-w-full overflow-x-auto rounded-xl bg-slate-100 p-3 text-left text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           {this.state.error.message}
         </pre>
+        {/* The outcome is shown here, not in a toast: the toast host lives
+            inside the app that just crashed. This button used to report
+            nothing at all — a failed or dismissed export looked exactly
+            like a successful one, on the screen that tells the user to
+            export and then reload. */}
+        {this.state.exportStatus && (
+          <p role="status" className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            {this.state.exportStatus}
+          </p>
+        )}
         <div className="flex gap-3">
           <button
-            onClick={() => exportBackup().catch(console.error)}
+            onClick={async () => {
+              try {
+                const result = await exportBackup();
+                this.setState({ exportStatus: exportOutcomeMessage(result) });
+              } catch (err) {
+                console.error(err);
+                this.setState({
+                  exportStatus: `Export failed: ${
+                    err instanceof Error ? err.message : String(err)
+                  }`,
+                });
+              }
+            }}
             className="rounded-2xl bg-cyan-500 px-5 py-2.5 font-semibold text-white"
           >
             Export data
