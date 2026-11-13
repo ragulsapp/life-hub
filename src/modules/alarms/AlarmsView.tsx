@@ -89,10 +89,13 @@ export function AlarmsView() {
       </h1>
 
       <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-        Habit, task, and note reminders now fire from the system even with
-        the app fully closed. The wake-up <em>mission</em> itself still needs
-        Life Mentor open (or freshly backgrounded) — solving a puzzle to
-        dismiss it means the app has to actually be running.
+        {/* Says plainly what a closed app can and cannot do. Both claims are
+            backed by the code: the OS notification comes from scheduleAlarm,
+            and the scheduler ticks the moment the app opens, ringing any
+            alarm still inside its 60-minute grace window (reminderLogic). */}
+        With the app closed, an alarm arrives as a notification. Tap it within
+        an hour and the wake-up <em>mission</em> starts. A notification on its
+        own can't make you solve the puzzle — only the open app can.
         {perm !== "granted" && (
           <button
             onClick={enableNotifications}
