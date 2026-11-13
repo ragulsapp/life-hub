@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { db } from "../../db/db";
 import { Card } from "../../components/Card";
 import { AnimatedNumber } from "../../components/AnimatedNumber";
+import { EmptyState } from "../../components/EmptyState";
+import { WalletIcon } from "../../components/Icons";
 import { localDateStr, startOfWeekStr } from "../../lib/dates";
 import {
   calcDayTotal,
@@ -64,7 +66,8 @@ function CategoryList({ rows }: { rows: { category: string; total: number }[] })
 
 export function ReportsView() {
   const [period, setPeriod] = useState<Period>("month");
-  const transactions = useLiveQuery(() => db.transactions.toArray(), []) ?? [];
+  const txRows = useLiveQuery(() => db.transactions.toArray(), []);
+  const transactions = txRows ?? [];
   const budgets = useLiveQuery(() => db.budgets.toArray(), []) ?? [];
   const now = new Date();
   const monthKey = currentMonthKey(now);
@@ -92,6 +95,24 @@ export function ReportsView() {
       limit: b.amount,
     }))
     .sort((a, b) => b.spent / b.limit - a.spent / a.limit);
+
+
+  // "Nothing yet" must mean a LOADED, genuinely empty table. While the query
+  // is in flight it is undefined; reading that as empty would flash the empty
+  // state on every open for someone with years of data.
+  // Every card here is derived from transactions; with none, all five were
+  // grids and charts of zeros.
+  if (txRows !== undefined && txRows.length === 0) {
+    return (
+      <Card title="Reports">
+        <EmptyState
+          icon={<WalletIcon size={30} />}
+          title="No reports yet"
+          hint="Income, spending and savings reports build up from what you log in Overview."
+        />
+      </Card>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">

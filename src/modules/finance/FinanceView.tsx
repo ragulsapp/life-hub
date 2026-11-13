@@ -33,7 +33,12 @@ const SUB_TABS: { id: SubTab; label: string }[] = [
 
 export function FinanceView() {
   const [subTab, setSubTab] = useState<SubTab>("overview");
-  const transactions = useLiveQuery(() => db.transactions.toArray(), []) ?? [];
+  const txRows = useLiveQuery(() => db.transactions.toArray(), []);
+  const transactions = txRows ?? [];
+  // "Nothing yet" must mean a LOADED, genuinely empty table. While the query
+  // is in flight it is undefined; reading that as empty would flash the empty
+  // state on every open for someone with years of data.
+  const nothingYet = txRows !== undefined && txRows.length === 0;
   const categories = useLiveQuery(() => db.financeCategories.toArray(), []) ?? [];
   const budgets = useLiveQuery(() => db.budgets.toArray(), []) ?? [];
   // The month being viewed. Every summary below is month-scoped, so this is
@@ -114,64 +119,81 @@ export function FinanceView() {
           </Card>
         )}
   
-        <Card title="This month">
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div>
-              <div className="text-lg font-bold text-emerald-500">
-                <AnimatedNumber value={totalIncome} prefix="₹" />
+        {/* A fresh install drew four ₹0 tiles, a ₹0 donut and an empty
+            history chart — a grid of zeros that looks like data. With nothing
+            logged at all there is nothing to add up, and it says so. A month
+            with transactions but no spending still shows a true ₹0. */}
+        {nothingYet ? (
+          <Card title="This month">
+            <EmptyState
+              icon={<WalletIcon size={30} />}
+              title="Nothing to add up yet"
+              hint="Totals, your spending breakdown and history appear here once you've logged something."
+            />
+          </Card>
+        ) : (
+          <>
+          <Card title="This month">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div className="text-lg font-bold text-emerald-500">
+                  <AnimatedNumber value={totalIncome} prefix="₹" />
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Income
+                </div>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-red-500">
+                  <AnimatedNumber value={totalExpense} prefix="₹" />
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Expense
+                </div>
+              </div>
+              <div>
+                <div
+                  className={`text-lg font-bold ${
+                    net >= 0 ? "text-emerald-500" : "text-red-500"
+                  }`}
+                >
+                  <AnimatedNumber value={net} prefix="₹" />
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Net
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 border-t border-slate-200/70 pt-3 text-center dark:border-slate-600/50">
+              <div className="text-lg font-bold text-cyan-500 dark:text-cyan-300">
+                <AnimatedNumber value={mrr} prefix="₹" />
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                Income
+                Recurring income, per month
               </div>
             </div>
-            <div>
-              <div className="text-lg font-bold text-red-500">
-                <AnimatedNumber value={totalExpense} prefix="₹" />
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                Expense
-              </div>
-            </div>
-            <div>
-              <div
-                className={`text-lg font-bold ${
-                  net >= 0 ? "text-emerald-500" : "text-red-500"
-                }`}
-              >
-                <AnimatedNumber value={net} prefix="₹" />
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                Net
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 border-t border-slate-200/70 pt-3 text-center dark:border-slate-600/50">
-            <div className="text-lg font-bold text-cyan-500 dark:text-cyan-300">
-              <AnimatedNumber value={mrr} prefix="₹" />
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              Recurring income, per month
-            </div>
-          </div>
-        </Card>
+          </Card>
   
-        <Card title="Spending breakdown" delay={0.05}>
-          <DonutChart
-            slices={donutSlices}
-            centerValue={`₹${totalExpense.toLocaleString()}`}
-            centerLabel="spent"
-          />
-        </Card>
+          <Card title="Spending breakdown" delay={0.05}>
+            <DonutChart
+              slices={donutSlices}
+              centerValue={`₹${totalExpense.toLocaleString()}`}
+              centerLabel="spent"
+            />
+          </Card>
   
-        <Card title="Spending history" delay={0.06}>
-          <SpendingHistory
-            transactions={transactions}
-            monthKey={thisMonth}
-            selectedKey={monthKey}
-            onSelectMonth={setMonthKey}
-          />
-        </Card>
+          <Card title="Spending history" delay={0.06}>
+            <SpendingHistory
+              transactions={transactions}
+              monthKey={thisMonth}
+              selectedKey={monthKey}
+              onSelectMonth={setMonthKey}
+            />
+          </Card>
   
+          </>
+        )}
+
         <Card title="Budgets" delay={0.08}>
           <BudgetManager transactions={transactions} />
         </Card>

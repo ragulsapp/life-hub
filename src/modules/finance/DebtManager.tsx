@@ -207,7 +207,12 @@ function DebtRow({ debt }: { debt: Debt }) {
 }
 
 export function DebtManager() {
-  const debts = useLiveQuery(() => db.debts.toArray(), []) ?? [];
+  const debtRows = useLiveQuery(() => db.debts.toArray(), []);
+  const debts = debtRows ?? [];
+  // "Nothing yet" must mean a LOADED, genuinely empty table. While the query
+  // is in flight it is undefined; reading that as empty would flash the empty
+  // state on every open for someone with years of data.
+  const noDebtsYet = debtRows !== undefined && debtRows.length === 0;
   const active = debts
     .filter((d) => !isSettled(d))
     .sort((a, b) => (a.dueDate ?? "9999-99-99").localeCompare(b.dueDate ?? "9999-99-99"));
@@ -216,6 +221,10 @@ export function DebtManager() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* With no debts on record the overview was ₹0 / ₹0 directly above
+          "Nothing owed either way." — the same fact, once as fake data. Once
+          any debt exists, even settled, its ₹0 is a true total. */}
+      {!noDebtsYet && (
       <Card title="Debts overview">
         <div className="grid grid-cols-2 gap-2 text-center">
           <div>
@@ -241,6 +250,7 @@ export function DebtManager() {
           </div>
         )}
       </Card>
+      )}
 
       <Card title="Add debt" delay={0.05}>
         <AddDebtForm />
