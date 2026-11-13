@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../db/db";
-import { exportBackup } from "../../lib/backup";
+import { exportBackup, exportOutcomeMessage } from "../../lib/backup";
 import { toast } from "../../lib/toast";
 import { DownloadIcon } from "../../components/Icons";
 
@@ -22,8 +22,9 @@ export function BackupNudge() {
 
   const doExport = async () => {
     try {
-      await exportBackup();
-      toast("Backup downloaded — keep it somewhere safe.");
+      // Read the result: this used to announce "Backup downloaded" even when
+      // the share sheet was dismissed and nothing was saved anywhere.
+      toast(exportOutcomeMessage(await exportBackup()));
     } catch (err) {
       console.error(err);
       toast("Export failed.", "error");

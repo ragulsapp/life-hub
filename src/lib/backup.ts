@@ -210,6 +210,25 @@ export async function restoreBackupPayload(payload: BackupPayload): Promise<void
 export type ExportResult = "shared" | "downloaded" | "cancelled";
 
 /**
+ * What to tell the user after an export — the one place that decides it.
+ *
+ * Each caller used to word this itself. Settings learned to read the result;
+ * the home-screen backup nudge never did, and announced "Backup downloaded"
+ * even when the share sheet was dismissed and no file existed anywhere. A
+ * cancel must never read as a backup.
+ */
+export function exportOutcomeMessage(result: ExportResult): string {
+  switch (result) {
+    case "cancelled":
+      return "Backup not saved.";
+    case "shared":
+      return "Backup saved — keep it somewhere other than this phone.";
+    case "downloaded":
+      return "Backup downloaded — keep it somewhere other than this phone.";
+  }
+}
+
+/**
  * Hands the user a copy of everything they own.
  *
  * This is the single most important function in the app. The whole promise is
