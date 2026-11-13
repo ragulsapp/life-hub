@@ -1,6 +1,10 @@
 import { db, type SoundId } from "../db/db";
 import {
+  alarmSlotIds,
+  cancelNotifications,
   cancelReminder,
+  isManagedNotifId,
+  pendingNotificationIds,
   scheduleAlarm,
   ensureChannels,
   habitNotifId,
@@ -72,16 +76,22 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
     db.appSettings.get(1),
   ]);
 
+  // Every id this run intends the OS to hold. Anything else in the app's own
+  // ranges is a leftover and gets cleared at the end.
+  const wanted = new Set<number>();
+
   // Alarms were missing from this resync because they had no native schedule
   // at all — they relied on the in-app poll, which cannot run when the app is
   // closed, which is exactly when an alarm has to work.
   for (const a of alarms) {
+    alarmSlotIds(a).forEach((id) => wanted.add(id));
     await attempt(`alarm "${a.label || a.time}"`, () => scheduleAlarm(a));
   }
 
   for (const h of habits) {
     if (h.reminderEnabled && h.reminderTime && !h.archived) {
       const time = h.reminderTime;
+      wanted.add(habitNotifId(h.id));
       await attempt(`habit "${h.name}"`, () =>
         scheduleDailyReminder(
           habitNotifId(h.id),
@@ -95,6 +105,7 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
   for (const t of tasks) {
     if (t.reminderEnabled && t.reminderTime && !t.done) {
       const time = t.reminderTime;
+      wanted.add(taskNotifId(t.id));
       await attempt(`task "${t.title}"`, () =>
         scheduleDailyReminder(taskNotifId(t.id), "Task reminder", t.title, time),
       );
@@ -103,6 +114,7 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
   for (const n of notes) {
     if (n.reminderEnabled && n.reminderTime) {
       const time = n.reminderTime;
+      wanted.add(noteNotifId(n.id));
       await attempt(`note "${n.title}"`, () =>
         scheduleDailyReminder(noteNotifId(n.id), "Note reminder", n.title, time),
       );
@@ -111,6 +123,7 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
 
   // On by default — undefined (pre-existing installs) and `true` both mean on.
   if (settings?.nightReminderEnabled !== false) {
+    wanted.add(NIGHT_REMINDER_NOTIF_ID);
     await attempt("nightly plan-tomorrow reminder", () =>
       scheduleDailyReminder(
         NIGHT_REMINDER_NOTIF_ID,
@@ -125,4 +138,22 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
       cancelReminder(NIGHT_REMINDER_NOTIF_ID),
     );
   }
+
+  /**
+   * Clear what nothing wants any more.
+   *
+   * Scheduling only ever ADDS. A reminder whose row stopped wanting one — a
+   * task ticked done, a note deleted before deletes cancelled, a reminder
+   * switched off while the OS call failed — stayed queued in Android
+   * forever, because no code path ever looked at what the OS was holding.
+   * Finished tasks went on reminding every day. This compares the OS's
+   * queue with what the database actually wants and removes the
+   * difference, so every phone heals on its next launch.
+   */
+  await attempt("clearing reminders no longer wanted", async () => {
+    const stale = (await pendingNotificationIds()).filter(
+      (id) => isManagedNotifId(id) && !wanted.has(id),
+    );
+    await cancelNotifications(stale);
+  });
 }

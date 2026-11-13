@@ -16,6 +16,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const scheduled: number[] = [];
 const failOn = new Set<number>();
+/** What the fake OS reports as already queued before the resync runs. */
+let pendingBefore: number[] = [];
+const cancelledIds: number[] = [];
 
 vi.mock("../src/lib/notify", async (orig) => {
   const real = await orig<typeof import("../src/lib/notify")>();
@@ -28,6 +31,10 @@ vi.mock("../src/lib/notify", async (orig) => {
     scheduleDailyReminder: vi.fn(async (id: number) => {
       if (failOn.has(id)) throw new Error(`refused ${id}`);
       scheduled.push(id);
+    }),
+    pendingNotificationIds: vi.fn(async () => [...pendingBefore]),
+    cancelNotifications: vi.fn(async (ids: number[]) => {
+      cancelledIds.push(...ids);
     }),
     scheduleAlarm: vi.fn(async (a: { id: number }) => {
       const id = real.alarmNotifId(a.id, 7);
@@ -46,6 +53,8 @@ const notify = await import("../src/lib/notify");
 beforeEach(async () => {
   scheduled.length = 0;
   failOn.clear();
+  pendingBefore = [];
+  cancelledIds.length = 0;
   await Promise.all([
     db.habits.clear(),
     db.tasks.clear(),
@@ -106,5 +115,31 @@ describe("resyncNativeReminders", () => {
     expect(failures).toHaveLength(1);
     expect(failures[0].what).toContain("Call bank");
     expect(failures[0].error).toContain("refused");
+  });
+
+  it("clears reminders the OS still holds for rows that no longer want one", async () => {
+    // A finished task whose reminder was never cancelled, a note that was
+    // deleted, a wanted note, and an id outside the app's ranges.
+    await db.tasks.update(1, { done: true });
+    pendingBefore = [
+      notify.taskNotifId(1),
+      notify.noteNotifId(99),
+      notify.noteNotifId(1),
+      42,
+    ];
+    await resyncNativeReminders();
+    expect(cancelledIds.sort()).toEqual(
+      [notify.taskNotifId(1), notify.noteNotifId(99)].sort(),
+    );
+  });
+
+  it("never cancels the reminders it has just scheduled", async () => {
+    pendingBefore = [
+      notify.habitNotifId(1),
+      notify.alarmNotifId(1, 7),
+      notify.NIGHT_REMINDER_NOTIF_ID,
+    ];
+    await resyncNativeReminders();
+    expect(cancelledIds).toEqual([]);
   });
 });

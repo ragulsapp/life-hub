@@ -13,6 +13,7 @@ import {
 } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { sortByOrder } from "../../lib/taskOrder";
+import { setTaskDone } from "./taskActions";
 import { DeleteButton } from "../../components/IconButton";
 import {
   BellIcon,
@@ -37,12 +38,9 @@ export function TaskList() {
     setTitle("");
   };
 
-  const toggle = (id: number, done: boolean) =>
-    // Clearing completedAt on un-tick keeps "finished this week" honest.
-    db.tasks.update(id, {
-      done: !done,
-      completedAt: !done ? Date.now() : undefined,
-    });
+  // Through setTaskDone, which also cancels or restores the OS reminder —
+  // writing `done` directly left a finished task's reminder firing forever.
+  const toggle = (id: number, done: boolean) => setTaskDone(id, !done);
   const remove = (id: number) => {
     cancelReminder(taskNotifId(id));
     db.tasks.delete(id);

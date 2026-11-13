@@ -5,6 +5,7 @@ import { db, PILLAR_META } from "../../db/db";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { AuraOrb } from "../../components/AuraOrb";
+import { setTaskDone } from "../alarms/taskActions";
 import { localDateStr } from "../../lib/dates";
 import { calcLifeBalance, calcPillars } from "../../lib/lifePillars";
 import { getRecommendation } from "../../lib/recommendations";
@@ -107,8 +108,9 @@ export function DashboardView() {
       label: t.title,
       icon: <CheckSquareIcon size={16} />,
       done: false,
-      toggle: () =>
-        db.tasks.update(t.id, { done: true, completedAt: Date.now() }),
+      // setTaskDone, not a direct write: it also cancels the task's OS
+      // reminder, which ticking it here used to leave firing every day.
+      toggle: () => setTaskDone(t.id, true),
     }));
   const mission = [...missionHabits, ...missionTasks];
   const missionDone = mission.filter((m) => m.done).length;

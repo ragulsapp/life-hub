@@ -238,16 +238,12 @@ export async function scheduleAlarm(alarm: {
   // bundled raw resource — so a custom tone falls back to the chosen built-in
   // for the OS notification. The in-app ring still uses the real clip.
   const channel = channelId(alarm.builtInSound ?? reminderSound);
-  // Empty days means every day, which Android expresses as a plain daily
-  // repeat rather than seven weekly ones.
-  const slots =
-    alarm.days.length === 0
-      ? [{ slot: 7, on: { hour, minute } }]
-      : alarm.days.map((d) => ({
-          slot: d,
-          // Capacitor weekdays are 1=Sunday..7=Saturday; ours are 0=Sunday.
-          on: { weekday: d + 1, hour, minute },
-        }));
+  const slots = alarmSlots(alarm.days).map((slot) => ({
+    slot,
+    // Capacitor weekdays are 1=Sunday..7=Saturday; ours are 0=Sunday. Slot 7
+    // is the every-day case, a plain daily repeat with no weekday.
+    on: slot === 7 ? { hour, minute } : { weekday: slot + 1, hour, minute },
+  }));
 
   await LocalNotifications.schedule({
     notifications: slots.map(({ slot, on }) => ({
@@ -260,6 +256,25 @@ export async function scheduleAlarm(alarm: {
   });
 }
 
+/**
+ * Which slots an alarm occupies. Empty days means every day, which Android
+ * expresses as one plain daily repeat (slot 7) rather than seven weekly ones.
+ */
+function alarmSlots(days: number[]): number[] {
+  return days.length === 0 ? [7] : [...days];
+}
+
+/** The notification ids an alarm holds while enabled — none while disabled. */
+export function alarmSlotIds(alarm: {
+  id: number;
+  days: number[];
+  enabled: boolean;
+}): number[] {
+  return alarm.enabled
+    ? alarmSlots(alarm.days).map((s) => alarmNotifId(alarm.id, s))
+    : [];
+}
+
 /** Clear every weekday slot an alarm might occupy. */
 export async function cancelAlarm(alarmId: number): Promise<void> {
   if (!isNative) return;
@@ -268,6 +283,28 @@ export async function cancelAlarm(alarmId: number): Promise<void> {
       id: alarmNotifId(alarmId, slot),
     })),
   });
+}
+
+/** Ids the OS is currently holding a schedule for. */
+export async function pendingNotificationIds(): Promise<number[]> {
+  if (!isNative) return [];
+  const { notifications } = await LocalNotifications.getPending();
+  return notifications.map((n) => n.id);
+}
+
+export async function cancelNotifications(ids: number[]): Promise<void> {
+  if (!isNative || ids.length === 0) return;
+  await LocalNotifications.cancel({ notifications: ids.map((id) => ({ id })) });
+}
+
+/**
+ * Whether an id belongs to one of the app's own schedules (habit, task, note,
+ * alarm, nightly) — the only ids the resync is allowed to clear. Immediate
+ * one-off notifications use random ids, but they are delivered at once and
+ * are never in the pending list.
+ */
+export function isManagedNotifId(id: number): boolean {
+  return (id >= 100_000 && id < 900_000) || id === NIGHT_REMINDER_NOTIF_ID;
 }
 
 export async function cancelReminder(id: number): Promise<void> {
