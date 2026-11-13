@@ -50,6 +50,29 @@ const NODES = 56;
 /** Struts per node. 5 gives the triangulated look without turning to mesh. */
 const LINKS = 5;
 
+/**
+ * Lift the bottom quarter of the score range so a low score is visible.
+ *
+ * Measured, not guessed: with the fill stepped to convergence, ink across
+ * the sphere (outside the readout) ran 0 / 0.3 / 2.4 / 6.0 / 34.6 / 66.3 /
+ * 100 percent at scores 0 / 5 / 10 / 15 / 35 / 65 / 95. From 25 up it tracks
+ * the score; below that it is crushed, because the bottom pole is a handful
+ * of small, distant nodes. A score of 10 drew the same as 0, which is the
+ * one distinction the orb most needs to make — "nothing yet" against "some".
+ *
+ * Below the knee the fill ramps linearly from LOW_FLOOR up to meet the true
+ * value at the knee, so it is continuous and monotonic, zero stays exactly
+ * zero, and nothing at 25 or above changes. The cost is that a tiny score
+ * reads slightly fuller than it is; the printed number carries the value.
+ */
+const LOW_KNEE = 0.25;
+const LOW_FLOOR = 1 / 6;
+function perceivedFill(f: number): number {
+  if (f <= 0) return 0;
+  if (f >= LOW_KNEE) return f;
+  return LOW_FLOOR + (f / LOW_KNEE) * (LOW_KNEE - LOW_FLOOR);
+}
+
 interface P3 {
   x: number;
   y: number;
@@ -226,10 +249,11 @@ export function AuraOrb({
        * colour and their brightness; nodes above it go grey and faint. A low
        * score now looks like a sphere mostly waiting to be filled in.
        */
-      const target =
+      const target = perceivedFill(
         scoreRef.current === null
           ? 0
-          : Math.max(0, Math.min(100, scoreRef.current)) / 100;
+          : Math.max(0, Math.min(100, scoreRef.current)) / 100,
+      );
       fillRef.current += (target - fillRef.current) * (reduced ? 1 : 0.06);
       // Model y runs +1 at the bottom of the screen to -1 at the top, and the
       // spin is about the y axis, so the waterline holds still while the
