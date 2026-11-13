@@ -69,6 +69,7 @@ beforeEach(async () => {
     db.alarms.clear(),
     db.appSettings.clear(),
     db.fastingSessions.clear(),
+    db.recurringTransactions.clear(),
   ]);
   await db.habits.add({
     id: 1, name: "Water", reminderEnabled: true, reminderTime: "08:00",
@@ -199,5 +200,16 @@ describe("resyncNativeReminders", () => {
     } as never);
     await resyncNativeReminders();
     expect(scheduled).not.toContain(notify.fastNotifId(5));
+  });
+
+  it("keeps an active payment's due alert and clears a deleted one's", async () => {
+    await db.recurringTransactions.add({
+      id: 8, type: "expense", category: "Rent", amount: 12000,
+      dayOfMonth: 5, active: true,
+    } as never);
+    pendingBefore = [notify.recurringNotifId(8), notify.recurringNotifId(77)];
+    await resyncNativeReminders();
+    expect(scheduled).toContain(notify.recurringNotifId(8));
+    expect(cancelledIds).toEqual([notify.recurringNotifId(77)]);
   });
 });

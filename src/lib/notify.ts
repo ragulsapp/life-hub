@@ -298,6 +298,7 @@ export async function scheduleOnce(
   title: string,
   body: string,
   at: Date,
+  extra?: NotificationExtra,
 ): Promise<void> {
   if (!isNative) return;
   await ensureChannels();
@@ -310,6 +311,7 @@ export async function scheduleOnce(
         body,
         channelId: channelId(reminderSound),
         schedule: { at, allowWhileIdle: true },
+        extra,
       },
     ],
   });
@@ -407,6 +409,7 @@ export const alarmNotifId = (alarmId: number, slot: number) =>
   400_000 + alarmId * 8 + slot;
 /** Above the alarm blocks, which reach 600_000 only at 25,000 alarms. */
 export const fastNotifId = (fastId: number) => 600_000 + fastId;
+export const recurringNotifId = (recurringId: number) => 700_000 + recurringId;
 
 /** Fixed id for the singleton nightly reminder — well clear of the row-id
  *  ranges above. */

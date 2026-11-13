@@ -1,4 +1,5 @@
 import { db, type SoundId } from "../db/db";
+import { nextDueAt, rescheduleRecurring } from "../modules/finance/recurringDue";
 import {
   fastTargetAt,
   scheduleFastComplete,
@@ -10,6 +11,7 @@ import {
   isManagedNotifId,
   pendingNotificationIds,
   fastNotifId,
+  recurringNotifId,
   scheduleAlarm,
   ensureChannels,
   habitNotifId,
@@ -73,14 +75,16 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
   if (sound) setReminderSound(sound);
   await attempt("notification channels", ensureChannels);
 
-  const [habits, tasks, notes, alarms, fasts, settings] = await Promise.all([
-    db.habits.toArray(),
-    db.tasks.toArray(),
-    db.notes.toArray(),
-    db.alarms.toArray(),
-    db.fastingSessions.toArray(),
-    db.appSettings.get(1),
-  ]);
+  const [habits, tasks, notes, alarms, fasts, recurring, settings] =
+    await Promise.all([
+      db.habits.toArray(),
+      db.tasks.toArray(),
+      db.notes.toArray(),
+      db.alarms.toArray(),
+      db.fastingSessions.toArray(),
+      db.recurringTransactions.toArray(),
+      db.appSettings.get(1),
+    ]);
 
   // Every id this run intends the OS to hold. Anything else in the app's own
   // ranges is a leftover and gets cleared at the end.
@@ -137,6 +141,14 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
       await attempt(`fast "${f.label ?? `${f.targetHours}h`}"`, () =>
         scheduleFastComplete(f),
       );
+    }
+  }
+
+  // Each active recurring payment holds one alert for its next due day.
+  for (const r of recurring) {
+    if (nextDueAt(r)) {
+      wanted.add(recurringNotifId(r.id));
+      await attempt(`payment "${r.category}"`, () => rescheduleRecurring(r.id));
     }
   }
 

@@ -10,6 +10,7 @@ import { db, DEFAULT_REMINDER_SOUND, type Alarm } from "../db/db";
 import { isNative, showLocalNotification } from "./notify";
 import { resyncNativeReminders } from "./reminderSync";
 import { fastCompleteCopy } from "../modules/health/fastingActions";
+import { isDueToday } from "../modules/finance/recurringDue";
 import { localDateStr, localMonthKey } from "./dates";
 import { alarmDueState, reminderDue } from "./reminderLogic";
 import { isPending } from "../modules/finance/recurringSummary";
@@ -195,11 +196,18 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
       for (const r of recurring) {
         if (!isPending(r, now) || r.notifiedMonth === thisMonth) continue;
         await db.recurringTransactions.update(r.id, { notifiedMonth: thisMonth });
-        await showLocalNotification(
-          "Recurring payment due",
-          `${r.category} — ₹${r.amount.toLocaleString()}`,
-          { kind: "recurring-due", recurringId: r.id },
-        );
+        // On the phone the OS delivers this at 09:00 on the due day from the
+        // schedule recurringDue keeps, so the poll stays quiet on that day
+        // rather than doubling it. On any later day it is still unpaid, and
+        // the nudge is worth giving — including for payments that were
+        // already overdue before the OS alert existed.
+        if (!isNative || !isDueToday(r, now)) {
+          await showLocalNotification(
+            "Recurring payment due",
+            `${r.category} — ₹${r.amount.toLocaleString()}`,
+            { kind: "recurring-due", recurringId: r.id },
+          );
+        }
       }
 
       // --- Smart Notifications: four contextual nudges, gated one-per-day

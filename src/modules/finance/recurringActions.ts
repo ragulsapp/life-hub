@@ -4,6 +4,8 @@ import {
   type RecurringTransaction,
 } from "../../db/db";
 import { localDateStr, localMonthKey } from "../../lib/dates";
+import { syncReminder } from "../../lib/reminderActions";
+import { rescheduleRecurring } from "./recurringDue";
 
 export async function addRecurringTransaction(input: {
   type: FinanceCategoryKind;
@@ -12,7 +14,11 @@ export async function addRecurringTransaction(input: {
   dayOfMonth: number;
   note?: string;
 }): Promise<void> {
-  await db.recurringTransactions.add({ ...input, active: true } as never);
+  const id = (await db.recurringTransactions.add({
+    ...input,
+    active: true,
+  } as never)) as unknown as number;
+  await syncReminder(() => rescheduleRecurring(id), { enabling: true });
 }
 
 export async function updateRecurringTransaction(
@@ -25,10 +31,13 @@ export async function updateRecurringTransaction(
   >,
 ): Promise<void> {
   await db.recurringTransactions.update(id, patch);
+  // A new day, a new amount, or a pause all change the alert.
+  await syncReminder(() => rescheduleRecurring(id), { enabling: false });
 }
 
 export async function deleteRecurringTransaction(id: number): Promise<void> {
   await db.recurringTransactions.delete(id);
+  await syncReminder(() => rescheduleRecurring(id), { enabling: false });
 }
 
 /**
@@ -62,4 +71,7 @@ export async function confirmRecurringTransaction(
       await db.recurringTransactions.update(id, { generatedMonth: thisMonth });
     },
   );
+  // After the transaction commits: confirming this month moves the alert to
+  // next month, so paying early never leaves a stale "due" on the way.
+  await syncReminder(() => rescheduleRecurring(id), { enabling: false });
 }
