@@ -76,4 +76,16 @@ describe("syncReminder", () => {
     expect(notify.requestNotificationPermission).not.toHaveBeenCalled();
     expect(toasts).toEqual([]);
   });
+
+  it("cannot throw even when the permission check itself fails", async () => {
+    const notify = await import("../src/lib/notify");
+    vi.mocked(notify.requestNotificationPermission).mockRejectedValueOnce(
+      new Error("no window"),
+    );
+    const update = vi.fn(async () => {});
+    await expect(
+      syncReminder(update, { enabling: true }),
+    ).resolves.toBeUndefined();
+    expect(update).toHaveBeenCalledOnce();
+  });
 });

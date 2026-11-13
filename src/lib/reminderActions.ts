@@ -21,12 +21,19 @@ export async function syncReminder(
   { enabling }: { enabling: boolean },
 ): Promise<void> {
   if (enabling) {
-    const permission = await requestNotificationPermission();
-    if (permission !== "granted") {
-      toast(
-        "Notifications are off for Life Mentor, so this reminder can't appear. Turn them on in your phone's Settings → Apps.",
-        "error",
-      );
+    // Inside its own guard: the permission check can throw too (no
+    // Notification API in this environment, a plugin error), and this
+    // function's whole contract is that it never fails the caller's change.
+    try {
+      const permission = await requestNotificationPermission();
+      if (permission !== "granted") {
+        toast(
+          "Notifications are off for Life Mentor, so this reminder can't appear. Turn them on in your phone's Settings → Apps.",
+          "error",
+        );
+      }
+    } catch (err) {
+      console.error("notification permission check failed", err);
     }
   }
   try {
