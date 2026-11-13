@@ -5,6 +5,7 @@ import { db } from "../../db/db";
 import { Card } from "../../components/Card";
 import { AnimatedNumber } from "../../components/AnimatedNumber";
 import { EmptyState } from "../../components/EmptyState";
+import { Segmented } from "../../components/Chip";
 import { WalletIcon } from "../../components/Icons";
 import { localDateStr, startOfWeekStr } from "../../lib/dates";
 import {
@@ -117,21 +118,19 @@ export function ReportsView() {
   return (
     <div className="flex flex-col gap-4">
       <Card title="Totals">
-        <div className="mb-3 flex gap-1.5 rounded-2xl bg-slate-100 p-1 dark:bg-slate-700/40">
-          {PERIODS.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setPeriod(p.id)}
-              className={`flex-1 rounded-xl py-1.5 text-xs font-semibold transition-colors ${
-                period === p.id
-                  ? "bg-white text-cyan-500 shadow-e1 dark:bg-slate-800 dark:text-cyan-300"
-                  : "text-slate-500 dark:text-slate-400"
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+        {/* The shared control, not a hand-rolled copy: the copy measured
+            28px tall, under the 44px minimum the primitive was built to
+            guarantee. "radio" because this picks a value inside a card that
+            already sits under Money's own tab bar — as "tabs" it would nest
+            a tablist inside a tablist. */}
+        <Segmented
+          options={PERIODS}
+          value={period}
+          onChange={setPeriod}
+          semantics="radio"
+          label="Report period"
+          className="mb-3"
+        />
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
             <div className="text-lg font-bold text-emerald-500">
