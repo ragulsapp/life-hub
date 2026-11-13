@@ -7,6 +7,7 @@ import { db, type Habit, type HabitSchedule } from "../../db/db";
 import { localDateStr } from "../../lib/dates";
 import { toast } from "../../lib/toast";
 import { cancelReminder, habitNotifId } from "../../lib/notify";
+import { syncReminder } from "../../lib/reminderActions";
 
 export const MAX_PINNED = 2;
 
@@ -125,7 +126,15 @@ export async function togglePinned(habit: Habit): Promise<void> {
 /** Delete a habit, its scheduled reminder, and every log row that references it. */
 export async function deleteHabit(habitName: string): Promise<void> {
   const habit = await db.habits.where("name").equals(habitName).first();
-  if (habit) await cancelReminder(habitNotifId(habit.id));
   await db.habitLogs.where("habitName").equals(habitName).delete();
   await db.habits.where("name").equals(habitName).delete();
+  // After the delete, not before: with the OS call first, a failure there
+  // left the habit impossible to delete. A reminder that fails to cancel
+  // here is cleared by the launch resync, which no longer wants it.
+  if (habit) {
+    const id = habit.id;
+    await syncReminder(() => cancelReminder(habitNotifId(id)), {
+      enabling: false,
+    });
+  }
 }

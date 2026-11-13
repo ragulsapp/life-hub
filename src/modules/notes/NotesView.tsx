@@ -8,10 +8,10 @@ import { inputClass } from "../../components/inputStyles";
 import {
   cancelReminder,
   noteNotifId,
-  requestNotificationPermission,
   scheduleDailyReminder,
 } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
+import { syncReminder } from "../../lib/reminderActions";
 import { DeleteButton } from "../../components/IconButton";
 import { EmptyState } from "../../components/EmptyState";
 import {
@@ -42,9 +42,13 @@ export function NotesView() {
     await db.notes.update(id, { pinned: !pinned });
   };
 
+  // Delete first, then clear the reminder: with the OS call first, a failure
+  // there meant the note could not be deleted at all.
   const remove = async (id: number) => {
-    await cancelReminder(noteNotifId(id));
     await db.notes.delete(id);
+    await syncReminder(() => cancelReminder(noteNotifId(id)), {
+      enabling: false,
+    });
   };
 
   const toggleReminder = async (
@@ -54,17 +58,20 @@ export function NotesView() {
     time?: string,
   ) => {
     const t = time ?? "09:00";
-    if (enabled) {
-      await requestNotificationPermission();
-      await scheduleDailyReminder(noteNotifId(id), "Note reminder", title, t);
-    } else {
-      await cancelReminder(noteNotifId(id));
-    }
+    // Save the user's choice first. The OS call used to come first, and when
+    // it threw the switch silently stayed off with nothing on screen.
     await db.notes.update(id, {
       reminderEnabled: enabled,
       reminderTime: t,
       lastReminderDate: reminderCreationGuard(t),
     });
+    await syncReminder(
+      () =>
+        enabled
+          ? scheduleDailyReminder(noteNotifId(id), "Note reminder", title, t)
+          : cancelReminder(noteNotifId(id)),
+      { enabling: enabled },
+    );
   };
 
   return (

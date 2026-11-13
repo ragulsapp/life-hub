@@ -14,6 +14,7 @@ import { WakeHistory } from "./WakeHistory";
 import { PlanTomorrowPanel } from "./PlanTomorrowPanel";
 import { useScheduler } from "../../lib/scheduler";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
+import { syncReminder } from "../../lib/reminderActions";
 import { EmptyState } from "../../components/EmptyState";
 import {
   cancelAlarm,
@@ -72,11 +73,13 @@ export function AlarmsView() {
     });
     // The OS schedule has to follow the switch, or a disabled alarm keeps
     // firing and an enabled one stays silent until the next app launch.
-    await scheduleAlarm({ ...a, enabled });
+    await syncReminder(() => scheduleAlarm({ ...a, enabled }), {
+      enabling: enabled,
+    });
   };
   const remove = async (id: number) => {
-    await cancelAlarm(id);
     await db.alarms.delete(id);
+    await syncReminder(() => cancelAlarm(id), { enabling: false });
   };
 
   return (

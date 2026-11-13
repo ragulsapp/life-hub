@@ -21,10 +21,10 @@ import { HabitHeatmap } from "./HabitHeatmap";
 import {
   cancelReminder,
   habitNotifId,
-  requestNotificationPermission,
   scheduleDailyReminder,
 } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
+import { syncReminder } from "../../lib/reminderActions";
 import { deleteHabit, setHabitDone, togglePinned } from "./habitActions";
 import { EmptyState } from "../../components/EmptyState";
 import { AppIcon } from "../../lib/appIcons";
@@ -222,22 +222,25 @@ function HabitCard({
               <button
                 onClick={async () => {
                   const time = habit.reminderTime ?? "09:00";
-                  if (!habit.reminderEnabled) {
-                    await requestNotificationPermission();
-                    await scheduleDailyReminder(
-                      habitNotifId(habit.id),
-                      "Habit reminder",
-                      `Time for: ${habit.name}`,
-                      time,
-                    );
-                  } else {
-                    await cancelReminder(habitNotifId(habit.id));
-                  }
-                  db.habits.update(habit.id, {
-                    reminderEnabled: !habit.reminderEnabled,
+                  const enabling = !habit.reminderEnabled;
+                  // Save first; see syncReminder for why the order matters.
+                  await db.habits.update(habit.id, {
+                    reminderEnabled: enabling,
                     reminderTime: time,
                     lastReminderDate: reminderCreationGuard(time),
                   });
+                  await syncReminder(
+                    () =>
+                      enabling
+                        ? scheduleDailyReminder(
+                            habitNotifId(habit.id),
+                            "Habit reminder",
+                            `Time for: ${habit.name}`,
+                            time,
+                          )
+                        : cancelReminder(habitNotifId(habit.id)),
+                    { enabling },
+                  );
                 }}
                 className={`flex h-11 items-center gap-1.5 rounded-full px-3 text-caption font-semibold transition-colors ${
                   habit.reminderEnabled
@@ -263,16 +266,22 @@ function HabitCard({
                 label="Remind me at"
                 value={habit.reminderTime ?? "09:00"}
                 onCommit={async (time) => {
-                  await scheduleDailyReminder(
-                    habitNotifId(habit.id),
-                    "Habit reminder",
-                    `Time for: ${habit.name}`,
-                    time,
-                  );
-                  db.habits.update(habit.id, {
+                  await db.habits.update(habit.id, {
                     reminderTime: time,
                     lastReminderDate: reminderCreationGuard(time),
                   });
+                  await syncReminder(
+                    () =>
+                      scheduleDailyReminder(
+                        habitNotifId(habit.id),
+                        "Habit reminder",
+                        `Time for: ${habit.name}`,
+                        time,
+                      ),
+                    // Changing the time of a reminder that is already on —
+                    // permission was settled when it was switched on.
+                    { enabling: false },
+                  );
                 }}
               />
             </div>

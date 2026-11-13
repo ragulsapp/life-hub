@@ -7,13 +7,13 @@ import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import {
   cancelReminder,
-  requestNotificationPermission,
   scheduleDailyReminder,
   taskNotifId,
 } from "../../lib/notify";
 import { reminderCreationGuard } from "../../lib/reminderLogic";
 import { sortByOrder } from "../../lib/taskOrder";
 import { setTaskDone } from "./taskActions";
+import { syncReminder } from "../../lib/reminderActions";
 import { DeleteButton } from "../../components/IconButton";
 import {
   BellIcon,
@@ -41,14 +41,15 @@ export function TaskList() {
   // Through setTaskDone, which also cancels or restores the OS reminder —
   // writing `done` directly left a finished task's reminder firing forever.
   const toggle = (id: number, done: boolean) => setTaskDone(id, !done);
-  const remove = (id: number) => {
-    cancelReminder(taskNotifId(id));
-    db.tasks.delete(id);
+  const remove = async (id: number) => {
+    await db.tasks.delete(id);
+    await syncReminder(() => cancelReminder(taskNotifId(id)), {
+      enabling: false,
+    });
   };
 
+  // Save first, then the OS — see syncReminder for why the order matters.
   const setReminder = async (id: number, title: string, time: string) => {
-    await requestNotificationPermission();
-    await scheduleDailyReminder(taskNotifId(id), "Task reminder", title, time);
     await db.tasks.update(id, {
       reminderTime: time,
       reminderEnabled: !!time,
@@ -56,11 +57,17 @@ export function TaskList() {
       lastReminderDate: reminderCreationGuard(time),
     });
     setEditingReminder(null);
+    await syncReminder(
+      () => scheduleDailyReminder(taskNotifId(id), "Task reminder", title, time),
+      { enabling: true },
+    );
   };
 
-  const clearReminder = (id: number) => {
-    cancelReminder(taskNotifId(id));
-    db.tasks.update(id, { reminderEnabled: false });
+  const clearReminder = async (id: number) => {
+    await db.tasks.update(id, { reminderEnabled: false });
+    await syncReminder(() => cancelReminder(taskNotifId(id)), {
+      enabling: false,
+    });
   };
 
   return (
