@@ -1,7 +1,8 @@
 import { Capacitor } from "@capacitor/core";
 import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
-import { db } from "../db/db";
+import { db, DEFAULT_REMINDER_SOUND } from "../db/db";
+import { resyncNativeReminders } from "./reminderSync";
 import { localDateStr } from "./dates";
 
 export interface BackupPayload {
@@ -182,6 +183,27 @@ export async function restoreBackupPayload(payload: BackupPayload): Promise<void
       }
     },
   );
+
+  /**
+   * Bring the OS schedule in line with the data that was just restored.
+   *
+   * Restoring replaces every row, but Android's reminder queue is not part of
+   * the database and was left exactly as it was. The old data's reminders
+   * kept firing — under the same ids, which now pointed at different notes and
+   * tasks — and the restored reminders were not scheduled until the next
+   * launch. The resync schedules what the restored data wants and clears
+   * everything else in the app's ranges.
+   *
+   * It runs after the transaction, and its failure cannot undo the restore:
+   * the user's data is the thing that matters here, and a schedule that fails
+   * now is retried on every launch.
+   */
+  try {
+    const settings = await db.appSettings.get(1);
+    await resyncNativeReminders(settings?.reminderSound ?? DEFAULT_REMINDER_SOUND);
+  } catch (err) {
+    console.error("reminder resync after restore failed", err);
+  }
 }
 
 /** Whether the backup left the app, and by which route. */

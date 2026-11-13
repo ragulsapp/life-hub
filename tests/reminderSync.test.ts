@@ -49,6 +49,9 @@ const { resyncNativeReminders, lastResyncFailures } = await import(
   "../src/lib/reminderSync"
 );
 const notify = await import("../src/lib/notify");
+const { buildBackupPayload, restoreBackupPayload } = await import(
+  "../src/lib/backup"
+);
 
 beforeEach(async () => {
   scheduled.length = 0;
@@ -141,5 +144,28 @@ describe("resyncNativeReminders", () => {
     ];
     await resyncNativeReminders();
     expect(cancelledIds).toEqual([]);
+  });
+
+  it("after a restore, holds the restored reminders and clears the old ones", async () => {
+    // A backup whose only reminder is a note at 07:30.
+    await db.tasks.clear();
+    await db.habits.clear();
+    await db.alarms.clear();
+    await db.notes.clear();
+    await db.notes.add({
+      id: 5, title: "Restored", body: "", tags: [], pinned: false,
+      createdAt: 0, reminderEnabled: true, reminderTime: "07:30",
+    } as never);
+    const backup = await buildBackupPayload();
+
+    // The phone currently holds the OLD data's reminders.
+    pendingBefore = [notify.taskNotifId(1), notify.habitNotifId(1)];
+    scheduled.length = 0;
+    await restoreBackupPayload(backup);
+
+    expect(scheduled).toContain(notify.noteNotifId(5));
+    expect(cancelledIds.sort()).toEqual(
+      [notify.taskNotifId(1), notify.habitNotifId(1)].sort(),
+    );
   });
 });
