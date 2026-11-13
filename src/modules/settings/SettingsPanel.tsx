@@ -14,7 +14,10 @@ import { useDarkMode } from "../../lib/theme";
 import { BodyProfileForm } from "../health/BodyProfileForm";
 import { ReminderSoundPicker } from "../alarms/ReminderSoundPicker";
 import { setFastingEnabled } from "../health/healthActions";
-import { resyncNativeReminders } from "../../lib/reminderSync";
+import {
+  lastResyncFailures,
+  resyncNativeReminders,
+} from "../../lib/reminderSync";
 import { CloseButton } from "../../components/IconButton";
 import {
   BellIcon,
@@ -331,6 +334,21 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   #{p.id} {p.at} — {p.title}
                 </p>
               ))}
+              {/* Each reminder now fails alone at launch instead of silently
+                  taking every later one down with it — and this is where
+                  those individual failures become visible. */}
+              {lastResyncFailures().length > 0 && (
+                <>
+                  <p className="font-semibold text-rose-600 dark:text-rose-400">
+                    Failed at last launch:
+                  </p>
+                  {lastResyncFailures().map((f, i) => (
+                    <p key={i} className="pl-2">
+                      {f.what} — {f.error}
+                    </p>
+                  ))}
+                </>
+              )}
             </div>
           )}
         </Section>
