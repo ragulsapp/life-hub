@@ -9,6 +9,7 @@ import {
 import { db, DEFAULT_REMINDER_SOUND, type Alarm } from "../db/db";
 import { isNative, showLocalNotification } from "./notify";
 import { resyncNativeReminders } from "./reminderSync";
+import { fastCompleteCopy } from "../modules/health/fastingActions";
 import { localDateStr, localMonthKey } from "./dates";
 import { alarmDueState, reminderDue } from "./reminderLogic";
 import { isPending } from "../modules/finance/recurringSummary";
@@ -164,11 +165,11 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // --- Fast reached its length: notify once, keep it running. Neutral
-      // wording on purpose — a fast may be an observance, so "time to eat!"
-      // is not ours to say. Known limitation: this uses the poll path rather
-      // than a native OS schedule, so on native it only fires while the app
-      // is alive. ---
+      // --- Fast reached its length: notify once, keep it running. On the
+      // phone the OS delivers this from the schedule set when the fast
+      // started (see fastingActions), so it arrives with the app closed;
+      // firing here too would double it. This poll stays the browser path,
+      // and still marks the fast notified on both. ---
       const activeFasts = await db.fastingSessions
         .filter((f) => f.endedAt === undefined && !f.targetNotified)
         .toArray();
@@ -176,10 +177,10 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
         const elapsedHours = (now.getTime() - f.startedAt) / 3600000;
         if (elapsedHours >= f.targetHours) {
           await db.fastingSessions.update(f.id, { targetNotified: true });
-          await showLocalNotification(
-            f.label ? `${f.label} — ${f.targetHours}h reached` : "Fast complete",
-            `You've reached ${f.targetHours} hours.`,
-          );
+          if (!isNative) {
+            const { title, body } = fastCompleteCopy(f);
+            await showLocalNotification(title, body);
+          }
         }
       }
 

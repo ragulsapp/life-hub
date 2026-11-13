@@ -6,9 +6,12 @@ import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import { Chip } from "../../components/Chip";
 import {
-  requestNotificationPermission,
+  cancelReminder,
+  fastNotifId,
   showLocalNotification,
 } from "../../lib/notify";
+import { syncReminder } from "../../lib/reminderActions";
+import { scheduleFastComplete } from "./fastingActions";
 
 /**
  * A fast the user chose to keep. Framed as an observance being kept and
@@ -39,15 +42,27 @@ export function FastingTimer() {
   }, [active]);
 
   const start = async () => {
-    await requestNotificationPermission();
     const name = label.trim();
-    await db.fastingSessions.add({
-      startedAt: Date.now(),
+    const startedAt = Date.now();
+    const id = (await db.fastingSessions.add({
+      startedAt,
       targetHours: target,
       label: name || undefined,
-    } as never);
+    } as never)) as unknown as number;
     setNow(Date.now());
     setLabel("");
+    // "I'll let you know" has to be true with the app closed, which is how a
+    // fast is actually spent. It used to rely on the in-app poll alone.
+    await syncReminder(
+      () =>
+        scheduleFastComplete({
+          id,
+          startedAt,
+          targetHours: target,
+          label: name || undefined,
+        }),
+      { enabling: true },
+    );
     await showLocalNotification(
       name ? `${name} started` : "Fast started",
       `Tracking ${target}h. I'll let you know when you reach it.`,
@@ -59,6 +74,11 @@ export function FastingTimer() {
     // fastingSessions is the single source of truth for fasting history —
     // no duplicate healthMetrics row needed.
     await db.fastingSessions.update(active.id, { endedAt: Date.now() });
+    // Ending early must take the "target reached" alert with it.
+    const id = active.id;
+    await syncReminder(() => cancelReminder(fastNotifId(id)), {
+      enabling: false,
+    });
   };
 
   if (!active) {

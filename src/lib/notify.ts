@@ -285,6 +285,36 @@ export async function cancelAlarm(alarmId: number): Promise<void> {
   });
 }
 
+/**
+ * One notification at one moment — fired by the OS even if the app is closed.
+ *
+ * For things with an end point rather than a repeat: a fast reaching its
+ * target. Those were driven by the in-app poll, so on the phone they only
+ * arrived if the app happened to be open at that minute — while the "fast
+ * started" message promised "I'll let you know when you reach it".
+ */
+export async function scheduleOnce(
+  id: number,
+  title: string,
+  body: string,
+  at: Date,
+): Promise<void> {
+  if (!isNative) return;
+  await ensureChannels();
+  await LocalNotifications.cancel({ notifications: [{ id }] });
+  await LocalNotifications.schedule({
+    notifications: [
+      {
+        id,
+        title,
+        body,
+        channelId: channelId(reminderSound),
+        schedule: { at, allowWhileIdle: true },
+      },
+    ],
+  });
+}
+
 /** Ids the OS is currently holding a schedule for. */
 export async function pendingNotificationIds(): Promise<number[]> {
   if (!isNative) return [];
@@ -375,6 +405,8 @@ export const noteNotifId = (noteId: number) => 300_000 + noteId;
  *  so each alarm reserves a block of eight rather than a single id. */
 export const alarmNotifId = (alarmId: number, slot: number) =>
   400_000 + alarmId * 8 + slot;
+/** Above the alarm blocks, which reach 600_000 only at 25,000 alarms. */
+export const fastNotifId = (fastId: number) => 600_000 + fastId;
 
 /** Fixed id for the singleton nightly reminder — well clear of the row-id
  *  ranges above. */

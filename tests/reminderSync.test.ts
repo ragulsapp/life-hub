@@ -36,6 +36,10 @@ vi.mock("../src/lib/notify", async (orig) => {
     cancelNotifications: vi.fn(async (ids: number[]) => {
       cancelledIds.push(...ids);
     }),
+    scheduleOnce: vi.fn(async (id: number) => {
+      if (failOn.has(id)) throw new Error(`refused ${id}`);
+      scheduled.push(id);
+    }),
     scheduleAlarm: vi.fn(async (a: { id: number }) => {
       const id = real.alarmNotifId(a.id, 7);
       if (failOn.has(id)) throw new Error(`refused alarm ${a.id}`);
@@ -64,6 +68,7 @@ beforeEach(async () => {
     db.notes.clear(),
     db.alarms.clear(),
     db.appSettings.clear(),
+    db.fastingSessions.clear(),
   ]);
   await db.habits.add({
     id: 1, name: "Water", reminderEnabled: true, reminderTime: "08:00",
@@ -167,5 +172,32 @@ describe("resyncNativeReminders", () => {
     expect(cancelledIds.sort()).toEqual(
       [notify.taskNotifId(1), notify.habitNotifId(1)].sort(),
     );
+  });
+
+  it("puts a running fast's completion on the OS schedule", async () => {
+    await db.fastingSessions.add({
+      id: 3, startedAt: Date.now(), targetHours: 16,
+    } as never);
+    await resyncNativeReminders();
+    expect(scheduled).toContain(notify.fastNotifId(3));
+  });
+
+  it("does not schedule a fast that has ended, and clears its leftover", async () => {
+    await db.fastingSessions.add({
+      id: 4, startedAt: Date.now() - 3_600_000, endedAt: Date.now(),
+      targetHours: 16,
+    } as never);
+    pendingBefore = [notify.fastNotifId(4)];
+    await resyncNativeReminders();
+    expect(scheduled).not.toContain(notify.fastNotifId(4));
+    expect(cancelledIds).toContain(notify.fastNotifId(4));
+  });
+
+  it("does not schedule a completion that is already in the past", async () => {
+    await db.fastingSessions.add({
+      id: 5, startedAt: Date.now() - 20 * 3_600_000, targetHours: 16,
+    } as never);
+    await resyncNativeReminders();
+    expect(scheduled).not.toContain(notify.fastNotifId(5));
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   alarmNotifId,
+  fastNotifId,
   habitNotifId,
   noteNotifId,
   NIGHT_REMINDER_NOTIF_ID,
@@ -25,6 +26,7 @@ describe("notification id allocation", () => {
     ...Array.from({ length: n }, (_, i) =>
       Array.from({ length: 8 }, (_, s) => alarmNotifId(i + 1, s)),
     ).flat(),
+    ...Array.from({ length: n }, (_, i) => fastNotifId(i + 1)),
     NIGHT_REMINDER_NOTIF_ID,
   ];
 

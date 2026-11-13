@@ -1,10 +1,15 @@
 import { db, type SoundId } from "../db/db";
 import {
+  fastTargetAt,
+  scheduleFastComplete,
+} from "../modules/health/fastingActions";
+import {
   alarmSlotIds,
   cancelNotifications,
   cancelReminder,
   isManagedNotifId,
   pendingNotificationIds,
+  fastNotifId,
   scheduleAlarm,
   ensureChannels,
   habitNotifId,
@@ -68,11 +73,12 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
   if (sound) setReminderSound(sound);
   await attempt("notification channels", ensureChannels);
 
-  const [habits, tasks, notes, alarms, settings] = await Promise.all([
+  const [habits, tasks, notes, alarms, fasts, settings] = await Promise.all([
     db.habits.toArray(),
     db.tasks.toArray(),
     db.notes.toArray(),
     db.alarms.toArray(),
+    db.fastingSessions.toArray(),
     db.appSettings.get(1),
   ]);
 
@@ -117,6 +123,19 @@ export async function resyncNativeReminders(sound?: SoundId): Promise<void> {
       wanted.add(noteNotifId(n.id));
       await attempt(`note "${n.title}"`, () =>
         scheduleDailyReminder(noteNotifId(n.id), "Note reminder", n.title, time),
+      );
+    }
+  }
+
+  // A running fast's completion. Covers fasts started before this existed
+  // and any whose schedule failed at start. One already past its target is
+  // left to the in-app poll; it is due now, not later.
+  const now = Date.now();
+  for (const f of fasts) {
+    if (f.endedAt === undefined && !f.targetNotified && fastTargetAt(f).getTime() > now) {
+      wanted.add(fastNotifId(f.id));
+      await attempt(`fast "${f.label ?? `${f.targetHours}h`}"`, () =>
+        scheduleFastComplete(f),
       );
     }
   }
