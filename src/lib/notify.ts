@@ -351,6 +351,14 @@ export interface ReminderDiagnostics {
   /** What the OS says it is actually holding. The ground truth. */
   pending: { id: number; title: string; at: string }[];
   pendingError?: string;
+  /**
+   * Whether Android lets this app fire at the exact minute. When it does not,
+   * the plugin silently falls back to an INEXACT alarm (setAndAllowWhileIdle),
+   * which Android may deliver many minutes late or batch until the phone
+   * wakes — a reminder that is scheduled correctly yet never seems to arrive.
+   * That fallback logs only a warning, so nothing on the phone shows it.
+   */
+  exactAlarms: "granted" | "denied" | "unknown";
 }
 
 /**
@@ -368,35 +376,92 @@ export async function reminderDiagnostics(): Promise<ReminderDiagnostics> {
     permission: await notificationPermission(),
     channels: [...channelResults],
   };
-  if (!isNative) return { ...base, pending: [] };
+  if (!isNative) return { ...base, pending: [], exactAlarms: "unknown" };
+
+  let exactAlarms: ReminderDiagnostics["exactAlarms"] = "unknown";
+  try {
+    const { exact_alarm } = await LocalNotifications.checkExactNotificationSetting();
+    exactAlarms = exact_alarm === "granted" ? "granted" : "denied";
+  } catch {
+    /* older Android has no such setting — exact alarms are simply allowed */
+  }
 
   await ensureChannels();
   try {
     const { notifications } = await LocalNotifications.getPending();
     return {
       ...base,
+      exactAlarms,
       channels: [...channelResults],
-      pending: notifications.map((n) => {
-        const on = n.schedule?.on;
-        return {
-          id: n.id,
-          title: n.title ?? "(no title)",
-          at: on
-            ? `${String(on.hour ?? 0).padStart(2, "0")}:${String(
-                on.minute ?? 0,
-              ).padStart(2, "0")} daily`
-            : "once",
-        };
-      }),
+      pending: notifications.map((n) => ({
+        id: n.id,
+        title: n.title ?? "(no title)",
+        at: describeSchedule(n.schedule),
+      })),
     };
   } catch (err) {
     return {
       ...base,
+      exactAlarms,
       channels: [...channelResults],
       pending: [],
       pendingError: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/**
+ * A pending schedule in words. This used to call every repeating reminder
+ * "daily", so a weekday-only alarm read as daily — a diagnostic that
+ * misdescribes what it is diagnosing.
+ */
+function describeSchedule(
+  schedule: { on?: { weekday?: number; hour?: number; minute?: number }; at?: Date } | undefined,
+): string {
+  const on = schedule?.on;
+  if (on) {
+    const hhmm = `${String(on.hour ?? 0).padStart(2, "0")}:${String(on.minute ?? 0).padStart(2, "0")}`;
+    return on.weekday ? `${hhmm} every ${WEEKDAYS[on.weekday - 1]}` : `${hhmm} daily`;
+  }
+  if (schedule?.at) {
+    const d = new Date(schedule.at);
+    return `once at ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  }
+  return "once";
+}
+
+/** Opens Android's "Alarms & reminders" page for this app. */
+export async function openExactAlarmSetting(): Promise<void> {
+  if (!isNative) return;
+  await LocalNotifications.changeExactNotificationSetting();
+}
+
+/**
+ * Outside every managed range (see isManagedNotifId), so the launch resync
+ * never clears it: a test must survive the app being reopened to check it.
+ */
+export const TEST_NOTIF_ID = 900_002;
+
+/**
+ * Schedule a real reminder one minute out, through the same OS path every
+ * reminder uses. "Send a test reminder now" posts immediately, which proves
+ * the notification can be SHOWN but says nothing about whether a SCHEDULED
+ * one is delivered — the part that was failing.
+ */
+export async function scheduleTestInOneMinute(): Promise<Date> {
+  // scheduleOnce is a no-op in the browser, so without this the button would
+  // announce "Test set" for a test that can never fire.
+  if (!isNative) throw new Error("this test only works in the installed app");
+  const at = new Date(Date.now() + 60_000);
+  await scheduleOnce(
+    TEST_NOTIF_ID,
+    "Test reminder",
+    "Scheduled reminders reach you on this phone.",
+    at,
+  );
+  return at;
 }
 
 // Stable, collision-free notification ids per record type + row id.

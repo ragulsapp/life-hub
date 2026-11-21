@@ -29,9 +29,12 @@ import {
   UploadIcon,
 } from "../../components/Icons";
 import {
+  openExactAlarmSetting,
   reminderDiagnostics,
+  scheduleTestInOneMinute,
   type ReminderDiagnostics,
 } from "../../lib/notify";
+import { TextButton } from "../../components/TextButton";
 
 /**
  * Everything that used to live in the header, plus body basics.
@@ -311,10 +314,56 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
               setDiag(await reminderDiagnostics());
             }}
           />
+          <Row
+            icon={<BellIcon size={16} />}
+            label="Test in 1 minute"
+            hint="Then press Home — don't swipe the app away — and wait"
+            onClick={async () => {
+              try {
+                const at = await scheduleTestInOneMinute();
+                toast(
+                  `Test set for ${at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}. Press Home and wait.`,
+                );
+              } catch (err) {
+                toast(
+                  `Couldn't schedule the test: ${err instanceof Error ? err.message : String(err)}`,
+                  "error",
+                );
+              }
+            }}
+          />
           {diag && (
             <div className="px-3 pb-3 text-caption text-slate-600 dark:text-slate-300">
               <p>Build: {diag.native ? "native app" : "browser"}</p>
               <p>Permission: {diag.permission}</p>
+              {/* Without exact alarms the plugin quietly schedules an
+                  inexact one, which Android may deliver very late — the
+                  reminder is "scheduled" yet never seems to arrive. */}
+              <p
+                className={
+                  diag.exactAlarms === "denied"
+                    ? "font-semibold text-rose-600 dark:text-rose-400"
+                    : ""
+                }
+              >
+                Exact alarms:{" "}
+                {diag.exactAlarms === "granted"
+                  ? "allowed"
+                  : diag.exactAlarms === "denied"
+                    ? "NOT allowed — reminders can arrive late or not at all"
+                    : "unknown"}
+              </p>
+              {diag.exactAlarms === "denied" && (
+                <TextButton
+                  className="-ml-3"
+                  onClick={async () => {
+                    await openExactAlarmSetting();
+                    toast("Turn on “Allow setting alarms and reminders”, then come back and check again.");
+                  }}
+                >
+                  Allow exact alarms
+                </TextButton>
+              )}
               <p>
                 Channels:{" "}
                 {diag.channels.length === 0

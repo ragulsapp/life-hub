@@ -5,8 +5,10 @@ import {
   recurringNotifId,
   habitNotifId,
   noteNotifId,
+  isManagedNotifId,
   NIGHT_REMINDER_NOTIF_ID,
   taskNotifId,
+  TEST_NOTIF_ID,
 } from "../src/lib/notify";
 
 /**
@@ -30,6 +32,7 @@ describe("notification id allocation", () => {
     ...Array.from({ length: n }, (_, i) => fastNotifId(i + 1)),
     ...Array.from({ length: n }, (_, i) => recurringNotifId(i + 1)),
     NIGHT_REMINDER_NOTIF_ID,
+    TEST_NOTIF_ID,
   ];
 
   it("never collides across features for a realistic number of rows", () => {
@@ -46,5 +49,11 @@ describe("notification id allocation", () => {
     const a = Array.from({ length: 8 }, (_, s) => alarmNotifId(7, s));
     const b = Array.from({ length: 8 }, (_, s) => alarmNotifId(8, s));
     expect(a.some((x) => b.includes(x))).toBe(false);
+  });
+
+  it("keeps the one-minute test outside the ranges the resync clears", () => {
+    // The test must survive the app being reopened to check on it; the
+    // resync deletes any managed id the data does not want.
+    expect(isManagedNotifId(TEST_NOTIF_ID)).toBe(false);
   });
 });
