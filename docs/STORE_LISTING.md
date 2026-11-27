@@ -10,6 +10,11 @@ submitting if the app has changed since.
 
 These are not polish. Play will reject or block the app without them.
 
+**Progress 2026-11-27:** #1 wired (key made, CI ready — owner runs one script,
+see `RELEASE_SIGNING.md`); #4 done — <https://ragulsapp.github.io/life-hub/privacy.html>;
+#5 done (versionCode = CI run number). #2 kept as is (alarm-clock declaration).
+#3 waits on a phone test.
+
 1. **Release signing.** The APK CI builds is a *debug* build, signed with
    `android/app/debug.keystore` — a key committed to a public repository. Play
    needs a release-signed **AAB** (Android App Bundle) with a private upload

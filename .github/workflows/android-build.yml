@@ -11,6 +11,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Secrets can't be tested in a step's `if:` directly.
+      HAS_RELEASE_KEY: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -44,9 +47,37 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
+
+      # Play Store bundle. Runs only once the owner has added the upload-key
+      # secrets (see docs/RELEASE_SIGNING.md); until then it is skipped and
+      # the debug APK above is unaffected. The key is decoded to the runner's
+      # temp dir and deleted at the end; it never touches the repo.
+      - name: Build signed release bundle (AAB)
+        if: ${{ env.HAS_RELEASE_KEY == 'true' }}
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          export RELEASE_KEYSTORE_PATH="$RUNNER_TEMP/upload.jks"
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$RELEASE_KEYSTORE_PATH"
+          ./gradlew bundleRelease --no-daemon
+          rm -f "$RELEASE_KEYSTORE_PATH"
+
+      - name: Upload release bundle
+        if: ${{ env.HAS_RELEASE_KEY == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: life-mentor-release-aab
+          path: android/app/build/outputs/bundle/release/*.aab
 
       - name: Locate APK
         id: apk

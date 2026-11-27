@@ -7,7 +7,10 @@ android {
         applicationId "com.ragulkumar.lifehub"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        // Play rejects an upload whose versionCode isn't higher than the last.
+        // CI passes its run number, so every build counts up on its own; a
+        // local build without it falls back to 2 (1 was the first sideload).
+        versionCode((System.getenv("VERSION_CODE") ?: "2").toInteger())
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -31,12 +34,27 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // The Play upload key. It is NEVER in the repo: CI decodes it from
+        // the RELEASE_KEYSTORE_BASE64 secret into a temp file and passes the
+        // path and passwords as env vars. Without them this config is skipped
+        // and a release build comes out unsigned (Play would refuse it).
+        if (System.getenv("RELEASE_KEYSTORE_PATH")) {
+            release {
+                storeFile file(System.getenv("RELEASE_KEYSTORE_PATH"))
+                storePassword System.getenv("RELEASE_STORE_PASSWORD")
+                keyAlias System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
+            if (System.getenv("RELEASE_KEYSTORE_PATH")) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

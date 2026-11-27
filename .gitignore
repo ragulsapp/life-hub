@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Release / upload signing keys must never be committed. (The one exception,
+# android/app/debug.keystore, is a public well-known debug key — see build.gradle.)
+*.jks
+*.p12
+*.pem
+upload*.keystore
+release*.keystore
