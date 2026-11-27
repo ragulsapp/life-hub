@@ -37,6 +37,9 @@ export function completionOver(
   habits: Habit[],
   logs: HabitLog[],
   dates: string[],
+  /** A day still in progress: a habit done on it counts, one not done yet
+   *  isn't a miss. Without this, day one of a new user read as "0%". */
+  openDay?: string,
 ): { rate: number | null; due: number; done: number } {
   const done = new Set(
     logs.filter((l) => l.completed).map((l) => `${l.date}|${l.habitName}`),
@@ -49,8 +52,10 @@ export function completionOver(
       if (h.archived) continue;
       if (h.createdAt && ds < localDateStr(new Date(h.createdAt))) continue;
       if (!isDueOn(h.schedule, d)) continue;
+      const isDone = done.has(`${ds}|${h.name}`);
+      if (ds === openDay && !isDone) continue;
       dueCount++;
-      if (done.has(`${ds}|${h.name}`)) doneCount++;
+      if (isDone) doneCount++;
     }
   }
   return {
@@ -83,7 +88,7 @@ export function weeklyReview(
 ): WeeklyReview {
   const thisWeek = windowDates(0, 7, now);
   const lastWeek = windowDates(7, 14, now);
-  const cur = completionOver(habits, logs, thisWeek);
+  const cur = completionOver(habits, logs, thisWeek, localDateStr(now));
   const prev = completionOver(habits, logs, lastWeek);
   const delta =
     cur.rate === null || prev.rate === null ? null : cur.rate - prev.rate;

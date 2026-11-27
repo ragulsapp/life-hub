@@ -99,6 +99,21 @@ describe("weeklyReview", () => {
     }
   });
 
+  it("doesn't judge a day that isn't over — a brand-new user gets no 0% verdict", () => {
+    // Found by walking through onboarding: habits created a minute ago, none
+    // ticked yet, and the card already said "You hit 0% … plan may be too big".
+    const h = { ...habit("Run"), createdAt: NOW.getTime() } as Habit;
+    const r = weeklyReview([h], [], empty.tx, empty.tasks, empty.goals, NOW);
+    expect(r.habitRate).toBeNull();
+    expect(r.challenge).not.toMatch(/0%/);
+  });
+
+  it("still counts today once its habit is done", () => {
+    const h = { ...habit("Run"), createdAt: NOW.getTime() } as Habit;
+    const r = weeklyReview([h], [log("Run", 0)], empty.tx, empty.tasks, empty.goals, NOW);
+    expect(r.habitRate).toBe(100);
+  });
+
   it("credits completed goals ahead of habit stats", () => {
     const goals = [
       { id: 1, title: "Ship it", status: "completed", completedAt: NOW.getTime() - 86400000 },
