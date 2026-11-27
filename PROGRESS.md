@@ -540,6 +540,18 @@ alias — every frosted surface silently renders unblurred.
 
 ---
 
+## Play Store push (2026-11-27)
+
+Goal: live on Play before New Year. Owner's AutoFlow sales come first; this runs on spare time.
+
+- Done: privacy policy (`public/privacy.html` → https://ragulsapp.github.io/life-hub/privacy.html);
+  release signing wired (`docs/RELEASE_SIGNING.md` — key lives outside the repo, CI builds a signed AAB
+  once the owner runs the secrets script); versionCode = CI run number; key files git-ignored.
+- Founder walkthrough on a fresh install fixed two first-run bugs: icon names printed on onboarding
+  chips; weekly review gave a brand-new user a "0% — plan may be too big" verdict.
+- Still open: remove INTERNET (needs a phone test of the build), screenshots, Play Console + 12 testers
+  (14-day closed test — must start by ~Dec 5), note-reminder delivery result from the owner's phone.
+
 ## Open item for the owner
 
 **The owner uses Android, running the APK — not an iPhone.** An earlier version
