@@ -21,7 +21,10 @@ a lost *upload* key can be reset by Google support, but that takes days.
 
 ## Turning on signed builds
 
-1. Run `bash ~/.life-mentor-signing/upload-to-github.sh` (needs `gh` signed in).
+1. In PowerShell run (needs `gh` signed in) —
+   `& "C:\Program Files\Git\bin\bash.exe" "/c/Users/Ragulkumar/.life-mentor-signing/upload-to-github.sh"`.
+   Plain `bash` in PowerShell is WSL, where `~` is the Linux home and the
+   script isn't found.
    It sets `RELEASE_KEYSTORE_BASE64`, `RELEASE_STORE_PASSWORD`,
    `RELEASE_KEY_PASSWORD`, `RELEASE_KEY_ALIAS`.
 2. The next push to `main` also builds `life-mentor-release-aab` — download it
