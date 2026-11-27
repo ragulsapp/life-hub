@@ -15,6 +15,7 @@ import { saveBodyProfile } from "../health/healthActions";
 import { MONTH_NAMES } from "../health/BodyProfileForm";
 import { requestNotificationPermission } from "../../lib/notify";
 import { CheckIcon } from "../../components/Icons";
+import { AppIcon } from "../../lib/appIcons";
 
 type Step = number;
 
@@ -27,7 +28,7 @@ function Chips({
   options: readonly string[];
   selected: string[];
   onToggle: (v: string) => void;
-  renderLabel?: (v: string) => string;
+  renderLabel?: (v: string) => React.ReactNode;
 }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -37,7 +38,7 @@ function Chips({
           whileTap={{ scale: 0.94 }}
           onClick={() => onToggle(o)}
           aria-pressed={selected.includes(o)}
-          className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
             selected.includes(o)
               ? "bg-cyan-500 text-white"
               : "bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300"
@@ -159,7 +160,14 @@ export function OnboardingWizard() {
           options={STARTER_TEMPLATES.habits.map((h) => h.name)}
           selected={habits}
           onToggle={toggle(setHabits)}
-          renderLabel={(n) => `${habitIcon(n)} ${n}`}
+          // Icons are stored as names ("dumbbell"); printing the name as text
+          // showed "dumbbell Exercise" on the chip. Render the icon instead.
+          renderLabel={(n) => (
+            <>
+              <AppIcon name={habitIcon(n)} size={16} />
+              {n}
+            </>
+          )}
         />
       ),
     },
