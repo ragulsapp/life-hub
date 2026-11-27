@@ -49,18 +49,18 @@ Counted by script against Play's limits (name 30, short description 80, full 400
 
 > Life Mentor: Habits & Money
 
-**Short description** (71/80)
+**Short description** (73/80)
 
-> Habits, money, alarms and health in one app. Nothing leaves your phone.
+> Habits, money, alarms and health in one app. No account, ads or tracking.
 
 **Full description**
 
 > One app for your day — habits, money, alarms, notes and health — that keeps
 > all of it on your phone.
 >
-> **No account. No cloud. No ads. Nothing uploaded.**
-> Your spending, your health numbers and your notes are stored only on this
-> device. There is no sign-up and nothing is sent anywhere.
+> **No account. No servers. No ads. No tracking.**
+> Your spending, your health numbers and your notes are stored on this
+> device. There is no sign-up, and the app sends nothing to us or anyone else.
 >
 > **What it does**
 > • Today: one screen that shows what to do now — habits due, tasks, and a

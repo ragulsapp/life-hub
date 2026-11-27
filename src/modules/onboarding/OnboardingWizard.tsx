@@ -142,8 +142,8 @@ export function OnboardingWizard() {
       body: (
         <div className="flex flex-col gap-3 text-sm text-slate-600 dark:text-slate-300">
           <p>
-            Everything stays on this device. Nothing is uploaded, nothing is
-            shared.
+            Everything stays on this device. We never receive any of it —
+            there's no account and no server.
           </p>
           <p>
             Next, pick a few starting points. You can change all of it later —

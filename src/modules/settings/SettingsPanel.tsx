@@ -423,7 +423,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         </Section>
 
         <p className="px-3 text-center text-xs text-slate-500 dark:text-slate-400">
-          Everything stays on this device. Nothing is uploaded.
+          Everything stays on this device. We never receive any of it.
         </p>
       </div>
     </motion.div>

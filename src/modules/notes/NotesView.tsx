@@ -176,7 +176,7 @@ export function NotesView() {
             title={notes.length === 0 ? "No notes yet" : "Nothing matches"}
             hint={
               notes.length === 0
-                ? "Anything you want to keep. It never leaves this device. Tap + to write one."
+                ? "Anything you want to keep. Only you can read it. Tap + to write one."
                 : "Try a different word, or clear the filters."
             }
           />
