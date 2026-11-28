@@ -5,6 +5,7 @@ import { toast } from "../../lib/toast";
 import { inputClass } from "../../components/inputStyles";
 import { Button } from "../../components/Button";
 import { logMetric } from "../health/healthActions";
+import { VoiceCapture } from "./VoiceCapture";
 import {
   CheckSquareIcon,
   NoteIcon,
@@ -114,6 +115,7 @@ export function QuickCaptureBody({ onDone }: { onDone: () => void }) {
 
   return (
     <>
+      <VoiceCapture onDone={onDone} />
       <div className="mb-3 flex flex-wrap gap-2">
         {KINDS.map((k) => (
           <button
