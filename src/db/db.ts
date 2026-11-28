@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
+import { localDateStr } from "../lib/dates";
 
 export type HealthMetricType =
   | "weight"
@@ -686,6 +687,20 @@ export async function ensureSeeded(): Promise<void> {
  * habit-creation path. Calling it from this file would be a circular import,
  * so the wizard invokes it directly before calling this.
  */
+/**
+ * What "setup is finished" writes. It also marks today's morning brief as
+ * seen: the user has just walked through six setup screens, and a second
+ * full-screen welcome straight after is one gate too many. The brief starts
+ * tomorrow.
+ */
+export function onboardingDoneFields() {
+  return {
+    onboardingComplete: true,
+    onboardingCompletedAt: Date.now(),
+    morningBriefShownDate: localDateStr(),
+  };
+}
+
 export async function applyOnboardingSelections(selection: {
   incomeCategories: string[];
   expenseCategories: string[];
@@ -727,10 +742,7 @@ export async function applyOnboardingSelections(selection: {
         await db.goals.add({ title, status: "active" } as never);
       }
 
-      await db.appSettings.update(1, {
-        onboardingComplete: true,
-        onboardingCompletedAt: Date.now(),
-      });
+      await db.appSettings.update(1, onboardingDoneFields());
     },
   );
 }

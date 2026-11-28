@@ -4,6 +4,7 @@ import {
   applyOnboardingSelections,
   db,
   HABIT_COLORS,
+  onboardingDoneFields,
   STARTER_TEMPLATES,
   type BodyProfile,
 } from "../../db/db";
@@ -98,10 +99,7 @@ export function OnboardingWizard() {
     setSaving(true);
     try {
       if (skip) {
-        await db.appSettings.update(1, {
-          onboardingComplete: true,
-          onboardingCompletedAt: Date.now(),
-        });
+        await db.appSettings.update(1, onboardingDoneFields());
       } else {
         // Habits go through the shared creation path; the first two picks are
         // pinned so the Dashboard isn't empty on day one.
