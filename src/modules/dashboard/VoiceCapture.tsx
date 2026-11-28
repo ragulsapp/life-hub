@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Mic } from "lucide-react";
 import { Button } from "../../components/Button";
 import { inputClass } from "../../components/inputStyles";
 import {
@@ -11,6 +12,7 @@ import {
 } from "../../components/Icons";
 import { parseVoiceCommand, type VoiceAction } from "../../lib/voice/parseCommand";
 import { applyVoiceActions } from "../../lib/voice/applyActions";
+import { listenOnce, voiceAvailable } from "../../lib/voice/listen";
 import { toast } from "../../lib/toast";
 
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -58,10 +60,39 @@ export function VoiceCapture({ onDone }: { onDone: () => void }) {
   const [text, setText] = useState("");
   const [proposed, setProposed] = useState<VoiceAction[] | null>(null);
   const [saving, setSaving] = useState(false);
+  const [canListen, setCanListen] = useState(false);
+  const [listening, setListening] = useState(false);
 
-  const understand = () => {
-    const actions = parseVoiceCommand(text);
-    setProposed(actions);
+  useEffect(() => {
+    let alive = true;
+    voiceAvailable().then((ok) => alive && setCanListen(ok));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const understand = (sentence = text) => {
+    setProposed(parseVoiceCommand(sentence));
+  };
+
+  const listen = async () => {
+    setListening(true);
+    try {
+      const heard = await listenOnce();
+      if (!heard) {
+        toast("Didn't hear anything. Try again a little closer.", "error");
+        return;
+      }
+      setText(heard);
+      understand(heard);
+    } catch (err) {
+      console.error(err);
+      toast(err instanceof Error && /permission/i.test(err.message)
+        ? "Turn on the microphone for Life Mentor in your phone's Settings → Apps."
+        : "Couldn't listen just now. You can type it instead.", "error");
+    } finally {
+      setListening(false);
+    }
   };
 
   const actionable = (proposed ?? []).filter((a) => a.type !== "unknown");
@@ -100,10 +131,27 @@ export function VoiceCapture({ onDone }: { onDone: () => void }) {
           placeholder="naliku 8 manikku alarm, bank ku call pannanum…"
           className={inputClass}
         />
-        <Button onClick={understand} disabled={!text.trim()}>
+        {canListen && (
+          <button
+            type="button"
+            onClick={listen}
+            disabled={listening}
+            aria-label="Speak"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-teal-600 text-white disabled:opacity-50"
+          >
+            <Mic size={20} />
+          </button>
+        )}
+        <Button onClick={() => understand()} disabled={!text.trim()}>
           Go
         </Button>
       </div>
+      {canListen && (
+        <p className="text-caption text-slate-500 dark:text-slate-400">
+          Your phone's speech service turns voice into text and may go online to
+          do it. Life Mentor only gets the text.
+        </p>
+      )}
 
       {proposed && (
         <div className="flex flex-col gap-1.5" aria-live="polite">

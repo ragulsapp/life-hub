@@ -2,7 +2,9 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main]
+    # voice-commands builds a separate test APK (own release tag below), so
+    # trying the feature on a phone never replaces the main build.
+    branches: [main, voice-commands]
   workflow_dispatch: {}
 
 permissions:
@@ -58,7 +60,7 @@ jobs:
       # the debug APK above is unaffected. The key is decoded to the runner's
       # temp dir and deleted at the end; it never touches the repo.
       - name: Build signed release bundle (AAB)
-        if: ${{ env.HAS_RELEASE_KEY == 'true' }}
+        if: ${{ env.HAS_RELEASE_KEY == 'true' && github.ref_name == 'main' }}
         working-directory: android
         env:
           VERSION_CODE: ${{ github.run_number }}
@@ -73,7 +75,7 @@ jobs:
           rm -f "$RELEASE_KEYSTORE_PATH"
 
       - name: Upload release bundle
-        if: ${{ env.HAS_RELEASE_KEY == 'true' }}
+        if: ${{ env.HAS_RELEASE_KEY == 'true' && github.ref_name == 'main' }}
         uses: actions/upload-artifact@v4
         with:
           name: life-mentor-release-aab
@@ -97,8 +99,8 @@ jobs:
       - name: Publish rolling Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: android-latest
-          name: "Life Hub (Android, debug build)"
+          tag_name: ${{ github.ref_name == 'main' && 'android-latest' || format('android-{0}', github.ref_name) }}
+          name: ${{ github.ref_name == 'main' && 'Life Hub (Android, debug build)' || format('Life Hub TEST build ({0})', github.ref_name) }}
           body: |
             Automatically rebuilt from the latest commit on `main`.
             Debug build — sideload only (not signed for the Play Store).
