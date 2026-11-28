@@ -29,8 +29,15 @@ describe("calcStreak", () => {
     expect(calcStreak(logs, "Read")).toBe(3);
   });
 
-  it("is zero when today is not completed", () => {
+  it("keeps yesterday's streak alive while today is still open", () => {
+    // Every morning used to show 0 until the habit was ticked, so a 6-day
+    // streak read as "0" — the day isn't over, so the streak isn't broken.
     const logs = [log("2026-07-13"), log("2026-07-12")];
+    expect(calcStreak(logs, "Read")).toBe(2);
+  });
+
+  it("is zero once a whole day was missed", () => {
+    const logs = [log("2026-07-12"), log("2026-07-11")];
     expect(calcStreak(logs, "Read")).toBe(0);
   });
 

@@ -64,7 +64,10 @@ export function calcWeekCompletions(
   ).length;
 }
 
-/** Counts consecutive completed days ending today (or the most recent logged day). */
+/**
+ * Consecutive completed days ending today — or ending yesterday while today
+ * is still open, so an unticked morning doesn't read as a broken streak.
+ */
 export function calcStreak(logs: HabitLog[], habitName: string): number {
   const completedDates = new Set(
     logs
@@ -74,6 +77,7 @@ export function calcStreak(logs: HabitLog[], habitName: string): number {
 
   let streak = 0;
   const cursor = new Date();
+  if (!completedDates.has(toDateStr(cursor))) cursor.setDate(cursor.getDate() - 1);
   for (;;) {
     const dateStr = toDateStr(cursor);
     if (!completedDates.has(dateStr)) break;
