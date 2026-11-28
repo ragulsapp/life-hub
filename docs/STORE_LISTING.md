@@ -136,5 +136,8 @@ seeded profile with a few weeks of real-looking data, and capture:
    no-cloud story visible rather than a worry.
 5. **Alarms** — with the honest banner visible.
 
-Not yet possible from here: these need the phone, or a seeded browser profile
-captured by hand.
+**Done 2026-11-28:** `docs/store/` has 4 phone screenshots (1080×1920 — Today,
+Your plan, Money, Notes) from a seeded demo profile, plus `feature-graphic.png`
+(1024×500). Alarms was left out: in a browser it shows the "Enable
+notifications" banner, which a phone with permission wouldn't. Add a phone
+screenshot of it if wanted.
