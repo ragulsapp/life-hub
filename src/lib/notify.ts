@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import { oneOffAt } from "./reminderLogic";
 import {
   BUILT_IN_SOUNDS,
   DEFAULT_REMINDER_SOUND,
@@ -224,6 +225,7 @@ export async function scheduleAlarm(alarm: {
   label: string;
   time: string;
   days: number[];
+  onDate?: string;
   enabled: boolean;
   builtInSound?: SoundId;
   soundId?: number;
@@ -244,6 +246,25 @@ export async function scheduleAlarm(alarm: {
     // is the every-day case, a plain daily repeat with no weekday.
     on: slot === 7 ? { hour, minute } : { weekday: slot + 1, hour, minute },
   }));
+
+  // A one-off fires once, at one moment. It used to be a daily repeat here,
+  // so with the app closed a "rings once" alarm came back every morning.
+  if (alarm.days.length === 0) {
+    const at = oneOffAt(alarm);
+    if (!at) return;
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: alarmNotifId(alarm.id, 7),
+          title: alarm.label || "Alarm",
+          body: `${alarm.time} — open to dismiss`,
+          channelId: channel,
+          schedule: { at, allowWhileIdle: true },
+        },
+      ],
+    });
+    return;
+  }
 
   await LocalNotifications.schedule({
     notifications: slots.map(({ slot, on }) => ({

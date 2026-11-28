@@ -108,7 +108,7 @@ export function AlarmForm({ onSaved }: { onSaved?: () => void } = {}) {
         </div>
         <p className="mt-2 text-caption text-slate-500 dark:text-slate-400">
           {days.length === 0
-            ? "One-off — rings once, today."
+            ? `One-off — rings once, the next time it's ${time}.`
             : `Every ${days.map((d) => DAY_NAMES[d]).join(", ")}.`}
         </p>
       </div>

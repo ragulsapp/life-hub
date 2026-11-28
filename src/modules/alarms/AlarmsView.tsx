@@ -30,8 +30,13 @@ import {
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function repeatLabel(days: number[]): string {
-  if (days.length === 0) return "One-off";
+function repeatLabel(days: number[], onDate?: string): string {
+  if (days.length === 0) {
+    if (!onDate) return "One-off";
+    const [y, m, d] = onDate.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return `Once · ${DAY_NAMES[date.getDay()]} ${d} ${date.toLocaleString("en-IN", { month: "short" })}`;
+  }
   if (days.length === 7) return "Every day";
   if (days.length === 5 && [1, 2, 3, 4, 5].every((d) => days.includes(d)))
     return "Weekdays";
@@ -176,7 +181,7 @@ export function AlarmsView() {
                       )}
                       <span className="inline-flex items-center gap-1">
                         <CalendarIcon size={12} />
-                        {repeatLabel(a.days)}
+                        {repeatLabel(a.days, a.onDate)}
                       </span>
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-caption font-medium dark:bg-white/5">
                         {a.mission === "math" ? "Math" : "Memory"} ·{" "}

@@ -4,6 +4,7 @@ import {
   alarmDueState,
   matchesDays,
   minutesLate,
+  oneOffAt,
   reminderCreationGuard,
   reminderDue,
 } from "../src/lib/reminderLogic";
@@ -65,5 +66,38 @@ describe("reminderCreationGuard (no instant fire on creation)", () => {
   });
   it("leaves future times unanchored", () => {
     expect(reminderCreationGuard("21:00", at(14, 0))).toBeUndefined();
+  });
+});
+
+describe("one-off alarms on a date (voice: 'naliku 11 manikku alarm')", () => {
+  // `at` is Tuesday 2026-07-14.
+  it("doesn't ring today when it's set for tomorrow, even at the same clock time", () => {
+    expect(alarmDueState("11:00", [], at(11, 0), "2026-07-15")).toBe("not-due");
+  });
+  it("rings on its date", () => {
+    expect(alarmDueState("11:00", [], new Date(2026, 6, 15, 11, 5), "2026-07-15")).toBe("ring");
+  });
+  it("a date already gone is reported missed once, not rung", () => {
+    expect(alarmDueState("11:00", [], new Date(2026, 6, 16, 9, 0), "2026-07-15")).toBe("missed");
+  });
+});
+
+describe("oneOffAt — when Android should fire a one-off alarm", () => {
+  it("uses the date when there is one", () => {
+    expect(oneOffAt({ time: "08:00", days: [], onDate: "2026-07-15" }, at(10, 0))).toEqual(
+      new Date(2026, 6, 15, 8, 0),
+    );
+  });
+  it("without a date: later today if the time is still ahead", () => {
+    expect(oneOffAt({ time: "11:00", days: [] }, at(10, 0))).toEqual(new Date(2026, 6, 14, 11, 0));
+  });
+  it("without a date: tomorrow once today's time has passed", () => {
+    expect(oneOffAt({ time: "08:00", days: [] }, at(10, 0))).toEqual(new Date(2026, 6, 15, 8, 0));
+  });
+  it("a date in the past schedules nothing", () => {
+    expect(oneOffAt({ time: "08:00", days: [], onDate: "2026-07-13" }, at(10, 0))).toBeNull();
+  });
+  it("repeating alarms aren't one-offs", () => {
+    expect(oneOffAt({ time: "08:00", days: [1] }, at(10, 0))).toBeNull();
   });
 });
