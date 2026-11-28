@@ -35,11 +35,41 @@ export function alarmDueState(
   time: string,
   days: number[],
   now: Date,
+  /** One-off on a specific day (YYYY-MM-DD). Only meaningful with no days. */
+  onDate?: string,
 ): AlarmDueState {
+  if (onDate && days.length === 0) {
+    const today = localDateStr(now);
+    if (today < onDate) return "not-due";
+    if (today > onDate) return "missed";
+  }
   if (!matchesDays(days, now)) return "not-due";
   const late = minutesLate(time, now);
   if (late < 0) return "not-due";
   return late <= ALARM_GRACE_MINUTES ? "ring" : "missed";
+}
+
+/**
+ * When Android should fire a one-off alarm, or null if it isn't one / its
+ * moment is gone. One-offs used to be scheduled as a DAILY repeat, so with
+ * the app closed a "rings once" alarm kept arriving every morning until the
+ * app was opened and the poll switched it off.
+ */
+export function oneOffAt(
+  alarm: { time: string; days: number[]; onDate?: string },
+  now: Date = new Date(),
+): Date | null {
+  if (alarm.days.length > 0) return null;
+  const [h, m] = alarm.time.split(":").map(Number);
+  let at: Date;
+  if (alarm.onDate) {
+    const [y, mo, d] = alarm.onDate.split("-").map(Number);
+    at = new Date(y, mo - 1, d, h, m);
+  } else {
+    at = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+    if (at <= now) at.setDate(at.getDate() + 1);
+  }
+  return at > now ? at : null;
 }
 
 /**

@@ -167,7 +167,11 @@ export interface Alarm {
   id: number;
   label: string;
   time: string; // HH:MM
-  days: number[]; // 0=Sun..6=Sat, empty = every day
+  days: number[]; // 0=Sun..6=Sat, empty = one-off
+  /** One-off on this day (YYYY-MM-DD) instead of the next time `time` comes
+   *  round — "naliku 11 manikku alarm" said at 10am means tomorrow, not in an
+   *  hour. Only meaningful with empty `days`. Non-indexed: no version bump. */
+  onDate?: string;
   enabled: boolean;
   mission: AlarmMission;
   difficulty: number; // 1..3 (mission steps)

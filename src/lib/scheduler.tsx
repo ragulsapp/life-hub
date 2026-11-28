@@ -80,7 +80,7 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
         const alarms = await db.alarms.toArray();
         for (const a of alarms) {
           if (!a.enabled || a.lastFiredDate === today) continue;
-          const state = alarmDueState(a.time, a.days, now);
+          const state = alarmDueState(a.time, a.days, now, a.onDate);
           if (state === "ring") {
             await db.alarms.update(a.id, firedPatch(a, today));
             await db.appSettings.update(1, { ringingAlarmId: a.id });
